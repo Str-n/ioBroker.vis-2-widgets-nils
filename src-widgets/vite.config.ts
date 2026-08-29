@@ -43,10 +43,11 @@ const config = {
     plugins: [
         federation({
             manifest: true,
-            name: 'vis2materialWidgets',
+            name: 'vis2nilsWidgets',
             filename: 'customWidgets.js',
             exposes: {
                 './Thermostat': './src/Thermostat',
+                './ThermostatCompact': './src/ThermostatCompact',
                 './Actual': './src/Actual',
                 './Switches': './src/Switches',
                 './SimpleState': './src/SimpleState',

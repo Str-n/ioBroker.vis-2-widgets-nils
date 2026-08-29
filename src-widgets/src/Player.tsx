@@ -160,7 +160,7 @@ class Player extends Generic<PlayerRxData, PlayerState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Player',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Player',
             visWidgetLabel: 'player',
             visAttrs: [
@@ -262,7 +262,7 @@ class Player extends Generic<PlayerRxData, PlayerState> {
                 height: 240,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_player.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_player.png',
         };
     }
 

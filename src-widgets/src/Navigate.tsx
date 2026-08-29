@@ -65,7 +65,7 @@ export default class Navigate extends Generic<NavigateRxData, NavigateState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Navigate',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Navigate',
             visWidgetLabel: 'navigate', // Label of widget
             visAttrs: [
@@ -269,7 +269,7 @@ export default class Navigate extends Generic<NavigateRxData, NavigateState> {
                 height: 72,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_navigate.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_navigate.png',
         };
     }
 

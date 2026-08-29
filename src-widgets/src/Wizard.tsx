@@ -111,7 +111,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
 
                 roomWidget ||= {
                     tpl: 'tplMaterial2Switches',
-                    widgetSet: 'vis-2-widgets-material',
+                    widgetSet: 'vis-2-widgets-nils',
                     data: {
                         name: Generic.getText(room.common.name),
                         widgetTitle: Generic.getText(room.common.name),
@@ -548,10 +548,10 @@ export default class Wizard extends window.visRxWidget<Record<string, any>, VisR
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Wizard',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Wizard',
             visWidgetLabel: 'wizard',
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_wizard.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_wizard.png',
             visOrder: 100,
             visAttrs: [],
             customPalette: props => (

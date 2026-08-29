@@ -75,7 +75,7 @@ class Static extends Generic<StaticRxData, StaticState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Static',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Static information',
             visWidgetLabel: 'static_info', // Label of widget
             visAttrs: [
@@ -159,7 +159,7 @@ class Static extends Generic<StaticRxData, StaticState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_static.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_static.png',
         };
     }
 

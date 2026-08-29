@@ -1,6 +1,6 @@
 {
   "common": {
-    "name": "vis-2-widgets-material",
+    "name": "vis-2-widgets-nils",
     "version": "1.6.7",
     "news": {
       "1.6.7": {
@@ -96,7 +96,7 @@
       }
     },
     "titleLang": {
-      "en": "Vis 2 Widgets Material",
+      "en": "Vis 2 Widgets Nils",
       "de": "Vis 2 Widgets Material",
       "ru": "Vis 2 Widgets Material",
       "it": "Vis 2 Widgets Material",
@@ -125,13 +125,13 @@
       "bluefox <dogafox@gmail.com>"
     ],
     "keywords": [
-      "vis-2-widgets-material"
+      "vis-2-widgets-nils"
     ],
     "platform": "Javascript/Node.js",
-    "icon": "vis-2-widgets-material.png",
-    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.vis-2-widgets-material/master/admin/vis-2-widgets-material.png",
+    "icon": "vis-2-widgets-nils.png",
+    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.vis-2-widgets-nils/master/admin/vis-2-widgets-nils.png",
     "enabled": true,
-    "readme": "https://github.com/ioBroker/ioBroker.vis-2-widgets-material/blob/master/README.md",
+    "readme": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils/blob/master/README.md",
     "loglevel": "info",
     "mode": "none",
     "singleton": true,
@@ -148,13 +148,14 @@
       "type": "free"
     },
     "visWidgets": {
-      "vis2materialWidgets": {
+      "vis2nilsWidgets": {
         "i18n": "component",
-        "name": "vis2materialWidgets",
-        "url": "vis-2-widgets-material/customWidgets.js",
+        "name": "vis2nilsWidgets",
+        "url": "vis-2-widgets-nils/customWidgets.js",
         "bundlerType": "module",
         "components": [
           "Thermostat",
+          "ThermostatCompact",
           "Actual",
           "Switches",
           "Blinds",

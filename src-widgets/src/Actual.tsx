@@ -85,10 +85,10 @@ const styles: Record<string, CSSProperties> = {
         marginRight: 4,
     },
     newValueLight: {
-        animation: 'vis-2-widgets-material-newValueAnimationLight 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-newValueAnimationLight 2s ease-in-out',
     },
     newValueDark: {
-        animation: 'vis-2-widgets-material-newValueAnimationDark 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-newValueAnimationDark 2s ease-in-out',
     },
     tooltip: {
         pointerEvents: 'none',
@@ -160,7 +160,7 @@ export default class Actual extends Generic<RxData, ActualState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Actual',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
 
             visSetLabel: 'set_label', // Label of this widget set
             visSetColor: '#0783ff', // Color of this widget set
@@ -352,7 +352,7 @@ export default class Actual extends Generic<RxData, ActualState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_actual.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_actual.png',
         } as const;
     }
 
@@ -886,7 +886,7 @@ export default class Actual extends Generic<RxData, ActualState> {
             >
                 <style>
                     {`
-@keyframes vis-2-widgets-material-newValueAnimationLight {
+@keyframes vis-2-widgets-nils-newValueAnimationLight {
     0% {
         color: #00bd00;
     }
@@ -897,7 +897,7 @@ export default class Actual extends Generic<RxData, ActualState> {
         color: rgba(243,177,31);
     }
 }
-@keyframes vis-2-widgets-material-newValueAnimationDark {
+@keyframes vis-2-widgets-nils-newValueAnimationDark {
     0% {
         color: #008000;
     }

@@ -276,7 +276,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Vacuum',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visWidgetLabel: 'vacuum', // Label of widget
             visName: 'Vacuum',
             visAttrs: [
@@ -420,7 +420,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
                 height: 400,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_vacuum.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_vacuum.png',
         };
     }
 

@@ -103,7 +103,7 @@ export default class Camera extends Generic<CameraRxData, CameraState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Camera',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Camera',
             visWidgetLabel: 'camera',
             visAttrs: [
@@ -185,7 +185,7 @@ export default class Camera extends Generic<CameraRxData, CameraState> {
                 height: 240,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_camera.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_camera.png',
         };
     }
 

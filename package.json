@@ -1,22 +1,22 @@
 {
-  "name": "iobroker.vis-2-widgets-material",
+  "name": "iobroker.vis-2-widgets-nils",
   "version": "1.6.7",
-  "description": "ioBroker vis2 material widgets",
+  "description": "ioBroker vis2 widgets for Nils",
   "author": "bluefox <dogafox@gmail.com>",
   "contributors": [
     "bluefox <dogafox@gmail.com>"
   ],
-  "homepage": "https://github.com/ioBroker/ioBroker.vis-2-widgets-material",
+  "homepage": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ioBroker/ioBroker.vis-2-widgets-material"
+    "url": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils"
   },
   "keywords": [
     "ioBroker",
     "weather",
     "home automation",
-    "vis-2-widgets-material"
+    "vis-2-widgets-nils"
   ],
   "devDependencies": {
     "@alcalzone/release-script": "^5.2.1",
@@ -52,7 +52,7 @@
     "npm": "npm i && cd src-widgets && npm i"
   },
   "bugs": {
-    "url": "https://github.com/ioBroker/ioBroker.vis-2-widgets-material/issues"
+    "url": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils/issues"
   },
   "readmeFilename": "README.md"
 }

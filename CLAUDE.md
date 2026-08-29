@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ioBroker.vis-2-widgets-material is a Material Design widget library for ioBroker vis-2. It provides 19 interactive widgets for smart home control: thermostats, switches, blinds, RGB lights, cameras, locks, vacuum cleaners, etc.
+ioBroker.vis-2-widgets-nils is a Material Design widget library for ioBroker vis-2. It provides 19 interactive widgets for smart home control: thermostats, switches, blinds, RGB lights, cameras, locks, vacuum cleaners, etc.
 
 Architecture: Root package orchestrates the build via `tasks.js`; `src-widgets/` contains the actual widget source code built with Vite + Module Federation.
 
@@ -31,7 +31,7 @@ cd src-widgets && npm start   # Vite dev server on port 4173, proxies to ioBroke
 1. Deletes `src-widgets/build/` and `widgets/`
 2. `npm install` in `src-widgets/`
 3. `tsc && vite build` via `@iobroker/build-tools`
-4. Copies build output to `widgets/vis-2-widgets-material/`
+4. Copies build output to `widgets/vis-2-widgets-nils/`
    - Patches echarts/zrender SVG renderer bug: injects `isFunction` definition before its first use in `installSVGRenderer` chunks
 
 ## Widget Architecture
@@ -53,7 +53,7 @@ Each widget file exports a class with:
 
 ### Module Federation (vite.config.ts)
 
-Federation name: `vis2materialWidgets`, entry: `customWidgets.js`. Exposes 19 widget modules + translations. Shared dependencies managed by `@iobroker/types-vis-2/modulefederation.vis.config`.
+Federation name: `vis2nilsWidgets`, entry: `customWidgets.js`. Exposes 19 widget modules + translations. Shared dependencies managed by `@iobroker/types-vis-2/modulefederation.vis.config`.
 
 ### Adding a New Widget
 

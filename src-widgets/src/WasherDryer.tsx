@@ -213,7 +213,7 @@ function Dishes(props: { style?: React.CSSProperties }): React.JSX.Element {
 
 const styles: Record<string, CSSProperties> = {
     rotatedItem: {
-        animation: 'vis-2-widgets-material-rotation 10000ms infinite',
+        animation: 'vis-2-widgets-nils-rotation 10000ms infinite',
     },
     body: {
         width: '100%',
@@ -308,7 +308,7 @@ export default class WasherDryer extends Generic<WasherDryerRxData, WasherDryerS
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2WasherDryer',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'WasherDryer',
             visWidgetLabel: 'washer_dryer',
             visAttrs: [
@@ -378,7 +378,7 @@ export default class WasherDryer extends Generic<WasherDryerRxData, WasherDryerS
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_washer_dryer.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_washer_dryer.png',
         };
     }
 
@@ -826,7 +826,7 @@ export default class WasherDryer extends Generic<WasherDryerRxData, WasherDryerS
             >
                 <style>
                     {`
-@keyframes vis-2-widgets-material-rotation {
+@keyframes vis-2-widgets-nils-rotation {
     100% {
         transform: rotate(360deg);
     }

@@ -1,11 +1,11 @@
-![Logo](admin/vis-2-widgets-material.png)
+![Logo](admin/vis-2-widgets-nils.png)
 
 # Material widgets for ioBroker.vis 2.0
 
-![Number of Installations](http://iobroker.live/badges/vis-2-widgets-material-installed.svg) ![Number of Installations](http://iobroker.live/badges/vis-2-widgets-material-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.vis-2-widgets-material.svg)](https://www.npmjs.com/package/iobroker.vis-2-widgets-material)
-[![Downloads](https://img.shields.io/npm/dm/iobroker.vis-2-widgets-material.svg)](https://www.npmjs.com/package/iobroker.vis-2-widgets-material)
+![Number of Installations](http://iobroker.live/badges/vis-2-widgets-nils-installed.svg) ![Number of Installations](http://iobroker.live/badges/vis-2-widgets-nils-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.vis-2-widgets-nils.svg)](https://www.npmjs.com/package/iobroker.vis-2-widgets-nils)
+[![Downloads](https://img.shields.io/npm/dm/iobroker.vis-2-widgets-nils.svg)](https://www.npmjs.com/package/iobroker.vis-2-widgets-nils)
 
-[![NPM](https://nodei.co/npm/iobroker.vis-2-widgets-material.png?downloads=true)](https://nodei.co/npm/iobroker.vis-2-widgets-material/)
+[![NPM](https://nodei.co/npm/iobroker.vis-2-widgets-nils.png?downloads=true)](https://nodei.co/npm/iobroker.vis-2-widgets-nils/)
 
 ## Widgets
 

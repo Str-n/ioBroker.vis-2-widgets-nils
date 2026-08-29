@@ -425,10 +425,10 @@ const styles: Record<string, any> = {
         left: 0,
     },
     thermostatNewValueLight: {
-        animation: 'vis-2-widgets-material-newValueAnimationLight 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-newValueAnimationLight 2s ease-in-out',
     },
     thermostatNewValueDark: {
-        animation: 'vis-2-widgets-material-newValueAnimationDark 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-newValueAnimationDark 2s ease-in-out',
     },
     thermostatDesiredTemp: {
         fontWeight: 'bold',
@@ -684,7 +684,7 @@ class Switches extends BlindsBase<SwitchesRxData, SwitchesState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Switches',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Switches',
             visWidgetLabel: 'switches_or_buttons', // Label of widget
             visAttrs: [
@@ -1564,7 +1564,7 @@ class Switches extends BlindsBase<SwitchesRxData, SwitchesState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_switches.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_switches.png',
         };
     }
 
@@ -4063,7 +4063,7 @@ class Switches extends BlindsBase<SwitchesRxData, SwitchesState> {
                         {actualTemp !== null ? (
                             <style>
                                 {`
-@keyframes vis-2-widgets-material-newValueAnimationLight {
+@keyframes vis-2-widgets-nils-newValueAnimationLight {
     0% {
         color: #00bd00;
     },
@@ -4075,7 +4075,7 @@ class Switches extends BlindsBase<SwitchesRxData, SwitchesState> {
     }
 }
 
-@keyframes vis-2-widgets-material-newValueAnimationDark {
+@keyframes vis-2-widgets-nils-newValueAnimationDark {
     0% {
         color: #008000;
     }

@@ -105,7 +105,7 @@ class Security extends Generic<SecurityRxData, SecurityState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Security',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visName: 'Security',
             visWidgetLabel: 'security',
             visAttrs: [
@@ -237,7 +237,7 @@ class Security extends Generic<SecurityRxData, SecurityState> {
                 height: 240,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_security.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_security.png',
         };
     }
 

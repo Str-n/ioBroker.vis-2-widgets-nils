@@ -7,7 +7,7 @@ import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetState, VisRxWidgetPr
 const styles: Record<string, CSSProperties> = {
     uClock: {
         verticalAlign: 'middle',
-        animation: 'vis-2-widgets-material-uClockFadeIn 500ms ease-in-out',
+        animation: 'vis-2-widgets-nils-uClockFadeIn 500ms ease-in-out',
         animationFillMode: 'both',
         backgroundColor: '#fff',
         borderRadius: '50%',
@@ -61,7 +61,7 @@ export default class Clock extends Generic<ClockRxData, ClockState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2Clock',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visWidgetLabel: 'clock', // Label of widget
             visName: 'Clock',
             visAttrs: [
@@ -158,7 +158,7 @@ export default class Clock extends Generic<ClockRxData, ClockState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_clock.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_clock.png',
         };
     }
 
@@ -635,7 +635,7 @@ export default class Clock extends Generic<ClockRxData, ClockState> {
             >
                 <style>
                     {`
-@keyframes vis-2-widgets-material-uClockFadeIn {
+@keyframes vis-2-widgets-nils-uClockFadeIn {
     from {
         opacity: 0;
     }

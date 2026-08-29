@@ -40,7 +40,7 @@ class ViewInWidget extends Generic<ViewInWidgetRxData, ViewInWidgetState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplMaterial2ViewInWidget',
-            visSet: 'vis-2-widgets-material',
+            visSet: 'vis-2-widgets-nils',
             visWidgetLabel: 'view_in_widget', // Label of widget
             visName: 'View in Widget',
             visAttrs: [
@@ -76,7 +76,7 @@ class ViewInWidget extends Generic<ViewInWidgetRxData, ViewInWidgetState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-material/img/prev_view.png',
+            visPrev: 'widgets/vis-2-widgets-nils/img/prev_view.png',
         };
     }
 
