@@ -275,8 +275,8 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Vacuum',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Vacuum',
+            visSet: 'vis-2-widgets-nils-fork',
             visWidgetLabel: 'vacuum', // Label of widget
             visName: 'Vacuum',
             visAttrs: [
@@ -420,7 +420,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
                 height: 400,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_vacuum.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_vacuum.png',
         };
     }
 
@@ -558,7 +558,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
                 }}
             >
                 {options[value] !== undefined && options[value] !== null
-                    ? Generic.t(options[value]).replace('vis_2_widgets_material_', '')
+                    ? Generic.t(options[value]).replace('vis_2_widgets_nils_', '')
                     : value}
             </Button>,
             this.state.showSpeedMenu ? (
@@ -578,7 +578,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
                                 );
                             }}
                         >
-                            {Generic.t(options[state]).replace('vis_2_widgets_material_', '')}
+                            {Generic.t(options[state]).replace('vis_2_widgets_nils_', '')}
                         </MenuItem>
                     ))}
                 </Menu>
@@ -733,7 +733,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
                         slotProps={{ popper: { sx: styles.tooltip } }}
                     >
                         <div style={{ color: statusColor }}>
-                            {Generic.t(status).replace('vis_2_widgets_material_', '')}
+                            {Generic.t(status).replace('vis_2_widgets_nils_', '')}
                         </div>
                     </Tooltip>
                 )}

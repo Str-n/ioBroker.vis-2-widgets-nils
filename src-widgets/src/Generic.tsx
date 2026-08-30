@@ -10,7 +10,7 @@ export default class Generic<
     getPropertyValue = (stateName: string): any => this.state.values[`${(this.state.rxData as any)[stateName]}.val`];
 
     static getI18nPrefix(): string {
-        return 'vis_2_widgets_material_';
+        return 'vis_2_widgets_nils_';
     }
 
     static getHistoryInstance(

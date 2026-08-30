@@ -241,8 +241,8 @@ export default class Map extends Generic<MapRxData, MapState> {
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Map',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Map',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'Map',
             visWidgetLabel: 'map',
             visAttrs: [
@@ -374,7 +374,7 @@ export default class Map extends Generic<MapRxData, MapState> {
                 height: 240,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_map.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_map.png',
         };
     }
 

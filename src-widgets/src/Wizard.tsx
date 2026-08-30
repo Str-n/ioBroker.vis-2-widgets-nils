@@ -110,8 +110,8 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                 );
 
                 roomWidget ||= {
-                    tpl: 'tplMaterial2Switches',
-                    widgetSet: 'vis-2-widgets-nils',
+                    tpl: 'tplNils2Switches',
+                    widgetSet: 'vis-2-widgets-nils-fork',
                     data: {
                         name: Generic.getText(room.common.name),
                         widgetTitle: Generic.getText(room.common.name),
@@ -446,7 +446,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                                                                 label={device._id}
                                                                 helperText={
                                                                     <span style={{ fontStyle: 'italic' }}>
-                                                                        {`${Generic.t('Device type')}: ${Generic.t(device.deviceType).replace('vis_2_widgets_material_', '')}`}
+                                                                        {`${Generic.t('Device type')}: ${Generic.t(device.deviceType).replace('vis_2_widgets_nils_', '')}`}
                                                                     </span>
                                                                 }
                                                                 value={device.common.name}
@@ -547,11 +547,11 @@ class WizardButton extends React.Component<CustomPaletteProperties, WizardButton
 export default class Wizard extends window.visRxWidget<Record<string, any>, VisRxWidgetState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Wizard',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Wizard',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'Wizard',
             visWidgetLabel: 'wizard',
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_wizard.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_wizard.png',
             visOrder: 100,
             visAttrs: [],
             customPalette: props => (

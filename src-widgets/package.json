@@ -1,7 +1,7 @@
 {
-    "name": "iobroker.vis-2-widgets-nils",
+    "name": "iobroker.vis-2-widgets-nils-fork",
     "private": true,
-    "version": "1.6.8",
+    "version": "1.6.9",
     "type": "module",
     "dependencies": {
         "@adobe/react-spectrum": "^3.47.3",

@@ -1,9 +1,9 @@
 {
   "common": {
-    "name": "vis-2-widgets-nils",
-    "version": "1.6.8",
+    "name": "vis-2-widgets-nils-fork",
+    "version": "1.6.9",
     "news": {
-      "1.6.8": {
+      "1.6.9": {
         "en": "Customized by Nils",
         "de": "Angepasst von Nils",
         "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
@@ -138,13 +138,13 @@
       "bluefox <dogafox@gmail.com>"
     ],
     "keywords": [
-      "vis-2-widgets-nils"
+      "vis-2-widgets-nils-fork"
     ],
     "platform": "Javascript/Node.js",
-    "icon": "vis-2-widgets-nils.png",
-    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.vis-2-widgets-nils/master/admin/vis-2-widgets-nils.png",
+    "icon": "vis-2-widgets-nils-fork.png",
+    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.vis-2-widgets-nils-fork/master/admin/vis-2-widgets-nils-fork.png",
     "enabled": true,
-    "readme": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils/blob/master/README.md",
+    "readme": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils-fork/blob/master/README.md",
     "loglevel": "info",
     "mode": "none",
     "singleton": true,
@@ -161,10 +161,10 @@
       "type": "free"
     },
     "visWidgets": {
-      "vis2nilsWidgets": {
+      "vis2nilsForkWidgets": {
         "i18n": "component",
-        "name": "vis2nilsWidgets",
-        "url": "vis-2-widgets-nils/customWidgets.js",
+        "name": "vis2nilsForkWidgets",
+        "url": "vis-2-widgets-nils-fork/customWidgets.js",
         "bundlerType": "module",
         "components": [
           "Thermostat",

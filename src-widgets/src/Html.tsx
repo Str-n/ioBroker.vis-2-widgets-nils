@@ -53,8 +53,8 @@ export default class Html extends Generic<HtmlRxData, HtmlState> {
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Static',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Static',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'Html template',
             visWidgetLabel: 'html', // Label of widget
             visAttrs: [
@@ -206,7 +206,7 @@ export default class Html extends Generic<HtmlRxData, HtmlState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_html.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_html.png',
         };
     }
 

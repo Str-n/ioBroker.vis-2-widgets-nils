@@ -154,11 +154,11 @@ function simpleState(
     }
 
     return {
-        tpl: 'tplMaterial2SimpleState',
-        widgetSet: 'vis-2-widgets-nils',
+        tpl: 'tplNils2SimpleState',
+        widgetSet: 'vis-2-widgets-nils-fork',
         data: {
             name: Generic.getText(device.common.name),
-            widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_material_', ''),
+            widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
             wizardId: device._id,
             values_count: 0,
             g_common: true,
@@ -192,12 +192,12 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
         style.height = 160;
 
         const widget: SingleWidget = {
-            tpl: 'tplMaterial2Thermostat',
+            tpl: 'tplNils2Thermostat',
             style,
-            widgetSet: 'vis-2-widgets-nils',
+            widgetSet: 'vis-2-widgets-nils-fork',
             data: {
                 name: Generic.getText(device.common.name),
-                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_material_', ''),
+                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
                 wizardId: device._id,
                 step: (_set.common as ioBroker.StateCommon).step === 0.5 ? '0.5' : '1',
                 g_common: true,
@@ -239,12 +239,12 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
         const set = device.states.find(state => state.name === 'SET');
         style.height = 120;
         return {
-            tpl: 'tplMaterial2Blinds',
-            widgetSet: 'vis-2-widgets-nils',
+            tpl: 'tplNils2Blinds',
+            widgetSet: 'vis-2-widgets-nils-fork',
             style,
             data: {
                 name: Generic.getText(device.common.name),
-                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_material_', ''),
+                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
                 wizardId: device._id,
                 sashCount: 1,
                 g_common: true,
@@ -259,12 +259,12 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
         const actual = device.states.find(state => state.name === 'ACTUAL');
         const humidity = device.states.find(state => state.name === 'SECOND');
         return {
-            tpl: 'tplMaterial2Actual',
+            tpl: 'tplNils2Actual',
             style,
-            widgetSet: 'vis-2-widgets-nils',
+            widgetSet: 'vis-2-widgets-nils-fork',
             data: {
                 name: Generic.getText(device.common.name),
-                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_material_', ''),
+                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
                 wizardId: device._id,
                 timeInterval: 12,
                 updateInterval: 60,
@@ -317,12 +317,12 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
         const open = device.states.find(state => state.name === 'OPEN');
         const working = device.states.find(state => state.name === 'WORKING');
         return {
-            tpl: 'tplMaterial2Lock',
-            widgetSet: 'vis-2-widgets-nils',
+            tpl: 'tplNils2Lock',
+            widgetSet: 'vis-2-widgets-nils-fork',
             style,
             data: {
                 name: Generic.getText(device.common.name),
-                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_material_', ''),
+                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
                 wizardId: device._id,
                 'lock-oid': _set?._id,
                 'doorOpen-oid': open?._id,
@@ -342,9 +342,9 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
         const currentMediaTypes = [...MEDIA_TYPES];
 
         const result: SingleWidget = {
-            tpl: 'tplMaterial2Player',
+            tpl: 'tplNils2Player',
             style,
-            widgetSet: 'vis-2-widgets-nils',
+            widgetSet: 'vis-2-widgets-nils-fork',
             data: {
                 name: Generic.getText(device.common.name),
                 wizardId: device._id,
@@ -380,10 +380,10 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
         return {
             tpl: 'tplOpenWeatherMapWeather',
             style,
-            widgetSet: 'vis-2-widgets-nils',
+            widgetSet: 'vis-2-widgets-nils-fork',
             data: {
                 name: Generic.getText(device.common.name),
-                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_material_', ''),
+                widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
                 wizardId: device._id,
                 type: 'all',
                 g_common: true,

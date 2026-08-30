@@ -43,7 +43,7 @@ const config = {
     plugins: [
         federation({
             manifest: true,
-            name: 'vis2nilsWidgets',
+            name: 'vis2nilsForkWidgets',
             filename: 'customWidgets.js',
             exposes: {
                 './Thermostat': './src/Thermostat',

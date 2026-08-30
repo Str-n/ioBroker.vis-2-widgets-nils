@@ -20,8 +20,8 @@ interface ThemeSwitcherState extends VisRxWidgetState {
 export default class ThemeSwitcher extends Generic<ThemeSwitcherRxData, ThemeSwitcherState> {
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2ThemeSwitcher',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2ThemeSwitcher',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'Theme switcher',
             visWidgetLabel: 'theme_switcher', // Label of widget
             visAttrs: [
@@ -71,7 +71,7 @@ export default class ThemeSwitcher extends Generic<ThemeSwitcherRxData, ThemeSwi
                 height: 48,
                 position: 'absolute',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_theme_switcher.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_theme_switcher.png',
         };
     }
 

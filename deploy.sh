@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deployment script for ioBroker.vis-2-widgets-nils
+# Deployment script for ioBroker.vis-2-widgets-nils-fork
 # Deploys the widget to a remote Raspberry Pi running ioBroker
 
 set -e  # Exit on error
@@ -8,7 +8,7 @@ set -e  # Exit on error
 REMOTE_HOST="192.168.178.40"
 REMOTE_USER="pi"
 REMOTE_IOBROKER_PATH="/opt/iobroker"
-WIDGET_NAME="vis-2-widgets-nils"
+WIDGET_NAME="vis-2-widgets-nils-fork"
 
 # Colors for output
 RED='\033[0;31m'
@@ -46,7 +46,7 @@ cat > "$TEMP_DIR/package.json" << EOF
   "name": "iobroker.${WIDGET_NAME}",
   "version": "$(cat package.json | grep '"version"' | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')",
   "description": "ioBroker vis2 widgets for Nils",
-  "main": "widgets/vis-2-widgets-nils/customWidgets.js",
+  "main": "widgets/vis-2-widgets-nils-fork/customWidgets.js",
   "files": [
     "admin/",
     "img/",

@@ -12,7 +12,7 @@ export default class ThermostatCompact extends Thermostat {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             ...Thermostat.getWidgetInfo(),
-            id: 'tplMaterial2ThermostatCompact',
+            id: 'tplNils2ThermostatCompact',
             visName: 'Thermostat Compact',
             visWidgetLabel: 'thermostat compact',
             visDefaultStyle: {

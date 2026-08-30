@@ -299,8 +299,8 @@ export default class RGBLight extends Generic<RGBLightRxData, RGBLightState> {
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2RGBLight',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2RGBLight',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'RGBLight',
             visWidgetLabel: 'rgb_light',
             visAttrs: [
@@ -521,7 +521,7 @@ export default class RGBLight extends Generic<RGBLightRxData, RGBLightState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_rgb_light.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_rgb_light.png',
         };
     }
 

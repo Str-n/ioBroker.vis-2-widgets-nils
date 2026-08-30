@@ -1,7 +1,7 @@
 {
-  "name": "iobroker.vis-2-widgets-nils",
-  "version": "1.6.8",
-  "description": "ioBroker vis2 widgets for Nils",
+  "name": "iobroker.vis-2-widgets-nils-fork",
+  "version": "1.6.9",
+  "description": "ioBroker vis2 widgets for Nils fork",
   "author": "bluefox <dogafox@gmail.com>",
   "contributors": [
     "bluefox <dogafox@gmail.com>"

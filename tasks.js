@@ -1,11 +1,11 @@
 const { deleteFoldersRecursive, buildReact, npmInstall, copyFiles } = require('@iobroker/build-tools');
 
-// http://127.0.0.1:18082/vis-2-beta/widgets/vis-2-widgets-nils/static/js/node_modules_iobroker_vis-2-widgets-react-dev_index_jsx-_adb40.af309310.chunk.js
+// http://127.0.0.1:18082/vis-2-beta/widgets/vis-2-widgets-nils-fork/static/js/node_modules_iobroker_vis-2-widgets-react-dev_index_jsx-_adb40.af309310.chunk.js
 
 function copyAllFiles() {
     copyFiles(
         ['src-widgets/build/**/*', '!src-widgets/build/index.html', '!src-widgets/build/mf-manifest.json'],
-        'widgets/vis-2-widgets-nils/',
+        'widgets/vis-2-widgets-nils-fork/',
         {
             process: (fileData, fileName) => {
                 if (fileName.includes('installSVGRenderer')) {

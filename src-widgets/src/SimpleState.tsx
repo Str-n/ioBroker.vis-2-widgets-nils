@@ -107,10 +107,10 @@ const styles: Record<string, any> = {
         maxHeight: 40,
     },
     newValueLight: {
-        animation: 'vis-2-widgets-nils-newValueAnimationLight 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-fork-newValueAnimationLight 2s ease-in-out',
     },
     newValueDark: {
-        animation: 'vis-2-widgets-nils-newValueAnimationDark 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-fork-newValueAnimationDark 2s ease-in-out',
     },
 };
 
@@ -166,8 +166,8 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2SimpleState',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2SimpleState',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'SimpleState',
             visWidgetLabel: 'simple_state',
             visAttrs: [
@@ -359,7 +359,7 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_simple_state.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_simple_state.png',
         };
     }
 
@@ -640,7 +640,7 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
                                         startIcon={isLamp ? <LightbulbIconOff /> : null}
                                     >
                                         {isLamp
-                                            ? Generic.t('OFF').replace('vis_2_widgets_material_', '')
+                                            ? Generic.t('OFF').replace('vis_2_widgets_nils_', '')
                                             : this.state.object.common.min +
                                               (this.state.rxData.unit || this.state.object.common.unit || '')}
                                     </Button>
@@ -657,7 +657,7 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
                                         startIcon={isLamp ? <LightbulbIconOn color="primary" /> : null}
                                     >
                                         {isLamp
-                                            ? Generic.t('ON').replace('vis_2_widgets_material_', '')
+                                            ? Generic.t('ON').replace('vis_2_widgets_nils_', '')
                                             : this.state.object.common.max +
                                               (this.state.rxData.unit || this.state.object.common.unit || '')}
                                     </Button>
@@ -829,7 +829,7 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
             <>
                 <style>
                     {`
-@keyframes vis-2-widgets-nils-newValueAnimationLight {
+@keyframes vis-2-widgets-nils-fork-newValueAnimationLight {
     0% {
         color: #00bd00;
     }
@@ -840,7 +840,7 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
         color: #000;
     }
 }
-@keyframes vis-2-widgets-nils-newValueAnimationDark {
+@keyframes vis-2-widgets-nils-fork-newValueAnimationDark {
     0% {
         color: #008000;
     }

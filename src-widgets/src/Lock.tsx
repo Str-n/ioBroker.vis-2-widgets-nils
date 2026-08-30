@@ -84,8 +84,8 @@ export default class Lock extends Generic<LockRxData, LockState> {
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Lock',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Lock',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'Lock',
             visWidgetLabel: 'lock',
             visAttrs: [
@@ -230,7 +230,7 @@ export default class Lock extends Generic<LockRxData, LockState> {
                 height: 240,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_lock.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_lock.png',
         };
     }
 

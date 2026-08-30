@@ -79,10 +79,10 @@ const styles: Record<string, any> = {
         left: 0,
     },
     thermostatNewValueLight: {
-        animation: 'vis-2-widgets-nils-newValueAnimationLight 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-fork-newValueAnimationLight 2s ease-in-out',
     },
     thermostatNewValueDark: {
-        animation: 'vis-2-widgets-nils-newValueAnimationDark 2s ease-in-out',
+        animation: 'vis-2-widgets-nils-fork-newValueAnimationDark 2s ease-in-out',
     },
     thermostatDesiredTemp: {
         fontWeight: 'bold',
@@ -190,8 +190,8 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Thermostat',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Thermostat',
+            visSet: 'vis-2-widgets-nils-fork',
             visWidgetLabel: 'thermostat', // Label of widget
             visName: 'Thermostat',
             visAttrs: [
@@ -433,7 +433,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_thermostat.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_thermostat.png',
         };
     }
 
@@ -987,7 +987,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             modesButton.push(
                 <Tooltip
                     key="power"
-                    title={Generic.t('power').replace('vis_2_widgets_material_', '')}
+                    title={Generic.t('power').replace('vis_2_widgets_nils_', '')}
                     slotProps={{ popper: { sx: styles.tooltip } }}
                 >
                     <IconButton
@@ -1014,7 +1014,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             >
                 <style>
                     {`
-@keyframes vis-2-widgets-nils-newValueAnimationLight {
+@keyframes vis-2-widgets-nils-fork-newValueAnimationLight {
     0% {
         color: #00bd00;
     },
@@ -1026,7 +1026,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
     }
 }
 
-@keyframes vis-2-widgets-nils-newValueAnimationDark {
+@keyframes vis-2-widgets-nils-fork-newValueAnimationDark {
     0% {
         color: #008000;
     }

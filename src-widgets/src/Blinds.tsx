@@ -53,8 +53,8 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
-            id: 'tplMaterial2Blinds',
-            visSet: 'vis-2-widgets-nils',
+            id: 'tplNils2Blinds',
+            visSet: 'vis-2-widgets-nils-fork',
             visName: 'Blinds',
             visWidgetLabel: 'blinds', // Label of widget
             visAttrs: [
@@ -286,7 +286,7 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils/img/prev_blinds.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_blinds.png',
         } as const;
     }
 
