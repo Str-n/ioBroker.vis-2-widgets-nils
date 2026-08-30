@@ -355,6 +355,7 @@
   "switches_or_buttons": "开关或按钮",
   "temperature": "温度",
   "temperature_oid": "设定温度ID",
+  "humidity_oid": "湿度ID",
   "theme": "主题",
   "theme_attribution": "主题归属",
   "theme_name": "主题名称",

@@ -102,7 +102,8 @@ export default class ThemeSwitcher extends Generic<ThemeSwitcherRxData, ThemeSwi
     }
 
     setViewTheme(themeName: ThemeName): void {
-        this.props.context?.toggleTheme?.(themeName || this.state.rxData.themeName);
+        const nextTheme = (themeName || this.state.rxData.themeName || 'light') as 'dark' | 'light';
+        this.props.context?.toggleTheme?.(nextTheme);
     }
 
     onThemeChanged = (event: { matches: boolean }): void =>

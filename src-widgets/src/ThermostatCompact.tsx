@@ -7,6 +7,7 @@ import type { RxRenderWidgetProps, RxWidgetInfo } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
 import Thermostat from './Thermostat';
+import './ThermostatCompact.css';
 
 export default class ThermostatCompact extends Thermostat {
     static getWidgetInfo(): RxWidgetInfo {
@@ -29,10 +30,6 @@ export default class ThermostatCompact extends Thermostat {
     }
 
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element[] | React.JSX.Element | null {
-        if (this.props.editMode) {
-            return super.renderWidgetBody(props);
-        }
-
         const currentValue =
             this.state.values[`${this.state.rxData['oid-temp-actual']}.val`] ??
             this.state.values[`${this.state.rxData['oid-temp-set']}.val`] ??
@@ -43,6 +40,11 @@ export default class ThermostatCompact extends Thermostat {
             currentValue === null || currentValue === undefined
                 ? Generic.t('temperature')
                 : `${this.formatValue(currentValue)}${unit}`;
+        const humidity = this.state.values[`${this.state.rxData['oid-humidity']}.val`];
+        const humidityLabel =
+            humidity === null || humidity === undefined
+                ? Generic.t('humidity')
+                : `${this.formatValue(humidity)}${this.state.humidityObject?.common?.unit || '%'}`;
 
         const fullContent = super.renderWidgetBody({
             ...props,
@@ -60,15 +62,16 @@ export default class ThermostatCompact extends Thermostat {
                     size="small"
                     startIcon={<ThermostatIcon style={{ width: 18, height: 18 }} />}
                     onClick={() => this.setState({ dialog: true })}
-                    style={{
-                        minWidth: 110,
-                        height: 36,
-                        borderRadius: 999,
-                        padding: '0 12px',
-                        whiteSpace: 'nowrap',
-                    }}
+                    className={`thermostat-compact-button${
+                        this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected'
+                            ? ' thermostat-compact-button--with-humidity'
+                            : ''
+                    }`}
                 >
                     {label}
+                    {this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
+                        <span style={{ fontSize: 10, fontWeight: 'normal' }}>{humidityLabel}</span>
+                    ) : null}
                 </Button>
 
                 <Dialog

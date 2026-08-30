@@ -355,6 +355,7 @@
   "switches_or_buttons": "Перемикачі або кнопки",
   "temperature": "температура",
   "temperature_oid": "Ідентифікатор встановленої температури",
+  "humidity_oid": "Ідентифікатор вологості",
   "theme": "Тема",
   "theme_attribution": "Атрибуція теми",
   "theme_name": "Назва теми",

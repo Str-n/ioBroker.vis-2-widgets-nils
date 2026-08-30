@@ -124,6 +124,7 @@ interface ThermostatRxData {
     widgetTitle: string;
     'oid-temp-set': string;
     'oid-temp-actual': string;
+    'oid-humidity': string;
     unit: string;
     'oid-power': string;
     'oid-mode': string;
@@ -155,6 +156,7 @@ interface ThermostatState extends VisRxWidgetState {
     modeObject: { common: ioBroker.StateCommon; _id: string } | undefined;
     tempObject: { common: ioBroker.StateCommon; _id: string } | null | undefined;
     tempStateObject: { common: ioBroker.StateCommon; _id: string } | null | undefined;
+    humidityObject: { common: ioBroker.StateCommon; _id: string } | null | undefined;
     isChart?: boolean;
     modes:
         | {
@@ -276,6 +278,11 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                             name: 'oid-temp-actual',
                             type: 'id',
                             label: 'actual_oid',
+                        },
+                        {
+                            name: 'oid-humidity',
+                            type: 'id',
+                            label: 'humidity_oid',
                         },
                         {
                             name: 'unit',
@@ -455,6 +462,9 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
         if (this.state.rxData['oid-temp-actual'] && this.state.rxData['oid-temp-actual'] !== 'nothing_selected') {
             ids.push(this.state.rxData['oid-temp-actual']);
         }
+        if (this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected') {
+            ids.push(this.state.rxData['oid-humidity']);
+        }
         const _objects: Record<string, ioBroker.StateObject> = ids.length
             ? ((await this.props.context.socket.getObjectsById(ids)) as Record<string, ioBroker.StateObject>)
             : {};
@@ -567,6 +577,14 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             newState.tempStateObject = { common: tempStateObj.common, _id: tempStateObj._id };
         } else {
             newState.tempStateObject = null;
+        }
+        if (this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected') {
+            const humidityObject = _objects[this.state.rxData['oid-humidity']];
+            newState.humidityObject = humidityObject
+                ? { common: humidityObject.common, _id: humidityObject._id }
+                : null;
+        } else {
+            newState.humidityObject = null;
         }
         const defaultHistory = this.props.context.systemConfig?.common?.defaultHistory;
         const mainHistoryInstance = Generic.getHistoryInstance(newState.tempObject, defaultHistory);
@@ -808,6 +826,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
         if (actualTemp === undefined) {
             actualTemp = null;
         }
+        const humidity = this.state.values[`${this.state.rxData['oid-humidity']}.val`];
 
         let handleSize = Math.round(this.state.size / 25);
         if (handleSize < 8) {
@@ -1218,6 +1237,15 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                             ) : null}
                         </div>
                     </div>
+                ) : null}
+                {this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
+                    <Tooltip title={Generic.t('humidity')} slotProps={{ popper: { sx: styles.tooltip } }}>
+                        <div style={{ textAlign: 'center', opacity: 0.7, ...this.customStyle }}>
+                            {humidity === null || humidity === undefined
+                                ? Generic.t('humidity')
+                                : `${this.formatValue(humidity)}${this.state.humidityObject?.common?.unit || '%'}`}
+                        </div>
+                    </Tooltip>
                 ) : null}
                 <div style={{ ...styles.thermostatButtonsDiv, bottom: 8 }}>{modesButton}</div>
                 {this.renderChartDialog()}

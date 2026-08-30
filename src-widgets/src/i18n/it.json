@@ -355,6 +355,7 @@
   "switches_or_buttons": "Interruttori o pulsanti",
   "temperature": "Temperatura",
   "temperature_oid": "Impostare l'ID della temperatura",
+  "humidity_oid": "ID dell'umidità",
   "theme": "Tema",
   "theme_attribution": "Attribuzione del tema",
   "theme_name": "Nome del tema",

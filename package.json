@@ -48,6 +48,7 @@
     "release-minor": "release-script minor --yes",
     "release-major": "release-script major --yes",
     "test": "npm run test:integration && npm run test:package",
+    "setup:local-test": "bash ./scripts/setup-local-test.sh",
     "update-packages": "npx -y npm-check-updates --upgrade && cd src-widgets && npx -y npm-check-updates --upgrade",
     "npm": "npm i && cd src-widgets && npm i"
   },

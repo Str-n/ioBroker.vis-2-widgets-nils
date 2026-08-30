@@ -355,6 +355,7 @@
   "switches_or_buttons": "Przełączniki lub przyciski",
   "temperature": "Temperatura",
   "temperature_oid": "Ustaw ID temperatury",
+  "humidity_oid": "ID wilgotności",
   "theme": "Motyw",
   "theme_attribution": "Atrybucja motywu",
   "theme_name": "Nazwa motywu",

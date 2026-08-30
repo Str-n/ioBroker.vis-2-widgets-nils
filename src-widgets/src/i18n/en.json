@@ -355,6 +355,7 @@
   "switches_or_buttons": "Switches or buttons",
   "temperature": "Temperature",
   "temperature_oid": "Set temperature ID",
+  "humidity_oid": "Humidity ID",
   "theme": "Theme",
   "theme_attribution": "Theme attribution",
   "theme_name": "Theme name",

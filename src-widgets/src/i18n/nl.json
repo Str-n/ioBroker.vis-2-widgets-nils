@@ -355,6 +355,7 @@
   "switches_or_buttons": "Schakelaars of knoppen",
   "temperature": "Temperatuur",
   "temperature_oid": "Temperatuur-ID instellen",
+  "humidity_oid": "Vochtigheids-ID",
   "theme": "Thema",
   "theme_attribution": "Thema toeschrijving",
   "theme_name": "Thema naam",

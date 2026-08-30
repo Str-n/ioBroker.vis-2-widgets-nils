@@ -355,6 +355,7 @@
   "switches_or_buttons": "Schalter oder Knöpfe",
   "temperature": "Temperatur",
   "temperature_oid": "Temperatur-ID einstellen",
+  "humidity_oid": "Feuchtigkeits-ID",
   "theme": "Thema",
   "theme_attribution": "Themenzuordnung",
   "theme_name": "Themenname",

@@ -3,20 +3,114 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Material</title>
-    <script type="text/javascript" src="_socket/info.js"></script>
-    <script>
-      var script = document.createElement('script');
-      window.registerSocketOnLoad = function (cb) {
-        window.socketLoadedHandler = cb;
-      };
-      script.onload = function () { typeof window.socketLoadedHandler === 'function' && window.socketLoadedHandler(); };
-      script.src = window.location.protocol + '//' + window.location.hostname + ':8082/lib/js/socket.io.js';
-      document.head.appendChild(script);
-    </script>
+    <title>Widget Local Test</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --muted: #94a3b8;
+        --text: #e5e7eb;
+        --accent: #3b82f6;
+        --border: rgba(148,163,184,0.22);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, var(--bg), #020817);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
+      .panel {
+        width: min(900px, calc(100vw - 32px));
+        background: rgba(17, 24, 39, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        padding: 32px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        background: rgba(59,130,246,0.12);
+        border: 1px solid rgba(59,130,246,0.35);
+        color: #bfdbfe;
+        border-radius: 999px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      h1 { margin: 0 0 8px; font-size: clamp(2rem, 3vw, 2.8rem); }
+      p { color: var(--muted); line-height: 1.6; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+      .card {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+      }
+      .card strong { display: block; margin-bottom: 8px; }
+      code {
+        background: rgba(148,163,184,0.08);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="src/index.tsx"></script>
+    <div class="panel" id="fallback-panel" style="display: none;">
+      <div class="badge">local test mode</div>
+      <h1>Widget test environment ready</h1>
+      <p>
+        ioBroker is not running on <code>localhost:8082</code>, so the socket backend is unavailable.
+        This is expected for a standalone local widget smoke test.
+      </p>
+      <div class="grid">
+        <div class="card">
+          <strong>Open dashboard</strong>
+          <div>Visit <code>http://localhost:4174/test-dashboard.html</code></div>
+        </div>
+        <div class="card">
+          <strong>Start backend</strong>
+          <div>Start ioBroker or a local vis test instance on port <code>8082</code>.</div>
+        </div>
+        <div class="card">
+          <strong>Build check</strong>
+          <div>Run <code>npm run build</code> in the widget project to confirm production output.</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      const panel = document.getElementById('fallback-panel');
+      const socketInfoUrl = window.location.protocol + '//' + window.location.hostname + ':8082/_socket/info.js';
+
+      function showFallback() {
+        panel.style.display = 'block';
+      }
+
+      function loadSocketInfo() {
+        const script = document.createElement('script');
+        script.src = socketInfoUrl + '?_=' + Date.now();
+        script.onload = function () {
+          window.registerSocketOnLoad && window.registerSocketOnLoad(() => {});
+        };
+        script.onerror = function () {
+          showFallback();
+        };
+        document.head.appendChild(script);
+      }
+
+      loadSocketInfo();
+    </script>
   </body>
 </html>

@@ -355,6 +355,7 @@
   "switches_or_buttons": "Переключатели или кнопки",
   "temperature": "Температура",
   "temperature_oid": "Установить идентификатор температуры",
+  "humidity_oid": "Идентификатор влажности",
   "theme": "Тема",
   "theme_attribution": "Атрибуция темы",
   "theme_name": "Название темы",
