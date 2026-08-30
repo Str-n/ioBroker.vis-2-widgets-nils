@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "vis-2-widgets-nils",
-    "version": "1.6.7",
+    "version": "1.6.8",
     "news": {
+      "1.6.8": {
+        "en": "Customized by Nils",
+        "de": "Angepasst von Nils",
+        "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
+        "pt": "Erro corrigido com botão e elemento de alarme",
+        "nl": "Gecorrigeerde fout met knop en alarm widget",
+        "fr": "Erreur corrigée avec bouton et widget d'alarme",
+        "it": "Errore corretto con pulsante e widget di allarme",
+        "es": "Error corregido con botón y widget de alarma",
+        "pl": "Poprawiony błąd z widżetem przycisku i alarmu",
+        "uk": "Виправлена помилка з кнопками та тривожним віджетом",
+        "zh-cn": "用按钮和提醒部件校正错误"
+      },
       "1.6.7": {
         "en": "Corrected error with button and alarm widget",
         "de": "Fehler behoben mit Knopf und Alarm Widget",
@@ -97,16 +110,16 @@
     },
     "titleLang": {
       "en": "Vis 2 Widgets Nils",
-      "de": "Vis 2 Widgets Material",
-      "ru": "Vis 2 Widgets Material",
-      "it": "Vis 2 Widgets Material",
-      "es": "Vis 2 Widgets Material",
-      "fr": "Vis 2 Widgets Material",
-      "nl": "Vis 2 Widgets Material",
-      "pt": "Vis 2 Widgets Material",
-      "pl": "Vis 2 Widgets Material",
-      "uk": "Vis 2 Widgets Material",
-      "zh-cn": "Vis 2 Widgets Material"
+      "de": "Vis 2 Widgets Nils",
+      "ru": "Vis 2 Widgets Nils",
+      "it": "Vis 2 Widgets Nils",
+      "es": "Vis 2 Widgets Nils",
+      "fr": "Vis 2 Widgets Nils",
+      "nl": "Vis 2 Widgets Nils",
+      "pt": "Vis 2 Widgets Nils",
+      "pl": "Vis 2 Widgets Nils",
+      "uk": "Vis 2 Widgets Nils",
+      "zh-cn": "Vis 2 Widgets Nils"
     },
     "desc": {
       "en": "Different nice-looking widgets in material style for vis-2",
