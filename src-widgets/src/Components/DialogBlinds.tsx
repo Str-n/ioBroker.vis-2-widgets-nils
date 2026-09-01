@@ -29,13 +29,35 @@ import {
 
 import { I18n } from '@iobroker/adapter-react-v5';
 
+const WIDGET_IMAGE_BASE = 'widgets/vis-2-widgets-nils-fork/img';
+
 const styles: Record<string, CSSProperties> = {
+    dialog: {
+        maxWidth: '1000px',
+        width: 'calc(100vw - 32px)',
+    },
+    dialogContent: {
+        padding: 0,
+        background: '#b8d2dd',
+        overflow: 'hidden',
+    },
     dialogTitle: {
         textAlign: 'center',
     },
     wrapperSliderBlock: {
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
+        position: 'relative',
+        zIndex: 2,
+    },
+    sceneStack: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.75em',
+        width: '100%',
     },
     buttonStopStyle: {
         float: 'left',
@@ -52,12 +74,49 @@ const styles: Record<string, CSSProperties> = {
         // border: '1px solid #b5b5b5',
         borderRadius: '2em',
         overflow: 'hidden',
-        background: 'white',
+        background: 'transparent',
         cursor: 'pointer',
-        boxShadow:
-            '0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12)',
+        boxShadow: 'none',
         height: '20em',
         boxSizing: 'border-box',
+    },
+    scene: {
+        position: 'relative',
+        width: '100%',
+        maxWidth: '620px',
+        aspectRatio: '1024 / 1536',
+        backgroundColor: '#dfeaf2',
+        backgroundImage: `linear-gradient(180deg, rgba(13,20,31,0.12), rgba(13,20,31,0.12)), url("${WIDGET_IMAGE_BASE}/person-at-window.png")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center center',
+        backgroundSize: '100% 100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto',
+    },
+    sceneWindow: {
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `url("${WIDGET_IMAGE_BASE}/personatemptywindow.png")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center center',
+        backgroundSize: '100% 100%',
+        pointerEvents: 'none',
+        zIndex: 2,
+    },
+    blindWindow: {
+        position: 'absolute',
+        left: '10%',
+        right: '10%',
+        top: '0%',
+        bottom: '23%',
+        zIndex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'transparent',
+        overflow: 'hidden',
     },
 };
 
@@ -404,46 +463,55 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
             handlerStyle.top = '0.4em';
         }
 
+        const blindStyle: CSSProperties = {
+            ...styles.sliderStyle,
+            width: '100%',
+            height: '85%',
+            minHeight: '250px',
+            margin: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            borderRadius: 0,
+            overflow: 'hidden',
+        };
+
         return (
-            <div
-                style={styles.wrapperSlider}
-                className="vis-2-slider-wrapper"
-            >
-                <div
-                    style={styles.wrapperSliderBlock}
-                    className="vis-2-slider-wrapper-block"
+            <div className="vis-2-slider-wrapper" style={styles.sceneStack}>
+                <Button
+                    variant="outlined"
+                    onClick={e => this.onButtonDown(e, 'top')}
                 >
-                    <Button
-                        variant="outlined"
-                        onClick={e => this.onButtonDown(e, 'top')}
-                    >
-                        {this.getTopButtonName()}
-                    </Button>
-                    <div
-                        className="vis-2-slider-blind"
-                        ref={this.refSlider}
-                        onMouseDown={this.onMouseDown as unknown as MouseEventHandler}
-                        onTouchStart={this.onMouseDown as unknown as TouchEventHandler}
-                        onClick={e => e.stopPropagation()}
-                        style={styles.sliderStyle}
-                    >
+                    {this.getTopButtonName()}
+                </Button>
+                <div style={styles.scene}>
+                    <div style={styles.sceneWindow} />
+                    <div style={styles.blindWindow}>
                         <div
-                            style={sliderStyle}
-                            className="vis-2-slider-inside"
+                            className="vis-2-slider-blind"
+                            ref={this.refSlider}
+                            onMouseDown={this.onMouseDown as unknown as MouseEventHandler}
+                            onTouchStart={this.onMouseDown as unknown as TouchEventHandler}
+                            onClick={e => e.stopPropagation()}
+                            style={blindStyle}
                         >
                             <div
-                                style={handlerStyle}
-                                className="vis-2-slider-handler"
-                            />
+                                style={sliderStyle}
+                                className="vis-2-slider-inside"
+                            >
+                                <div
+                                    style={handlerStyle}
+                                    className="vis-2-slider-handler"
+                                />
+                            </div>
                         </div>
                     </div>
-                    <Button
-                        variant="outlined"
-                        onClick={e => this.onButtonDown(e, 'bottom')}
-                    >
-                        {this.getBottomButtonName()}
-                    </Button>
                 </div>
+                <Button
+                    variant="outlined"
+                    onClick={e => this.onButtonDown(e, 'bottom')}
+                >
+                    {this.getBottomButtonName()}
+                </Button>
                 {this.getToggleButton()}
             </div>
         );
@@ -454,6 +522,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
             <Dialog
                 open={!0}
                 onClose={() => this.props.onClose()}
+                PaperProps={{ style: styles.dialog }}
             >
                 <DialogTitle style={styles.dialogTitle}>
                     {this.getStopButton()}
@@ -465,7 +534,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
-                <DialogContent>{this.generateContent()}</DialogContent>
+                <DialogContent style={styles.dialogContent}>{this.generateContent()}</DialogContent>
             </Dialog>
         );
     }

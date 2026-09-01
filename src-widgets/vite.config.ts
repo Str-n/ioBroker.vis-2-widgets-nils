@@ -50,6 +50,7 @@ const config = {
                 './ThermostatCompact': './src/ThermostatCompact',
                 './Actual': './src/Actual',
                 './Switches': './src/Switches',
+                './SwitchButton': './src/SwitchButton',
                 './SimpleState': './src/SimpleState',
                 './Blinds': './src/Blinds',
                 './Clock': './src/Clock',

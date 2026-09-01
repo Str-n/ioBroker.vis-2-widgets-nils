@@ -44,7 +44,7 @@ export default class ThermostatCompact extends Thermostat {
         const humidityLabel =
             humidity === null || humidity === undefined
                 ? Generic.t('humidity')
-                : `${this.formatValue(humidity)}${this.state.humidityObject?.common?.unit || '%'}`;
+                : `${this.formatValue(humidity)}%`;
 
         const fullContent = super.renderWidgetBody({
             ...props,
@@ -60,7 +60,6 @@ export default class ThermostatCompact extends Thermostat {
                     variant="contained"
                     color="primary"
                     size="small"
-                    startIcon={<ThermostatIcon style={{ width: 18, height: 18 }} />}
                     onClick={() => this.setState({ dialog: true })}
                     className={`thermostat-compact-button${
                         this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected'
@@ -68,10 +67,12 @@ export default class ThermostatCompact extends Thermostat {
                             : ''
                     }`}
                 >
-                    {label}
-                    {this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
-                        <span style={{ fontSize: 10, fontWeight: 'normal' }}>{humidityLabel}</span>
-                    ) : null}
+                    <span className="thermostat-compact-label">
+                        <span>{label}</span>
+                        {this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
+                            <span style={{ fontSize: 10, fontWeight: 'normal' }}>{humidityLabel}</span>
+                        ) : null}
+                    </span>
                 </Button>
 
                 <Dialog
