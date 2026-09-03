@@ -17,7 +17,7 @@ import {
 
 import { Card, CardContent, IconButton, Slider } from '@mui/material';
 
-import type { IobTheme, LegacyConnection } from '@iobroker/adapter-react-v5';
+import type { Connection, IobTheme } from '@iobroker/gui-components';
 import type {
     RxRenderWidgetProps,
     RxWidgetInfo,
@@ -91,7 +91,7 @@ const loadStates = async (
     field: RxWidgetInfoAttributesField,
     data: WidgetData,
     changeData: (newData: WidgetData) => void,
-    socket: LegacyConnection,
+    socket: Connection,
 ): Promise<void> => {
     if (data[field.name!]) {
         const object = await socket.getObject(data[field.name!]);
@@ -144,7 +144,7 @@ interface PlayerState extends VisRxWidgetState {
 }
 
 class Player extends Generic<PlayerRxData, PlayerState> {
-    private readonly coverRef: React.RefObject<HTMLImageElement> = React.createRef();
+    private readonly coverRef: React.RefObject<HTMLImageElement | null> = React.createRef();
 
     private setVolumeTimer: ReturnType<typeof setTimeout> | null = null;
 

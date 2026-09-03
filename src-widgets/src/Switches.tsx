@@ -73,7 +73,7 @@ import {
 import TbSquareLetterW from './Components/TbSquareLetterW';
 import { CircularSliderWithChildren } from 'react-circular-slider-svg';
 
-import { Icon, type LegacyConnection, Utils } from '@iobroker/adapter-react-v5';
+import { Icon, type Connection, Utils } from '@iobroker/gui-components';
 import type {
     AnyWidgetId,
     GroupWidget,
@@ -160,7 +160,7 @@ async function loadStates(
     field: RxWidgetInfoAttributesField,
     data: WidgetData,
     changeData: (newData: WidgetData) => void,
-    socket: LegacyConnection,
+    socket: Connection,
     index?: number,
 ): Promise<void> {
     if (data[field.name!]) {
@@ -208,7 +208,7 @@ const vacuumLoadStates = async (
     field: RxWidgetInfoAttributesField,
     data: WidgetData,
     changeData: (newData: WidgetData) => void,
-    socket: LegacyConnection,
+    socket: Connection,
     index?: number,
 ): Promise<void> => {
     if (data[field.name!]) {
@@ -225,7 +225,7 @@ const vacuumLoadStates = async (
                 parts.pop();
                 device = await socket.getObject(parts.join('.'));
             }
-            if (device.type !== 'device') {
+            if (!device || device.type !== 'device') {
                 parts = object._id.split('.');
                 parts.pop();
             }
@@ -1676,7 +1676,7 @@ class Switches extends BlindsBase<SwitchesRxData, SwitchesState> {
                             object.common.icon =
                                 Generic.getObjectIcon(grandParentObject, grandParentObject._id) || undefined;
                         }
-                    } else {
+                    } else if (parentObject?.common?.icon) {
                         object.common.icon = Generic.getObjectIcon(parentObject, parentObject._id) || undefined;
                     }
                 }

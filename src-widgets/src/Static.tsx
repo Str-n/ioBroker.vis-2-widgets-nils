@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogTitle, IconButton, Switch } from '@mui/mat
 
 import { Close as IconClose } from '@mui/icons-material';
 
-import { Icon } from '@iobroker/adapter-react-v5';
+import { Icon } from '@iobroker/gui-components';
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
@@ -179,9 +179,7 @@ class Static extends Generic<StaticRxData, StaticState> {
         for (let i = 1; i <= this.state.rxData.count; i++) {
             if (this.state.rxData[`oid${i}`]) {
                 // read object itself
-                const object: ioBroker.StateObject | null | undefined = await this.props.context.socket.getObject(
-                    this.state.rxData[`oid${i}`],
-                );
+                const object = await this.props.context.socket.getObject(this.state.rxData[`oid${i}`]);
                 if (!object) {
                     objects[i] = { common: {} as ioBroker.StateCommon, _id: '', isChart: false };
                     continue;
@@ -208,14 +206,14 @@ class Static extends Generic<StaticRxData, StaticState> {
                                 object.common.icon = `../${grandParentObject.common.name}.admin/${object.common.icon}`;
                             }
                         }
-                    } else {
+                    } else if (parentObject?.common?.icon) {
                         object.common.icon = parentObject.common.icon;
                         if (parentObject.type === 'instance' || parentObject.type === 'adapter') {
                             object.common.icon = `../${parentObject.common.name}.admin/${object.common.icon}`;
                         }
                     }
                 }
-                objects[i] = { common: object.common, _id: object._id, isChart };
+                objects[i] = { common: object.common as ioBroker.StateCommon, _id: object._id, isChart };
             }
         }
 

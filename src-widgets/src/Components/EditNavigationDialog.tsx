@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 
 import {
     Button,
@@ -22,7 +22,7 @@ import { Check, Close, Delete, DragHandle } from '@mui/icons-material';
 import type { Project, RxWidgetInfoAttributesFieldWithType } from '@iobroker/types-vis-2';
 
 import Generic from '../Generic';
-import { Icon } from '@iobroker/adapter-react-v5';
+import { Icon } from '@iobroker/gui-components';
 
 export type NavigateRxData = {
     noCard: boolean;

@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Button, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 
-import { Icon } from '@iobroker/adapter-react-v5';
+import { Icon } from '@iobroker/gui-components';
 import type {
     RxRenderWidgetProps,
     RxWidgetInfo,

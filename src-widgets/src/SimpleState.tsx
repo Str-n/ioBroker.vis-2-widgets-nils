@@ -11,7 +11,7 @@ import {
 
 import { CircularSliderWithChildren } from 'react-circular-slider-svg';
 
-import { Icon, type IobTheme } from '@iobroker/adapter-react-v5';
+import { Icon, type IobTheme } from '@iobroker/gui-components';
 import type {
     RxRenderWidgetProps,
     RxWidgetInfo,
@@ -148,7 +148,7 @@ interface SimpleStateState extends VisRxWidgetState {
 }
 
 export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateState> {
-    private readonly refDiv: React.RefObject<HTMLDivElement> = React.createRef();
+    private readonly refDiv: React.RefObject<HTMLDivElement | null> = React.createRef();
     private updateTimeout: ReturnType<typeof setTimeout> | null = null;
     private updateTimer1: ReturnType<typeof setTimeout> | null = null;
     private lastRxData: string | null = null;
@@ -199,21 +199,25 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
                             onChange: async (field, data, changeData, socket) => {
                                 if (data.oid) {
                                     const object = await socket.getObject(data.oid);
-                                    if (object?.common?.states) {
-                                        if (Array.isArray(object.common.states)) {
+                                    if (
+                                        object?.type === 'state' &&
+                                        object.common.states &&
+                                        typeof object.common.states !== 'string'
+                                    ) {
+                                        let states = object.common.states;
+                                        if (Array.isArray(states)) {
                                             // convert to {'state1': 'state1', 'state2': 'state2', ...}
-                                            const states: Record<string, string> = {};
-                                            object.common.states.forEach(state => (states[state] = state));
+                                            states = Object.fromEntries(states.map(state => [state, state]));
                                             object.common.states = states;
                                         }
-                                        data.values_count = Object.keys(object.common.states).length;
+                                        data.values_count = Object.keys(states).length;
                                         data.withStates = true;
                                         data.withNumber = false;
-                                        Object.keys(object.common.states).forEach(
-                                            (state, index) => (data[`value${index + 1}`] = object.common.states[state]),
+                                        Object.keys(states).forEach(
+                                            (state, index) => (data[`value${index + 1}`] = states[state]),
                                         );
                                         changeData(data);
-                                    } else if (object?.common) {
+                                    } else if (object?.type === 'state') {
                                         data.withNumber = object.common.type === 'number';
                                         data.withStates = false;
                                         data.values_count = 0;
@@ -415,7 +419,7 @@ export default class SimpleState extends Generic<SimpleStateRxData, SimpleStateS
                         object.common.icon = `../${grandParentObject.common.name}.admin/${object.common.icon}`;
                     }
                 }
-            } else {
+            } else if (parentObject?.common?.icon) {
                 object.common.icon = parentObject.common.icon;
                 if (parentObject.type === 'instance' || parentObject.type === 'adapter') {
                     object.common.icon = `../${parentObject.common.name}.admin/${object.common.icon}`;

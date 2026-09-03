@@ -15,7 +15,7 @@ import {
 
 import { BatteryChargingFull, BatteryFull, Close, Home, Pause, PlayArrow } from '@mui/icons-material';
 
-import { Icon, type LegacyConnection } from '@iobroker/adapter-react-v5';
+import { Icon, type Connection } from '@iobroker/gui-components';
 import type {
     RxRenderWidgetProps,
     RxWidgetInfo,
@@ -133,7 +133,7 @@ const vacuumLoadStates = async (
     field: RxWidgetInfoAttributesField,
     data: WidgetData,
     changeData: (newData: WidgetData) => void,
-    socket: LegacyConnection,
+    socket: Connection,
 ): Promise<void> => {
     if (data[field.name!]) {
         const object = await socket.getObject(data[field.name!]);
@@ -149,7 +149,7 @@ const vacuumLoadStates = async (
                 parts.pop();
                 device = await socket.getObject(parts.join('.'));
             }
-            if (device.type !== 'device') {
+            if (!device || device.type !== 'device') {
                 parts = object._id.split('.');
                 parts.pop();
             }
@@ -447,7 +447,7 @@ class Vacuum extends Generic<VacuumRxData, VacuumState> {
                 oids.push(oid);
             }
         }
-        const _objects = await this.props.context.socket.getObjectsById(oids);
+        const _objects = (await this.props.context.socket.getObjectsById(oids)) || {};
 
         // read all objects at once
         Object.values(_objects).forEach(obj => {

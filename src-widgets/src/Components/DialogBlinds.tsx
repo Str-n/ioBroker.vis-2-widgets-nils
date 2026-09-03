@@ -27,7 +27,7 @@ import {
     Close as CloseIcon,
 } from '@mui/icons-material';
 
-import { I18n } from '@iobroker/adapter-react-v5';
+import { I18n } from '@iobroker/gui-components';
 
 const WIDGET_IMAGE_BASE = 'widgets/vis-2-widgets-nils-fork/img';
 
@@ -159,7 +159,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
         timer: null,
         timeUp: 0,
     };
-    private readonly refSlider: React.RefObject<HTMLDivElement> = React.createRef();
+    private readonly refSlider: React.RefObject<HTMLDivElement | null> = React.createRef();
     private readonly type: number;
     private top: number | undefined = undefined;
     private height: number | undefined = undefined;
@@ -522,7 +522,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
             <Dialog
                 open={!0}
                 onClose={() => this.props.onClose()}
-                PaperProps={{ style: styles.dialog }}
+                slotProps={{ paper: { style: styles.dialog } }}
             >
                 <DialogTitle style={styles.dialogTitle}>
                     {this.getStopButton()}

@@ -19,7 +19,7 @@ import type {
     VisRxWidgetState,
     VisRxWidgetProps,
 } from '@iobroker/types-vis-2';
-import type { LegacyConnection } from '@iobroker/adapter-react-v5';
+import type { Connection } from '@iobroker/gui-components';
 
 // @ts-expect-error ignore
 delete L.Icon.Default.prototype._getIconUrl;
@@ -132,11 +132,11 @@ const mapThemes: Record<
     },
 };
 
-async function getParentObject(id: string, socket: LegacyConnection): Promise<ioBroker.Object | null> {
+async function getParentObject(id: string, socket: Connection): Promise<ioBroker.Object | null> {
     const parts = id.split('.');
     parts.pop();
     const parentOID = parts.join('.');
-    return await socket.getObject(parentOID);
+    return (await socket.getObject(parentOID)) ?? null;
 }
 
 function getText(text: ioBroker.StringOrTranslated): string {
@@ -150,7 +150,7 @@ async function detectNameAndColor(
     field: RxWidgetInfoAttributesField,
     data: WidgetData,
     changeData: (newData: WidgetData) => void,
-    socket: LegacyConnection,
+    socket: Connection,
 ): Promise<void> {
     if (data[field.name!]) {
         const object = await socket.getObject(data[field.name!]);
@@ -422,7 +422,7 @@ export default class Map extends Generic<MapRxData, MapState> {
                 ids.push(this.state.rxData[`oid${index}`]);
             }
         }
-        const _objects = ids.length ? await this.props.context.socket.getObjectsById(ids) : {};
+        const _objects = ids.length ? (await this.props.context.socket.getObjectsById(ids)) || {} : {};
 
         // try to find icons for all OIDs
         for (let index = 1; index <= this.state.rxData.markersCount; index++) {
@@ -454,7 +454,7 @@ export default class Map extends Generic<MapRxData, MapState> {
                                 object.common.icon = `../${grandParentObject.common.name}.admin/${object.common.icon}`;
                             }
                         }
-                    } else {
+                    } else if (parentObject?.common?.icon) {
                         object.common.icon = parentObject.common.icon;
                         if (parentObject.type === 'instance' || parentObject.type === 'adapter') {
                             object.common.icon = `../${parentObject.common.name}.admin/${object.common.icon}`;

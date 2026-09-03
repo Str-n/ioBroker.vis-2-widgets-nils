@@ -1,43 +1,10 @@
 // @ts-expect-error no types
 import react from '@vitejs/plugin-react';
 import commonjs from 'vite-plugin-commonjs';
-import vitetsConfigPaths from 'vite-tsconfig-paths';
 import { federation } from '@module-federation/vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
-
-const singleton = (
-    extra: Record<string, unknown> = {},
-): {
-    singleton: true;
-    requiredVersion: '*';
-} & Record<string, unknown> => ({
-    singleton: true,
-    requiredVersion: '*',
-    ...extra,
-});
-
-const sharedModules: Record<string, ReturnType<typeof singleton>> = {
-    react: singleton(),
-    'react-dom': singleton(),
-    'react-dom/client': singleton(),
-    '@mui/material': singleton(),
-    '@mui/icons-material': singleton(),
-    '@mui/styles': singleton(),
-    '@mui/system': singleton(),
-    'prop-types': singleton(),
-    '@iobroker/adapter-react-v5': singleton(),
-    '@iobroker/adapter-react-v5/i18n/de.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/en.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/es.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/ru.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/nl.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/it.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/pl.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/pt.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/fr.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/uk.json': singleton(),
-    '@iobroker/adapter-react-v5/i18n/zh-cn.json': singleton(),
-};
+import { moduleFederationShared } from '@iobroker/types-vis-2/modulefederation.vis.config';
+import packageJson from './package.json' with { type: 'json' };
 
 const config = {
     plugins: [
@@ -70,7 +37,7 @@ const config = {
                 './translations': './src/translations.js',
             },
             remotes: {},
-            shared: sharedModules,
+            shared: moduleFederationShared(packageJson),
             dts: false,
         }),
         topLevelAwait({
@@ -80,7 +47,6 @@ const config = {
             promiseImportName: (i: number): string => `__tla_${i}`,
         }),
         react(),
-        vitetsConfigPaths(),
         commonjs(),
     ],
     server: {
@@ -99,15 +65,15 @@ const config = {
     },
     base: './',
     resolve: {
+        tsconfigPaths: true,
         dedupe: [
             'react',
             'react-dom',
-            'prop-types',
+            '@emotion/react',
+            '@iobroker/gui-components',
             '@mui/material',
             '@mui/system',
-            '@mui/styles',
-            '@mui/icons-material',
-            '@iobroker/adapter-react-v5',
+            '@mui/private-theming',
         ],
     },
     build: {

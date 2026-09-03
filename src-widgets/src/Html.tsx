@@ -38,7 +38,7 @@ interface HtmlState extends VisRxWidgetState {
 }
 
 export default class Html extends Generic<HtmlRxData, HtmlState> {
-    private readonly widgetRef: React.RefObject<HTMLDivElement> = React.createRef();
+    private readonly widgetRef: React.RefObject<HTMLDivElement | null> = React.createRef();
     private doNotWantIncludeWidgets: boolean | undefined;
     private wakeUpInstalled: boolean | undefined;
     private viewChangeInstalled: boolean | undefined;

@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "vis-2-widgets-nils-fork",
-    "version": "1.6.10",
+    "version": "1.7.0",
     "news": {
+      "1.7.0": {
+        "en": "Migrated to React 19 and MUI 5",
+        "de": "Neue Widgets hinzugefügt: Staubsauger, Waschmaschine, Trockner, Assistent",
+        "ru": "Добавлены новые виджеты: Пылесос, Стиральная машина, Сушилка, Мастер",
+        "pt": "Adicionados novos widgets: Aspirador de pó, Lavadora e secadora, Assistente",
+        "nl": "Nieuwe widgets toegevoegd: Stofzuiger, Was-droger, Wizard",
+        "fr": "Ajout de nouveaux widgets : Aspirateur, Lave-linge et sèche-linge, Assistant",
+        "it": "Aggiunti nuovi widget: Aspirapolvere, Lavatrice e asciugatrice, Assistente",
+        "es": "Se agregaron nuevos widgets: Aspiradora, Lavadora y secadora, Asistente",
+        "pl": "Dodano nowe widżety: Odkurzacz, Pralka i suszarka, Kreator",
+        "uk": "Додано нові віджети: Пилосос, Пральна машина та сушарка, Майстер",
+        "zh-cn": "添加了新的小部件: 吸尘器、洗衣机和烘干机、向导"
+      },
       "1.6.10": {
         "en": "Customized by Nils",
         "de": "Angepasst von Nils",

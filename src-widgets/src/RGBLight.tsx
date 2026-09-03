@@ -19,7 +19,7 @@ import { Button, Dialog, DialogContent, DialogTitle, IconButton, Slider, Switch,
 import { Brightness6, Close, ColorLens, Thermostat, WbAuto } from '@mui/icons-material';
 import TbSquareLetterW from './Components/TbSquareLetterW';
 
-import { Icon, type LegacyConnection } from '@iobroker/adapter-react-v5';
+import { Icon, type Connection } from '@iobroker/gui-components';
 
 import Generic from './Generic';
 import './sketch.css';
@@ -189,7 +189,7 @@ const loadStates = async (
     field: RxWidgetInfoAttributesField,
     data: WidgetData,
     changeData: (newData: WidgetData) => void,
-    socket: LegacyConnection,
+    socket: Connection,
 ): Promise<void> => {
     if (data[field.name!]) {
         const object = await socket.getObject(data[field.name!]);
@@ -281,7 +281,7 @@ interface RGBLightState extends VisRxWidgetState {
 }
 
 export default class RGBLight extends Generic<RGBLightRxData, RGBLightState> {
-    private readonly contentRef: React.RefObject<HTMLDivElement> = React.createRef();
+    private readonly contentRef: React.RefObject<HTMLDivElement | null> = React.createRef();
     private timeouts: Record<string, ReturnType<typeof setTimeout> | null> = {};
     private _pressTimeout: ReturnType<typeof setTimeout> | null = null;
 

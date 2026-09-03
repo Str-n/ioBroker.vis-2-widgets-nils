@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@mui/material';
 
 import type { RxRenderWidgetProps, RxWidgetInfo, WidgetData, VisRxWidgetState } from '@iobroker/types-vis-2';
-import { ToggleThemeMenu, I18n, type ThemeName } from '@iobroker/adapter-react-v5';
+import { ToggleThemeMenu, I18n, type ThemeName } from '@iobroker/gui-components';
 
 import Generic from './Generic';
 

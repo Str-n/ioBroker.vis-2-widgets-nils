@@ -20,7 +20,7 @@ import type { EChartsOption, LineSeriesOption } from 'echarts';
 import type { TimeAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
-import { Icon } from '@iobroker/adapter-react-v5';
+import { Icon } from '@iobroker/gui-components';
 
 import ObjectChart from './Components/ObjectChart';
 import Generic from './Generic';
@@ -140,7 +140,7 @@ interface ActualState extends VisRxWidgetState {
 }
 
 export default class Actual extends Generic<RxData, ActualState> {
-    private readonly refContainer: React.RefObject<HTMLDivElement> = React.createRef();
+    private readonly refContainer: React.RefObject<HTMLDivElement | null> = React.createRef();
     private mainTimer: ReturnType<typeof setInterval> | undefined;
     private updateTimeout: ReturnType<typeof setTimeout> | undefined;
     private lastRxData: string | undefined;
@@ -374,7 +374,7 @@ export default class Actual extends Generic<RxData, ActualState> {
                         object.common.icon = `../${grandParentObject.common.name}.admin/${object.common.icon}`;
                     }
                 }
-            } else {
+            } else if (parentObject?.common?.icon) {
                 object.common.icon = parentObject.common.icon;
                 if (parentObject.type === 'instance' || parentObject.type === 'adapter') {
                     object.common.icon = `../${parentObject.common.name}.admin/${object.common.icon}`;
@@ -408,7 +408,7 @@ export default class Actual extends Generic<RxData, ActualState> {
             ids.push(this.state.rxData['oid-secondary']);
         }
 
-        const _objects = ids.length ? await this.props.context.socket.getObjectsById(ids) : {};
+        const _objects = ids.length ? (await this.props.context.socket.getObjectsById(ids)) || {} : {};
 
         // try to find icons for all OIDs
         if (this.state.rxData['oid-main'] && this.state.rxData['oid-main'] !== 'nothing_selected') {

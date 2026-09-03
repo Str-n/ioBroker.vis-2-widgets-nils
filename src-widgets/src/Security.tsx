@@ -3,7 +3,7 @@ import React, { type CSSProperties } from 'react';
 import { Button, Chip, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { RemoveModerator as RemoveModeratorIcon, Security as SecurityIcon } from '@mui/icons-material';
 
-import { Icon, Message as DialogMessage } from '@iobroker/adapter-react-v5';
+import { Icon, Message as DialogMessage } from '@iobroker/gui-components';
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
@@ -260,7 +260,7 @@ class Security extends Generic<SecurityRxData, SecurityState> {
                 ids.push(this.state.rxData[`oid${index}`]);
             }
         }
-        const _objects = ids.length ? await this.props.context.socket.getObjectsById(ids) : {};
+        const _objects = ids.length ? (await this.props.context.socket.getObjectsById(ids)) || {} : {};
 
         // try to find icons for all OIDs
         for (let index = 1; index <= this.state.rxData.buttonsCount; index++) {
@@ -295,7 +295,7 @@ class Security extends Generic<SecurityRxData, SecurityState> {
                             object.common.icon = `../${grandParentObject.common.name}.admin/${object.common.icon}`;
                         }
                     }
-                } else {
+                } else if (parentObject?.common?.icon) {
                     object.common.icon = parentObject.common.icon;
                     if (parentObject.type === 'instance' || parentObject.type === 'adapter') {
                         object.common.icon = `../${parentObject.common.name}.admin/${object.common.icon}`;

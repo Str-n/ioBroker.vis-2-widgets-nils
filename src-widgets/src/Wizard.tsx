@@ -15,7 +15,7 @@ import {
     TextField,
 } from '@mui/material';
 import { Add, Close, ExpandMore, Lightbulb, QuestionMark } from '@mui/icons-material';
-import { Icon } from '@iobroker/adapter-react-v5';
+import { Icon } from '@iobroker/gui-components';
 
 import Generic from './Generic';
 import { getDeviceWidget, getDeviceWidgetOnePage } from './deviceWidget';
