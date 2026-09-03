@@ -109,7 +109,8 @@ ssh ${REMOTE_USER}@${REMOTE_HOST} << EOF
     # Restart vis-2 so it discovers and uploads the widget bundle.
     iobroker restart vis-2
     iobroker message vis-2.0 rebuild
-    
+    iobroker upload vis-2-widgets-nils-fork --debug
+
     echo "Deployment complete on Raspberry Pi!"
 EOF
 

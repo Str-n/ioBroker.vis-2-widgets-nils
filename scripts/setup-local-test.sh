@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPACT_WIDGET_ID="tplNils2ThermostatCompact"
 COMPACT_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/ThermostatCompact.tsx"
+BLINDS_WIDGET_ID="tplNils2Blinds"
+BLINDS_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/Blinds.tsx"
 PREVIEW_SOURCE="${ROOT_DIR}/src-widgets/preview/main.tsx"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -11,7 +13,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo ""
     echo "Usage: ./scripts/setup-local-test.sh"
     echo ""
-    echo "This script validates and previews SwitchButton and ThermostatCompact with local mock states."
+    echo "This script validates and previews SwitchButton, ThermostatCompact, and Blinds with local mock states."
     echo "Open: http://localhost:4174/test-dashboard.html"
     exit 0
 fi
@@ -36,6 +38,16 @@ if ! grep -Fq "import('../src/ThermostatCompact')" "${PREVIEW_SOURCE}"; then
     exit 1
 fi
 
+if ! grep -Fq "id: '${BLINDS_WIDGET_ID}'" "${BLINDS_WIDGET_SOURCE}"; then
+    echo "Blinds must keep the persisted widget ID ${BLINDS_WIDGET_ID}." >&2
+    exit 1
+fi
+
+if ! grep -Fq "import('../src/Blinds')" "${PREVIEW_SOURCE}"; then
+    echo "Blinds is missing from the local test dashboard." >&2
+    exit 1
+fi
+
 if [[ ! -d "${ROOT_DIR}/node_modules" ]]; then
     echo "Installing root dependencies..."
     (cd "${ROOT_DIR}" && npm install)
@@ -53,7 +65,7 @@ Local widget test environment
 ========================================
 Project root: ${ROOT_DIR}
 Dashboard URL: http://localhost:4174/test-dashboard.html
-Widgets: SwitchButton, ThermostatCompact (${COMPACT_WIDGET_ID})
+Widgets: SwitchButton, ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID})
 
 This environment starts the Vite dev server for quick widget checks before deployment to the Raspberry Pi.
 Press Ctrl+C to stop the server.

@@ -22,7 +22,11 @@ function copyAllFiles() {
                     // Where Y is isFunction and ra is protoFunction
                     fileData = fileData.toString();
                     const match = fileData.match(/\w+\s*=\s*\w+\s*&&\s*(\w)\(\w+.bind\)/);
-                    if (match) {
+                    // Newer Vite/Rolldown builds emit isFunction as a hoisted function declaration,
+                    // for which the workaround is unnecessary. Injecting it anyway creates a duplicate
+                    // binding and prevents every ECharts-based widget from loading in Chromium.
+                    const hasHoistedFunction = match && new RegExp(`function\\s+${match[1]}\\s*\\(`).test(fileData);
+                    if (match && !hasHoistedFunction) {
                         // place before match[0] the definition of isFunction
                         fileData = fileData.replace(
                             match[0],

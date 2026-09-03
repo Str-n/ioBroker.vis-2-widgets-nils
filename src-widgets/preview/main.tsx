@@ -42,18 +42,19 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: ThermostatCompact }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/ThermostatCompact'),
+const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
     'preview.temperature.set': { _id: 'preview.temperature.set', type: 'state', common: { type: 'number', min: 12, max: 30, step: 0.5, unit: '°C' } },
     'preview.temperature.actual': { _id: 'preview.temperature.actual', type: 'state', common: { type: 'number', unit: '°C' } },
     'preview.humidity': { _id: 'preview.humidity', type: 'state', common: { type: 'number', unit: '%' } },
+    'preview.blinds.position': { _id: 'preview.blinds.position', type: 'state', common: { type: 'number', min: 0, max: 100, unit: '%' } },
 };
 
 function App(): React.JSX.Element {
-    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.humidity.val': 46 };
+    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35 };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -95,6 +96,14 @@ function App(): React.JSX.Element {
             <article className="thermostat-card"><ThermostatCompact {...commonProps as any} id="thermostat-compact" customSettings={{ values, style: { width: 180, height: 42 }, rxData: {
                 noCard: true, widgetTitle: 'Living room', 'oid-temp-set': 'preview.temperature.set', 'oid-temp-actual': 'preview.temperature.actual',
                 'oid-humidity': 'preview.humidity', 'oid-power': '', 'oid-mode': '', 'oid-boost': '', 'oid-party': '', unit: '°C', step: '0.5', timeout: 500, externalDialog: false, count: 0,
+            } }} /></article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Blinds</h2><p>Click the window to open its control dialog.</p></div></div>
+            <article className="thermostat-card" style={{ minHeight: 250 }}><Blinds {...commonProps as any} id="blinds" customSettings={{ values, style: { width: 320, height: 210 }, rxData: {
+                noCard: true, widgetTitle: 'Living room window', sashCount: 1, ratio: 1.35, borderWidth: 3,
+                oid: 'preview.blinds.position', oid_stop: '', showValue: true, min: '0', max: '100', invert: false,
+                externalDialog: false, timeout: 0, slideSensor_oid1: '', slideRatio1: 1, slidePos_oid1: '', slideHandle_oid1: '', slideType1: '',
             } }} /></article>
         </section>
     </main>;
