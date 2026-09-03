@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vis-2-widgets-nils-fork",
-  "version": "1.6.9",
+  "version": "1.6.10",
   "description": "ioBroker vis2 widgets for Nils fork",
   "author": "bluefox <dogafox@gmail.com>",
   "contributors": [
@@ -49,6 +49,7 @@
     "release-major": "release-script major --yes",
     "test": "npm run test:integration && npm run test:package",
     "setup:local-test": "bash ./scripts/setup-local-test.sh",
+    "preview:widgets": "bash ./scripts/setup-local-test.sh",
     "update-packages": "npx -y npm-check-updates --upgrade && cd src-widgets && npx -y npm-check-updates --upgrade",
     "npm": "npm i && cd src-widgets && npm i"
   },

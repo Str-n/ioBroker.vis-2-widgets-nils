@@ -47,7 +47,6 @@ interface SwitchButtonRxData {
     background: string;
     backgroundOn: string;
     backgroundOff: string;
-    size: number | string;
     readOnly: boolean | 'true';
 }
 
@@ -96,14 +95,6 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                             name: 'oid',
                             type: 'id',
                             label: 'switch_button_oid',
-                        },
-                        {
-                            name: 'size',
-                            type: 'slider',
-                            label: 'switch_button_size',
-                            min: 20,
-                            max: 200,
-                            default: 40,
                         },
                         {
                             name: 'color',
@@ -161,10 +152,10 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                 },
             ],
             visDefaultStyle: {
+                position: 'absolute',
                 width: 40,
                 height: 40,
                 display: 'inline-block',
-                position: 'absolute',
             },
             visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_switch_button.png',
         };
@@ -210,12 +201,12 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         return !isOn;
     }
 
-    private getIconElement(iconName: string | undefined, color: string, size: number): React.JSX.Element {
+    private getIconElement(iconName: string | undefined, color: string): React.JSX.Element {
         const MaterialIcon = getIconFromName(iconName);
 
         if (MaterialIcon) {
             const IconComponent = MaterialIcon;
-            return <IconComponent style={{ fontSize: size * 0.56, color }} />;
+            return <IconComponent style={{ width: '70%', height: '70%', color }} />;
         }
 
         const src = iconName || 'power';
@@ -223,16 +214,22 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
             <Icon
                 src={src}
                 style={{
-                    width: size * 0.56,
-                    height: size * 0.56,
+                    width: '70%',
+                    height: '70%',
                     color,
-                    fontSize: size * 0.56,
                 }}
             />
         );
     }
 
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element | null {
+        super.renderWidgetBody(props);
+
+        // The button's shadow extends beyond the widget bounds and must remain visible.
+        props.style.overflow = 'visible';
+        props.style.overflowX = 'visible';
+        props.style.overflowY = 'visible';
+
         const oid = this.state.rxData.oid;
         if (!oid) {
             return null;
@@ -240,7 +237,6 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
 
         const rawValue = this.state.values[`${oid}.val`];
         const isOn = this.isOn(rawValue);
-        const size = Number(this.state.rxData.size || 40);
         const iconName = isOn ? this.state.rxData['icon-on'] : this.state.rxData['icon-off'];
         const baseColor = this.state.rxData.color || '#9e9e9e';
         const color = isOn ? this.state.rxData.colorOn || baseColor : this.state.rxData.colorOff || baseColor;
@@ -253,6 +249,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         return (
             <IconButton
                 size="small"
+                color="primary"
                 disabled={disabled}
                 onClick={e => {
                     e.stopPropagation();
@@ -261,14 +258,16 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                     }
                 }}
                 style={{
-                    width: size,
-                    height: size,
-                    minWidth: size,
-                    minHeight: size,
+                    width: '100%',
+                    height: '100%',
+                    minWidth: 0,
+                    minHeight: 0,
                     borderRadius: '50%',
                     background,
                     color,
-                    boxShadow: isOn ? '0 6px 14px rgba(76, 175, 80, 0.35)' : '0 4px 10px rgba(0, 0, 0, 0.18)',
+                    boxShadow: isOn
+                        ? `2px 4px 10px color-mix(in srgb, ${color} 35%, transparent)`
+                        : `2px 4px 10px color-mix(in srgb, ${color} 35%, transparent)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -277,7 +276,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                 }}
                 aria-label={isOn ? 'on' : 'off'}
             >
-                {this.getIconElement(iconName, color, size)}
+                {this.getIconElement(iconName, color)}
             </IconButton>
         );
     }

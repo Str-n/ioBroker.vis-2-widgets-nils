@@ -18,7 +18,7 @@
         "baseUrl": ".",
         "types": ["@iobroker/types"]
     },
-    "include": ["src"],
+    "include": ["src", "preview"],
     "references": [
         {
             "path": "./tsconfig.node.json"

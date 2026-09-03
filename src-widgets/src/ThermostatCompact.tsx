@@ -21,7 +21,7 @@ export default class ThermostatCompact extends Thermostat {
                 width: '100%',
                 height: 42,
                 display: 'inline-block',
-            },
+            }
         };
     }
 

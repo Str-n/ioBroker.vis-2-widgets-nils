@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "vis-2-widgets-nils-fork",
-    "version": "1.6.9",
+    "version": "1.6.10",
     "news": {
-      "1.6.9": {
+      "1.6.10": {
         "en": "Customized by Nils",
         "de": "Angepasst von Nils",
         "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
@@ -171,6 +171,7 @@
           "ThermostatCompact",
           "Actual",
           "Switches",
+          "SwitchButton",
           "Blinds",
           "Clock",
           "Lock",

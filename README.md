@@ -9,6 +9,9 @@
 
 ## Widgets
 
+For a standalone, hot-reloading preview of the button widgets, run `npm run preview:widgets` and open
+<http://localhost:4174/test-dashboard.html>. It uses mock ioBroker values and does not require a deployment.
+
 ### Buttons and switches
 
 ![Switches](img/material-switches.png)
