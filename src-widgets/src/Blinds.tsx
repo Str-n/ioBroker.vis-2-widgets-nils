@@ -1,5 +1,7 @@
 import React, { type CSSProperties } from 'react';
 
+import { Fab } from '@mui/material';
+
 import type {
     RxRenderWidgetProps,
     RxWidgetInfo,
@@ -9,6 +11,7 @@ import type {
 } from '@iobroker/types-vis-2';
 
 import BlindsBase, { type BlindsBaseRxData, type BlindsBaseState, type HelperObject } from './Components/BlindsBase';
+import WindowClosed from './Components/WindowClosed';
 
 const styles: Record<string, CSSProperties> = {
     cardContent: {
@@ -17,8 +20,53 @@ const styles: Record<string, CSSProperties> = {
         justifyContent: 'center',
         alignItems: 'center',
         width: '100%',
-        overflow: 'hidden',
+        overflow: 'visible',
         height: '100%',
+    },
+    fabWindowIcon: {
+        position: 'relative',
+        zIndex: 2,
+        width: '100%',
+        height: '100%',
+        color: 'rgba(255, 255, 255, 0.92)',
+        transition: 'transform 0.2s ease, color 0.2s ease',
+    },
+    fabWindow: {
+        position: 'relative',
+        zIndex: 1,
+        width: '92%',
+        height: '92%',
+        overflow: 'visible',
+        transition: 'transform 0.2s ease',
+    },
+    fabBlind: {
+        position: 'absolute',
+        zIndex: 1,
+        top: '31%',
+        left: '27%',
+        width: '46%',
+        maxHeight: '42%',
+        background:
+            'repeating-linear-gradient(to bottom, rgba(222, 232, 239, 0.9) 0 3px, rgba(91, 111, 124, 0.9) 3px 4px)',
+        boxShadow: '0 0 0 1px rgba(30, 49, 61, 0.25)',
+        transition: 'height 0.25s ease',
+    },
+    fabWindowState: {
+        position: 'absolute',
+        zIndex: 2,
+        top: 3,
+        right: 3,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 11,
+        height: 11,
+        border: '1px solid rgba(0, 0, 0, 0.3)',
+        borderRadius: '50%',
+        color: '#10202b',
+        fontSize: '0.45rem',
+        fontWeight: 800,
+        lineHeight: 1,
     },
 };
 
@@ -42,7 +90,6 @@ interface BlindsRxData extends BlindsBaseRxData {
 }
 
 export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
-    private readonly refCardContent: React.RefObject<HTMLDivElement | null> = React.createRef();
     private lastRxData: string | undefined;
     private updateTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -94,7 +141,7 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
                             max: 100,
                             step: 0.1,
                             label: 'border_width',
-                            default: 3,
+                            default: 0.1,
                         },
                         {
                             name: 'oid',
@@ -282,9 +329,9 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
                 },
             ],
             visDefaultStyle: {
-                width: '100%',
-                height: 120,
-                position: 'relative',
+                width: '40px',
+                height: '40px',
+                position: 'absolute',
             },
             visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_blinds.png',
         } as const;
@@ -292,6 +339,134 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
 
     getWidgetInfo(): RxWidgetInfo {
         return Blinds.getWidgetInfo();
+    }
+
+    private getWindowState(): 'open' | 'closed' | 'unknown' {
+        let hasClosedState = false;
+
+        for (let index = 1; index <= (this.state.rxData.sashCount || 1); index++) {
+            const handleOid = this.state.rxData[`slideHandle_oid${index}`];
+            const sensorOid = this.state.rxData[`slideSensor_oid${index}`];
+            const oid = handleOid || sensorOid;
+            if (!oid) {
+                continue;
+            }
+
+            let value = this.state.values[`${oid}.val`];
+            if (value === undefined || value === null) {
+                continue;
+            }
+
+            // Handle sensors use the opposite numbering to the sash sensor.
+            if (handleOid) {
+                if (value === 2 || value === '2') {
+                    value = 1;
+                } else if (value === 1 || value === '1') {
+                    value = 2;
+                }
+            }
+
+            if (
+                value === 1 ||
+                value === 2 ||
+                value === '1' ||
+                value === '2' ||
+                value === true ||
+                value === 'true' ||
+                value === 'open' ||
+                value === 'opened' ||
+                value === 'tilt' ||
+                value === 'tilted'
+            ) {
+                return 'open';
+            }
+
+            if (
+                value === 0 ||
+                value === '0' ||
+                value === false ||
+                value === 'false' ||
+                value === 'close' ||
+                value === 'closed'
+            ) {
+                hasClosedState = true;
+            }
+        }
+
+        return hasClosedState ? 'closed' : 'unknown';
+    }
+
+    private renderWindowFab(positionPercent: number | null, hasControl: boolean): React.JSX.Element {
+        const windowState = this.getWindowState();
+        const isOpen = windowState === 'open';
+        const closedPercent = positionPercent === null ? null : Math.max(0, Math.min(100, 100 - positionPercent));
+        const stateLabel = windowState === 'unknown' ? '?' : isOpen ? 'O' : 'C';
+        const ariaLabel = [
+            this.state.rxData.widgetTitle || 'Blinds',
+            positionPercent === null ? null : `${positionPercent}% position`,
+            windowState === 'unknown' ? null : `window ${isOpen ? 'open' : 'closed'}`,
+        ]
+            .filter(Boolean)
+            .join(', ');
+
+        return (
+            <Fab
+                size="small"
+                color="primary"
+                aria-label={ariaLabel}
+                onClick={
+                    hasControl
+                        ? e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              this.lastClick = Date.now();
+                              this.setState({ showBlindsDialog: true });
+                          }
+                        : undefined
+                }
+                sx={{
+                    width: '100%',
+                    height: '100%',
+                    minWidth: 0,
+                    minHeight: 0,
+                    padding: 0,
+                    position: 'relative',
+                }}
+            >
+                <div
+                    style={{
+                        ...styles.fabWindow,
+                        ...(isOpen ? { transform: 'perspective(48px) rotateY(-20deg)' } : undefined),
+                    }}
+                >
+                    {closedPercent !== null ? (
+                        <div
+                            style={{
+                                ...styles.fabBlind,
+                                height: `${closedPercent * 0.42}%`,
+                            }}
+                        />
+                    ) : null}
+                    <WindowClosed
+                        style={{
+                            ...styles.fabWindowIcon,
+                            ...(isOpen ? { color: '#b9f2ce' } : undefined),
+                        }}
+                    />
+                </div>
+                {windowState !== 'unknown' ? (
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            ...styles.fabWindowState,
+                            background: isOpen ? '#7be0a2' : '#dce7ed',
+                        }}
+                    >
+                        {stateLabel}
+                    </span>
+                ) : null}
+            </Fab>
+        );
     }
 
     async propertiesUpdate(): Promise<void> {
@@ -372,6 +547,11 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element | React.JSX.Element[] | null {
         super.renderWidgetBody(props);
 
+        // The FAB shadow extends slightly beyond the widget bounds.
+        props.style.overflow = 'visible';
+        props.style.overflowX = 'visible';
+        props.style.overflowY = 'visible';
+
         const actualRxData = JSON.stringify(this.state.rxData);
         if (this.lastRxData !== actualRxData) {
             this.updateTimeout ||= setTimeout(async () => {
@@ -380,51 +560,13 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
             }, 50);
         }
 
-        let height: number;
-        let width: number;
-        if (!this.refCardContent.current) {
-            setTimeout(() => this.forceUpdate(), 50);
-        } else {
-            height = this.refCardContent.current.offsetHeight; // take 10° for opened slash
-            // if one of the slashes could be opened, find the length of it
-            let length = 0;
-            for (let i = 1; i <= this.state.rxData.sashCount; i++) {
-                if (this.state.rxData[`slideSensor_oid${i}`] || this.state.rxData[`slideHandle_oid${i}`]) {
-                    if (length < this.state.rxData[`slideRatio${i}`]) {
-                        length = this.state.rxData[`slideRatio${i}`];
-                    }
-                }
-            }
-
-            width = this.refCardContent.current.offsetWidth;
-
-            if (length) {
-                const oneWidth = (width / this.state.rxData.sashCount) * length;
-                height -= 0.12 * oneWidth;
-            }
-        }
-
         const data = this.getMinMaxPosition(0);
-        height! -= 8;
+        const positionPercent = data.hasControl ? Math.round(data.shutterPos) : null;
 
         const content = (
-            <div
-                ref={this.refCardContent}
-                style={{ ...styles.cardContent, cursor: data.hasControl ? 'pointer' : undefined }}
-                onClick={
-                    data.hasControl
-                        ? e => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              if (!this.lastClick || Date.now() - this.lastClick > 300) {
-                                  this.setState({ showBlindsDialog: true });
-                              }
-                          }
-                        : undefined
-                }
-            >
-                {height! ? this.renderBlindsDialog() : null}
-                {height! ? this.renderWindows({ height: height!, width: width! }) : null}
+            <div style={styles.cardContent}>
+                {this.renderBlindsDialog()}
+                {this.renderWindowFab(positionPercent, data.hasControl)}
             </div>
         );
 

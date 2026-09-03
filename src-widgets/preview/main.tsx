@@ -100,7 +100,7 @@ function App(): React.JSX.Element {
         </section>
         <section>
             <div className="section-heading"><div><h2>Blinds</h2><p>Click the window to open its control dialog.</p></div></div>
-            <article className="thermostat-card" style={{ minHeight: 250 }}><Blinds {...commonProps as any} id="blinds" customSettings={{ values, style: { width: 320, height: 210 }, rxData: {
+            <article className="thermostat-card" style={{ minHeight: 120 }}><Blinds {...commonProps as any} id="blinds" customSettings={{ values, style: { width: 64, height: 64 }, rxData: {
                 noCard: true, widgetTitle: 'Living room window', sashCount: 1, ratio: 1.35, borderWidth: 3,
                 oid: 'preview.blinds.position', oid_stop: '', showValue: true, min: '0', max: '100', invert: false,
                 externalDialog: false, timeout: 0, slideSensor_oid1: '', slideRatio1: 1, slidePos_oid1: '', slideHandle_oid1: '', slideType1: '',

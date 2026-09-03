@@ -236,7 +236,8 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
 
     if (device.deviceType === 'blind') {
         const set = device.states.find(state => state.name === 'SET');
-        style.height = 120;
+        style.width = '40px';
+        style.height = 40;
         return {
             tpl: 'tplNils2Blinds',
             widgetSet: 'vis-2-widgets-nils-fork',
