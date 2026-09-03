@@ -5,13 +5,16 @@ const { tests } = require('@iobroker/testing');
 // Validate the package files
 tests.packageFiles(path.join(__dirname, '..'));
 
-const thermostatSource = fs.readFileSync(path.join(__dirname, '../src-widgets/src/Thermostat.tsx'), 'utf8');
+const thermostatCompactSource = fs.readFileSync(
+    path.join(__dirname, '../src-widgets/src/ThermostatCompact.tsx'),
+    'utf8',
+);
 const viteConfig = fs.readFileSync(path.join(__dirname, '../src-widgets/vite.config.ts'), 'utf8');
 const ioPackage = fs.readFileSync(path.join(__dirname, '../io-package.json'), 'utf8');
 
 describe('compact thermostat widget', () => {
     it('should provide a compact thermostat widget template and palette entry', () => {
-        if (!thermostatSource.includes('tplMaterial2ThermostatCompact')) {
+        if (!thermostatCompactSource.includes('tplNils2ThermostatCompact')) {
             throw new Error('Compact thermostat template is missing');
         }
         if (!viteConfig.includes('./ThermostatCompact')) {

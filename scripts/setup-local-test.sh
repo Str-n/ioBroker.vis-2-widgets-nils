@@ -2,13 +2,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPACT_WIDGET_ID="tplNils2ThermostatCompact"
+COMPACT_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/ThermostatCompact.tsx"
+PREVIEW_SOURCE="${ROOT_DIR}/src-widgets/preview/main.tsx"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo "Local widget test setup"
     echo ""
     echo "Usage: ./scripts/setup-local-test.sh"
     echo ""
-    echo "This script installs the project dependencies if needed and starts the local Vite test dashboard."
+    echo "This script validates and previews SwitchButton and ThermostatCompact with local mock states."
     echo "Open: http://localhost:4174/test-dashboard.html"
     exit 0
 fi
@@ -20,6 +23,16 @@ fi
 
 if ! command -v npm >/dev/null 2>&1; then
     echo "npm is required but not installed." >&2
+    exit 1
+fi
+
+if ! grep -Fq "id: '${COMPACT_WIDGET_ID}'" "${COMPACT_WIDGET_SOURCE}"; then
+    echo "ThermostatCompact must keep the persisted widget ID ${COMPACT_WIDGET_ID}." >&2
+    exit 1
+fi
+
+if ! grep -Fq "import('../src/ThermostatCompact')" "${PREVIEW_SOURCE}"; then
+    echo "ThermostatCompact is missing from the local test dashboard." >&2
     exit 1
 fi
 
@@ -40,10 +53,11 @@ Local widget test environment
 ========================================
 Project root: ${ROOT_DIR}
 Dashboard URL: http://localhost:4174/test-dashboard.html
+Widgets: SwitchButton, ThermostatCompact (${COMPACT_WIDGET_ID})
 
 This environment starts the Vite dev server for quick widget checks before deployment to the Raspberry Pi.
 Press Ctrl+C to stop the server.
 EOF
 
 cd "${ROOT_DIR}/src-widgets"
-exec npm start -- --host 0.0.0.0 --port 4174
+exec npm start -- --force --strictPort

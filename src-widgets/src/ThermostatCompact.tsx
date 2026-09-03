@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Button, Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
-import { Close as IconClose, Thermostat as ThermostatIcon } from '@mui/icons-material';
+import { Close as IconClose } from '@mui/icons-material';
 
 import type { RxRenderWidgetProps, RxWidgetInfo } from '@iobroker/types-vis-2';
 
@@ -13,6 +13,7 @@ export default class ThermostatCompact extends Thermostat {
     static getWidgetInfo(): RxWidgetInfo {
         return {
             ...Thermostat.getWidgetInfo(),
+            // Keep the original template ID: it is persisted in existing vis-2 projects.
             id: 'tplNils2ThermostatCompact',
             visName: 'Thermostat Compact',
             visWidgetLabel: 'thermostat compact',
@@ -21,7 +22,7 @@ export default class ThermostatCompact extends Thermostat {
                 width: '100%',
                 height: 42,
                 display: 'inline-block',
-            }
+            },
         };
     }
 
@@ -35,16 +36,18 @@ export default class ThermostatCompact extends Thermostat {
             this.state.values[`${this.state.rxData['oid-temp-set']}.val`] ??
             null;
 
-        const unit = this.state.rxData.unit || this.state.tempStateObject?.common?.unit || this.state.tempObject?.common?.unit || '';
+        const unit =
+            this.state.rxData.unit ||
+            this.state.tempStateObject?.common?.unit ||
+            this.state.tempObject?.common?.unit ||
+            '';
         const label =
             currentValue === null || currentValue === undefined
                 ? Generic.t('temperature')
                 : `${this.formatValue(currentValue)}${unit}`;
         const humidity = this.state.values[`${this.state.rxData['oid-humidity']}.val`];
         const humidityLabel =
-            humidity === null || humidity === undefined
-                ? Generic.t('humidity')
-                : `${this.formatValue(humidity)}%`;
+            humidity === null || humidity === undefined ? Generic.t('humidity') : `${this.formatValue(humidity)}%`;
 
         const fullContent = super.renderWidgetBody({
             ...props,
@@ -69,7 +72,8 @@ export default class ThermostatCompact extends Thermostat {
                 >
                     <span className="thermostat-compact-label">
                         <span>{label}</span>
-                        {this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
+                        {this.state.rxData['oid-humidity'] &&
+                        this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
                             <span style={{ fontSize: 10, fontWeight: 'normal' }}>{humidityLabel}</span>
                         ) : null}
                     </span>

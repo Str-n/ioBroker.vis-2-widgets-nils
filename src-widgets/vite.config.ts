@@ -4,48 +4,53 @@ import commonjs from 'vite-plugin-commonjs';
 import { federation } from '@module-federation/vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
 import { moduleFederationShared } from '@iobroker/types-vis-2/modulefederation.vis.config';
+import type { UserConfig } from 'vite';
 import packageJson from './package.json' with { type: 'json' };
 
-const config = {
+const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
     plugins: [
-        federation({
-            manifest: true,
-            name: 'vis2nilsForkWidgets',
-            filename: 'customWidgets.js',
-            exposes: {
-                './Thermostat': './src/Thermostat',
-                './ThermostatCompact': './src/ThermostatCompact',
-                './Actual': './src/Actual',
-                './Switches': './src/Switches',
-                './SwitchButton': './src/SwitchButton',
-                './SimpleState': './src/SimpleState',
-                './Blinds': './src/Blinds',
-                './Clock': './src/Clock',
-                './ViewInWidget': './src/ViewInWidget',
-                './Camera': './src/Camera',
-                './Security': './src/Security',
-                './Player': './src/Player',
-                './Map': './src/Map',
-                './Html': './src/Html',
-                './ThemeSwitcher': './src/ThemeSwitcher',
-                './WasherDryer': './src/WasherDryer',
-                './Wizard': './src/Wizard',
-                './RGBLight': './src/RGBLight',
-                './Lock': './src/Lock',
-                './Vacuum': './src/Vacuum',
-                './Navigate': './src/Navigate',
-                './translations': './src/translations.js',
-            },
-            remotes: {},
-            shared: moduleFederationShared(packageJson),
-            dts: false,
-        }),
-        topLevelAwait({
-            // The export name of top-level awaits promise for each chunk module
-            promiseExportName: '__tla',
-            // The function to generate import names of top-level awaits promise in each chunk module
-            promiseImportName: (i: number): string => `__tla_${i}`,
-        }),
+        ...(command === 'build'
+            ? [
+                  federation({
+                      manifest: true,
+                      name: 'vis2nilsForkWidgets',
+                      filename: 'customWidgets.js',
+                      exposes: {
+                          './Thermostat': './src/Thermostat',
+                          './ThermostatCompact': './src/ThermostatCompact',
+                          './Actual': './src/Actual',
+                          './Switches': './src/Switches',
+                          './SwitchButton': './src/SwitchButton',
+                          './SimpleState': './src/SimpleState',
+                          './Blinds': './src/Blinds',
+                          './Clock': './src/Clock',
+                          './ViewInWidget': './src/ViewInWidget',
+                          './Camera': './src/Camera',
+                          './Security': './src/Security',
+                          './Player': './src/Player',
+                          './Map': './src/Map',
+                          './Html': './src/Html',
+                          './ThemeSwitcher': './src/ThemeSwitcher',
+                          './WasherDryer': './src/WasherDryer',
+                          './Wizard': './src/Wizard',
+                          './RGBLight': './src/RGBLight',
+                          './Lock': './src/Lock',
+                          './Vacuum': './src/Vacuum',
+                          './Navigate': './src/Navigate',
+                          './translations': './src/translations.js',
+                      },
+                      remotes: {},
+                      shared: moduleFederationShared(packageJson),
+                      dts: false,
+                  }),
+                  topLevelAwait({
+                      // The export name of top-level awaits promise for each chunk module
+                      promiseExportName: '__tla',
+                      // The function to generate import names of top-level awaits promise in each chunk module
+                      promiseImportName: (i: number): string => `__tla_${i}`,
+                  }),
+              ]
+            : []),
         react(),
         commonjs(),
     ],
@@ -89,6 +94,6 @@ const config = {
             },
         },
     },
-};
+});
 
 export default config;
