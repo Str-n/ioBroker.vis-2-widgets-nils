@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { IconButton } from '@mui/material';
+import { Fab } from '@mui/material';
 import {
     FlashOn,
     FlashOff,
@@ -39,14 +39,14 @@ const MATERIAL_ICON_MAP: Record<string, React.ElementType> = {
 
 interface SwitchButtonRxData {
     oid: string;
-    'icon-on': string;
-    'icon-off': string;
-    color: string;
-    colorOn: string;
-    colorOff: string;
-    background: string;
-    backgroundOn: string;
-    backgroundOff: string;
+    'icon-on'?: string;
+    'icon-off'?: string;
+    color?: string;
+    colorOn?: string;
+    colorOff?: string;
+    background?: string;
+    backgroundOn?: string;
+    backgroundOff?: string;
     readOnly: boolean | 'true';
 }
 
@@ -100,37 +100,31 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                             name: 'color',
                             type: 'color',
                             label: 'switch_button_color',
-                            default: '#9e9e9e',
                         },
                         {
                             name: 'colorOn',
                             type: 'color',
                             label: 'switch_button_color_on',
-                            default: '#4caf50',
                         },
                         {
                             name: 'colorOff',
                             type: 'color',
                             label: 'switch_button_color_off',
-                            default: '#9e9e9e',
                         },
                         {
                             name: 'background',
                             type: 'color',
                             label: 'switch_button_background',
-                            default: '#00000000',
                         },
                         {
                             name: 'backgroundOn',
                             type: 'color',
                             label: 'switch_button_background_on',
-                            default: '#4caf5033',
                         },
                         {
                             name: 'backgroundOff',
                             type: 'color',
                             label: 'switch_button_background_off',
-                            default: '#9e9e9e33',
                         },
                         {
                             name: 'readOnly',
@@ -201,12 +195,12 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         return !isOn;
     }
 
-    private getIconElement(iconName: string | undefined, color: string): React.JSX.Element {
+    private getIconElement(iconName: string | undefined): React.JSX.Element {
         const MaterialIcon = getIconFromName(iconName);
 
         if (MaterialIcon) {
             const IconComponent = MaterialIcon;
-            return <IconComponent style={{ width: '70%', height: '70%', color }} />;
+            return <IconComponent style={{ width: '70%', height: '70%' }} />;
         }
 
         const src = iconName || 'power';
@@ -216,7 +210,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                 style={{
                     width: '70%',
                     height: '70%',
-                    color,
+                    color: 'currentColor',
                 }}
             />
         );
@@ -238,18 +232,16 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         const rawValue = this.state.values[`${oid}.val`];
         const isOn = this.isOn(rawValue);
         const iconName = isOn ? this.state.rxData['icon-on'] : this.state.rxData['icon-off'];
-        const baseColor = this.state.rxData.color || '#9e9e9e';
-        const color = isOn ? this.state.rxData.colorOn || baseColor : this.state.rxData.colorOff || baseColor;
-        const background = isOn
-            ? this.state.rxData.backgroundOn || this.state.rxData.background || '#4caf5033'
-            : this.state.rxData.backgroundOff || this.state.rxData.background || '#9e9e9e33';
+        const color = (isOn ? this.state.rxData.colorOn : this.state.rxData.colorOff) || this.state.rxData.color;
+        const background =
+            (isOn ? this.state.rxData.backgroundOn : this.state.rxData.backgroundOff) || this.state.rxData.background;
 
         const disabled = this.state.rxData.readOnly === true || this.state.rxData.readOnly === 'true';
 
         return (
-            <IconButton
+            <Fab
                 size="small"
-                color="primary"
+                color={isOn ? 'primary' : 'default'}
                 disabled={disabled}
                 onClick={e => {
                     e.stopPropagation();
@@ -257,27 +249,20 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                         this.props.context.setValue(oid, this.getNextValue(rawValue));
                     }
                 }}
-                style={{
+                sx={{
                     width: '100%',
                     height: '100%',
                     minWidth: 0,
                     minHeight: 0,
-                    borderRadius: '50%',
-                    background,
-                    color,
-                    boxShadow: isOn
-                        ? `2px 4px 10px color-mix(in srgb, ${color} 35%, transparent)`
-                        : `2px 4px 10px color-mix(in srgb, ${color} 35%, transparent)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    ...(background ? { backgroundColor: background } : {}),
+                    ...(background ? { '&:hover': { backgroundColor: background } } : {}),
+                    ...(color ? { color } : {}),
                     padding: 0,
-                    transition: 'all 0.2s ease',
                 }}
                 aria-label={isOn ? 'on' : 'off'}
             >
-                {this.getIconElement(iconName, color)}
-            </IconButton>
+                {this.getIconElement(iconName)}
+            </Fab>
         );
     }
 }
