@@ -187,7 +187,8 @@
           "ThemeSwitcher",
           "Vacuum",
           "WasherDryer",
-          "Wizard"
+          "Wizard",
+          "EnergyGame"
         ]
       }
     },

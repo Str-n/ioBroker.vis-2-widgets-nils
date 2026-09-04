@@ -47,7 +47,7 @@ const styles: Record<string, CSSProperties> = {
         width: '46%',
         maxHeight: '42%',
         background:
-            'repeating-linear-gradient(to bottom, rgba(222, 232, 239, 0.9) 0 3px, rgba(91, 111, 124, 0.9) 3px 4px)',
+            'repeating-linear-gradient(to bottom, rgba(222, 232, 239, 0.9) 0 3px, rgba(194, 210, 221, 0.9) 3px 4px)',
         boxShadow: '0 0 0 1px rgba(30, 49, 61, 0.25)',
         transition: 'height 0.25s ease',
     },

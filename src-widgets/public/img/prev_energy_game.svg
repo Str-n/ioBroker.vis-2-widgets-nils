@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160">
+  <rect x="4" y="4" width="232" height="152" rx="12" fill="#1f2530"/>
+  <text x="120" y="26" fill="#9aa4b2" font-family="Roboto,Arial,sans-serif" font-size="9" letter-spacing="2" text-anchor="middle">ENERGY SAVER</text>
+  <path d="M121 36 113 48h6l-1 8 8-12h-6l1-8z" fill="#4fd6ff"/>
+  <text x="120" y="96" fill="#f5f7fa" font-family="Roboto,Arial,sans-serif" font-size="46" font-weight="800" text-anchor="middle">18</text>
+  <text x="120" y="110" fill="#4fd6ff" font-family="Roboto,Arial,sans-serif" font-size="8" letter-spacing="2" text-anchor="middle">TODAY</text>
+  <text x="28" y="136" fill="#f5f7fa" font-family="Roboto,Arial,sans-serif" font-size="16" font-weight="700">2,847</text>
+  <text x="28" y="148" fill="#9aa4b2" font-family="Roboto,Arial,sans-serif" font-size="7" letter-spacing="2">ALL TIME</text>
+  <rect x="150" y="118" width="70" height="34" rx="8" fill="none" stroke="#ffc857" stroke-opacity=".5"/>
+  <path d="M170 124h8v1.5h2.5v2.5a4 4 0 0 1-3.3 3.9 4 4 0 0 1-2.2 2.3V136h2.4v1.6h-6.8V136h2.4v-1.8a4 4 0 0 1-2.2-2.3 4 4 0 0 1-3.3-3.9v-2.5h2.5z" fill="#ffc857"/>
+  <text x="214" y="136" fill="#ffc857" font-family="Roboto,Arial,sans-serif" font-size="16" font-weight="700" text-anchor="end">27</text>
+  <text x="214" y="148" fill="#9aa4b2" font-family="Roboto,Arial,sans-serif" font-size="7" letter-spacing="2" text-anchor="end">RECORD</text>
+</svg>

@@ -37,6 +37,7 @@ const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
                           './Lock': './src/Lock',
                           './Vacuum': './src/Vacuum',
                           './Navigate': './src/Navigate',
+                          './EnergyGame': './src/EnergyGame',
                           './translations': './src/translations.js',
                       },
                       remotes: {},

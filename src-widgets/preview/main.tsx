@@ -42,8 +42,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'),
+const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -105,6 +105,10 @@ function App(): React.JSX.Element {
                 oid: 'preview.blinds.position', oid_stop: '', showValue: true, min: '0', max: '100', invert: false,
                 externalDialog: false, timeout: 0, slideSensor_oid1: '', slideRatio1: 1, slidePos_oid1: '', slideHandle_oid1: '', slideType1: '',
             } }} /></article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Energy game</h2><p>Exercise the score states, event animations, record celebration, and reduced-motion mode.</p></div></div>
+            <article className="thermostat-card"><EnergyGamePreview /></article>
         </section>
     </main>;
 }
