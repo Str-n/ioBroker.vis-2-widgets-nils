@@ -191,6 +191,7 @@
           "RGBLight",
           "SimpleState",
           "ViewInWidget",
+          "StackCardCarousel",
           "Camera",
           "Security",
           "Player",

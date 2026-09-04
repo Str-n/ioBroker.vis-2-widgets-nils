@@ -32,6 +32,19 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
     renderWidgetBody(_props: Record<string, unknown>): React.ReactNode { return null; }
     formatValue(value: unknown): string { return value == null ? '' : String(value); }
     wrapContent(content: React.ReactNode): React.ReactNode { return content; }
+    getWidgetView(view: string, options?: { style?: React.CSSProperties }): React.ReactNode {
+        const samples: Record<string, { eyebrow: string; title: string; value: string; color: string }> = {
+            climate: { eyebrow: 'Living room', title: 'Climate', value: '21.5 °C', color: '#5b8cff' },
+            energy: { eyebrow: 'Today', title: 'Solar energy', value: '8.4 kWh', color: '#f5b942' },
+            security: { eyebrow: 'Home', title: 'Security', value: 'All secure', color: '#49c67a' },
+        };
+        const sample = samples[view] || { eyebrow: 'View', title: view, value: '', color: '#5b8cff' };
+        return <div className="mock-view" style={options?.style}>
+            <span style={{ color: sample.color }}>{sample.eyebrow}</span>
+            <strong>{sample.title}</strong>
+            <b>{sample.value}</b>
+        </div>;
+    }
 
     render(): React.ReactNode {
         const widget = { data: this.state.rxData, style: this.state.style, usedInWidget: false };
@@ -42,8 +55,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'),
+const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -120,6 +133,12 @@ function App(): React.JSX.Element {
         <section>
             <div className="section-heading"><div><h2>Energy game</h2><p>Exercise the score states, event animations, record celebration, and reduced-motion mode.</p></div></div>
             <article className="thermostat-card"><EnergyGamePreview /></article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Stack card carousel</h2><p>Swipe the card or use the controls to move between embedded views.</p></div></div>
+            <article className="thermostat-card carousel-preview"><StackCardCarousel {...commonProps as any} id="stack-card-carousel" customSettings={{ values, style: { width: 420, height: 320 }, rxData: {
+                count: 3, view1: 'climate', view2: 'energy', view3: 'security',
+            } }} /></article>
         </section>
     </main>;
 }

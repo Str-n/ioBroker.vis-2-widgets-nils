@@ -19,4 +19,9 @@ section { margin-top: 26px; padding: 24px; background: rgba(20,25,35,.86); borde
 .preview-card code { font-size: 11px; }
 .widget-surface { position: relative; display: inline-block; overflow: visible; }
 .thermostat-card { min-height: 110px; display: grid; place-items: center; background: #0e131c; border: 1px solid #252d3d; border-radius: 13px; }
+.carousel-preview { min-height: 370px; overflow: auto; }
+.mock-view { display: flex; flex-direction: column; justify-content: center; padding: 34px; background: linear-gradient(145deg, #1b2230, #10151f); }
+.mock-view span { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.mock-view strong { margin-top: 8px; font-size: 28px; }
+.mock-view b { margin-top: 28px; font-size: 36px; font-weight: 500; }
 @media (max-width: 560px) { main { padding-top: 38px; } section { padding: 17px; } .section-heading { align-items: flex-start; flex-direction: column; } }

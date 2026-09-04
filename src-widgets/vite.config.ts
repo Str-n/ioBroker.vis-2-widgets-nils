@@ -25,6 +25,7 @@ const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
                           './Blinds': './src/Blinds',
                           './Clock': './src/Clock',
                           './ViewInWidget': './src/ViewInWidget',
+                          './StackCardCarousel': './src/StackCardCarousel',
                           './Camera': './src/Camera',
                           './Security': './src/Security',
                           './Player': './src/Player',

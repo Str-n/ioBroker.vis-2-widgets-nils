@@ -10,6 +10,8 @@ BLINDS_WIDGET_ID="tplNils2Blinds"
 BLINDS_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/Blinds.tsx"
 ENERGY_GAME_WIDGET_ID="tplNils2EnergyGame"
 ENERGY_GAME_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/EnergyGame.tsx"
+STACK_CARD_CAROUSEL_WIDGET_ID="tplNils2StackCardCarousel"
+STACK_CARD_CAROUSEL_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/StackCardCarousel.tsx"
 PREVIEW_SOURCE="${ROOT_DIR}/src-widgets/preview/main.tsx"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -17,7 +19,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo ""
     echo "Usage: ./scripts/setup-local-test.sh"
     echo ""
-    echo "This script validates and previews SwitchButton, ThermostatCompact, Blinds, and EnergyGame with local mock states."
+    echo "This script validates and previews SwitchButton, ThermostatCompact, Blinds, EnergyGame, and StackCardCarousel with local mock states."
     echo "Open: http://localhost:4174/test-dashboard.html"
     exit 0
 fi
@@ -74,6 +76,16 @@ if ! grep -Fq "import('../src/dev/EnergyGamePreview')" "${PREVIEW_SOURCE}"; then
     exit 1
 fi
 
+if ! grep -Fq "id: '${STACK_CARD_CAROUSEL_WIDGET_ID}'" "${STACK_CARD_CAROUSEL_WIDGET_SOURCE}"; then
+    echo "StackCardCarousel must keep the widget ID ${STACK_CARD_CAROUSEL_WIDGET_ID}." >&2
+    exit 1
+fi
+
+if ! grep -Fq "import('../src/StackCardCarousel')" "${PREVIEW_SOURCE}"; then
+    echo "StackCardCarousel is missing from the local test dashboard." >&2
+    exit 1
+fi
+
 if [[ ! -d "${ROOT_DIR}/node_modules" ]]; then
     echo "Installing root dependencies..."
     (cd "${ROOT_DIR}" && npm install)
@@ -91,7 +103,7 @@ Local widget test environment
 ========================================
 Project root: ${ROOT_DIR}
 Dashboard URL: http://localhost:4174/test-dashboard.html
-Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including brightness/temperature controls), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID})
+Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including brightness/temperature controls), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID}), StackCardCarousel (${STACK_CARD_CAROUSEL_WIDGET_ID})
 
 This environment starts the Vite dev server for quick widget checks before deployment to the Raspberry Pi.
 Press Ctrl+C to stop the server.
