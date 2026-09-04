@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "vis-2-widgets-nils-fork",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "news": {
+      "1.7.1": {
+        "en": "Added the EnergyGame widget",
+        "de": "EnergyGame-Widget hinzugefügt",
+        "ru": "Добавлен виджет EnergyGame",
+        "pt": "Adicionado o widget EnergyGame",
+        "nl": "EnergyGame-widget toegevoegd",
+        "fr": "Widget EnergyGame ajouté",
+        "it": "Aggiunto il widget EnergyGame",
+        "es": "Se añadió el widget EnergyGame",
+        "pl": "Dodano widżet EnergyGame",
+        "uk": "Додано віджет EnergyGame",
+        "zh-cn": "添加了 EnergyGame 小部件"
+      },
       "1.7.0": {
         "en": "Customized by Nils",
         "de": "Angepasst von Nils",

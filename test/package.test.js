@@ -11,6 +11,7 @@ const thermostatCompactSource = fs.readFileSync(
 );
 const viteConfig = fs.readFileSync(path.join(__dirname, '../src-widgets/vite.config.ts'), 'utf8');
 const ioPackage = fs.readFileSync(path.join(__dirname, '../io-package.json'), 'utf8');
+const energyGameSource = fs.readFileSync(path.join(__dirname, '../src-widgets/src/EnergyGame.tsx'), 'utf8');
 
 describe('compact thermostat widget', () => {
     it('should provide a compact thermostat widget template and palette entry', () => {
@@ -22,6 +23,23 @@ describe('compact thermostat widget', () => {
         }
         if (!ioPackage.includes('"ThermostatCompact"')) {
             throw new Error('Compact thermostat is not registered in the widget palette');
+        }
+    });
+});
+
+describe('energy game widget', () => {
+    it('should be registered in the palette and exposed for module federation', () => {
+        const ioPackageJson = JSON.parse(ioPackage);
+        const components = ioPackageJson.common.visWidgets.vis2nilsForkWidgets.components;
+
+        if (!components.includes('EnergyGame')) {
+            throw new Error('EnergyGame is missing from the widget palette registration');
+        }
+        if (!viteConfig.includes("'./EnergyGame': './src/EnergyGame'")) {
+            throw new Error('EnergyGame widget is not exposed for module federation');
+        }
+        if (!energyGameSource.includes("id: 'tplNils2EnergyGame'")) {
+            throw new Error('EnergyGame template ID is missing');
         }
     });
 });

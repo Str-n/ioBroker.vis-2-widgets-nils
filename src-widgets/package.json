@@ -1,7 +1,7 @@
 {
     "name": "iobroker.vis-2-widgets-nils-fork",
     "private": true,
-    "version": "1.7.0",
+    "version": "1.7.1",
     "type": "module",
     "dependencies": {
         "@hello-pangea/dnd": "^18.0.1",
