@@ -124,6 +124,7 @@
   "colorEnabled": "Активный цвет",
   "color_active": "Активный цвет",
   "color_temperature": "Цветовая температура",
+  "color_temperature_scale": "Масштаб цветовой температуры",
   "color_temperature_max": "Максимальная цветовая температура",
   "color_temperature_min": "Минимальная цветовая температура",
   "controlTimeout": "Задержка управления",

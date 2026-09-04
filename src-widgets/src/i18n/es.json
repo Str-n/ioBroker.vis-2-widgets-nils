@@ -124,6 +124,7 @@
   "colorEnabled": "Color activo",
   "color_active": "color activo",
   "color_temperature": "Temperatura del color",
+  "color_temperature_scale": "Escala de temperatura de color",
   "color_temperature_max": "Temperatura de color máxima",
   "color_temperature_min": "Temperatura de color mínima",
   "controlTimeout": "Retardo de control",

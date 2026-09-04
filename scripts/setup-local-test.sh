@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SWITCH_WIDGET_ID="tplNils2SwitchButton"
+SWITCH_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/SwitchButton.tsx"
 COMPACT_WIDGET_ID="tplNils2ThermostatCompact"
 COMPACT_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/ThermostatCompact.tsx"
 BLINDS_WIDGET_ID="tplNils2Blinds"
@@ -27,6 +29,18 @@ fi
 
 if ! command -v npm >/dev/null 2>&1; then
     echo "npm is required but not installed." >&2
+    exit 1
+fi
+
+if ! grep -Fq "id: '${SWITCH_WIDGET_ID}'" "${SWITCH_WIDGET_SOURCE}"; then
+    echo "SwitchButton must keep the persisted widget ID ${SWITCH_WIDGET_ID}." >&2
+    exit 1
+fi
+
+if ! grep -Fq "brightness: 'preview.light.brightness'" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "color_temperature: 'preview.light.temperature'" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "color_temperature_scale: 10" "${PREVIEW_SOURCE}"; then
+    echo "The parameterized SwitchButton light controls are missing from the local test dashboard." >&2
     exit 1
 fi
 
@@ -77,7 +91,7 @@ Local widget test environment
 ========================================
 Project root: ${ROOT_DIR}
 Dashboard URL: http://localhost:4174/test-dashboard.html
-Widgets: SwitchButton, ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID})
+Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including brightness/temperature controls), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID})
 
 This environment starts the Vite dev server for quick widget checks before deployment to the Raspberry Pi.
 Press Ctrl+C to stop the server.

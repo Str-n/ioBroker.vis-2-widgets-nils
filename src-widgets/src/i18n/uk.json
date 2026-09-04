@@ -124,6 +124,7 @@
   "colorEnabled": "Активний колір",
   "color_active": "Активний колір",
   "color_temperature": "Колірна температура",
+  "color_temperature_scale": "Масштаб колірної температури",
   "color_temperature_max": "Максимальна колірна температура",
   "color_temperature_min": "Мінімальна колірна температура",
   "controlTimeout": "Контрольна затримка",

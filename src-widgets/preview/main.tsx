@@ -47,6 +47,8 @@ const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Bli
 ]);
 
 const objects: Record<string, Record<string, any>> = {
+    'preview.light.brightness': { _id: 'preview.light.brightness', type: 'state', common: { type: 'number', min: 0, max: 100, step: 1, unit: '%' } },
+    'preview.light.temperature': { _id: 'preview.light.temperature', type: 'state', common: { type: 'number', min: 220, max: 650, step: 5, unit: 'K' } },
     'preview.temperature.set': { _id: 'preview.temperature.set', type: 'state', common: { type: 'number', min: 12, max: 30, step: 0.5, unit: '°C' } },
     'preview.temperature.actual': { _id: 'preview.temperature.actual', type: 'state', common: { type: 'number', unit: '°C' } },
     'preview.humidity': { _id: 'preview.humidity', type: 'state', common: { type: 'number', unit: '%' } },
@@ -54,7 +56,7 @@ const objects: Record<string, Record<string, any>> = {
 };
 
 function App(): React.JSX.Element {
-    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35 };
+    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35 };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -81,7 +83,7 @@ function App(): React.JSX.Element {
     return <main>
         <header><span className="eyebrow">Local source preview</span><h1>Material widgets</h1><p>Edit <code>src-widgets/src</code> and this page refreshes immediately. These controls use local mock ioBroker states.</p></header>
         <section>
-            <div className="section-heading"><div><h2>Switch buttons</h2><p>Click a button to toggle its mock value.</p></div><button className="reset" onClick={() => setValues(initialValues)}>Reset states</button></div>
+            <div className="section-heading"><div><h2>Switch buttons</h2><p>Click a button to toggle it. Long-press the light control to open its sliders.</p></div><button className="reset" onClick={() => setValues(initialValues)}>Reset states</button></div>
             <div className="button-grid">{buttons.map(([title, oid, iconOn, iconOff, colorOn, readOnly], index) =>
                 <article className="preview-card" key={oid}>
                     <SwitchButton {...commonProps as any} id={`switch-${index}`} customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
@@ -89,7 +91,16 @@ function App(): React.JSX.Element {
                         background: 'transparent', backgroundOn: `${colorOn}28`, backgroundOff: '#64748b24', readOnly,
                     } }} />
                     <strong>{title}</strong><code>{String(values[`${oid}.val`])}</code>
-                </article>)}</div>
+                </article>)}
+                <article className="preview-card">
+                    <SwitchButton {...commonProps as any} id="switch-light-controls" customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
+                        oid: 'preview.light', brightness: 'preview.light.brightness', color_temperature: 'preview.light.temperature', color_temperature_scale: 10,
+                        'icon-on': 'lightbulb', 'icon-off': 'lightbulb-outlined', color: '#94a3b8', colorOn: '#fbbf24', colorOff: '#8a96a8',
+                        background: 'transparent', backgroundOn: '#fbbf2428', backgroundOff: '#64748b24', readOnly: false,
+                    } }} />
+                    <strong>Light controls</strong><code>{String(values['preview.light.val'])} · {values['preview.light.brightness.val']}% · {values['preview.light.temperature.val'] * 10}K</code>
+                </article>
+            </div>
         </section>
         <section>
             <div className="section-heading"><div><h2>Compact thermostat button</h2><p>The real compact widget, backed by local temperature data.</p></div></div>

@@ -124,6 +124,7 @@
   "colorEnabled": "Actieve kleur",
   "color_active": "Actieve kleur",
   "color_temperature": "Kleurtemperatuur",
+  "color_temperature_scale": "Schaal kleurtemperatuur",
   "color_temperature_max": "Maximale kleurtemperatuur",
   "color_temperature_min": "Minimale kleurtemperatuur",
   "controlTimeout": "Controle vertraging",
