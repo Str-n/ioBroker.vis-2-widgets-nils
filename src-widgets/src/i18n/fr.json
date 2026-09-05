@@ -470,6 +470,7 @@
   "eg_animations": "Animations",
   "eg_show_light_names": "Afficher les noms des lumières",
   "eg_record_sparkles": "Effets de record persistants",
+  "eg_effect_at_last_click": "Afficher l'effet au dernier clic",
   "eg_compact": "Mode compact",
   "eg_accent_color": "Couleur d'accent",
   "eg_energy_saver": "Économiseur d'énergie",

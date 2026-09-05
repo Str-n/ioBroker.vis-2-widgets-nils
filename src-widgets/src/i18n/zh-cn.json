@@ -470,6 +470,7 @@
   "eg_animations": "动画",
   "eg_show_light_names": "显示灯名称",
   "eg_record_sparkles": "持续记录效果",
+  "eg_effect_at_last_click": "在上次点击位置显示效果",
   "eg_compact": "紧凑模式",
   "eg_accent_color": "强调色",
   "eg_energy_saver": "节能者",

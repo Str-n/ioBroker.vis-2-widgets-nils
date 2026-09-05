@@ -1,6 +1,8 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 import {
+    type ClickPosition,
     EVENT_DURATION_MS,
     SPARK_COUNT,
     formatScore,
@@ -43,6 +45,7 @@ export interface EnergyGameViewProps {
     lang: string;
     width: number;
     height: number;
+    eventPosition?: ClickPosition | null;
     t: (key: string, ...args: (string | number)[]) => string;
 }
 
@@ -161,11 +164,13 @@ function EventOverlay({
     dailyText,
     props,
     base,
+    position,
 }: {
     event: VisualEvent;
     dailyText: string;
     props: EnergyGameViewProps;
     base: number;
+    position?: ClickPosition | null;
 }): React.JSX.Element {
     const duration = `${EVENT_DURATION_MS[event.kind]}ms`;
     const record = event.kind === 'NEW_RECORD';
@@ -193,7 +198,24 @@ function EventOverlay({
         <div
             className="nils-eg-overlay"
             aria-hidden="true"
-            style={{ '--dur': duration } as React.CSSProperties}
+            style={
+                {
+                    '--dur': duration,
+                    ...(position
+                        ? {
+                              position: 'fixed',
+                              inset: 'auto',
+                              left: position.x,
+                              top: position.y,
+                              width: Math.min(Math.max(base * 1.1, 240), 480),
+                              height: Math.min(Math.max(base * 0.8, 180), 360),
+                              transform: 'translate(-50%, -50%)',
+                              zIndex: 2147483647,
+                              overflow: 'visible',
+                          }
+                        : {}),
+                } as React.CSSProperties
+            }
         >
             {record && (
                 <span
@@ -394,6 +416,20 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
     const padding = compact ? 8 : clamp(base * 0.035, 10, 20);
     const dailyText = formatScore(props.daily, props.lang);
     const event = props.animationsEnabled ? props.activeEvent : null;
+    const eventOverlay = event ? (
+        <EventOverlay
+            key={event.sequence}
+            event={event}
+            dailyText={dailyText}
+            props={props}
+            base={base}
+            position={props.eventPosition}
+        />
+    ) : null;
+    const globalEventOverlay =
+        event && props.eventPosition && typeof document !== 'undefined' && document.body
+            ? createPortal(eventOverlay, document.body, `nils-eg-event-${event.sequence}`)
+            : null;
     const recordTitle = props.recordBrokenAt
         ? new Date(props.recordBrokenAt).toLocaleTimeString(props.lang || undefined)
         : undefined;
@@ -552,15 +588,8 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     </div>
                 </div>
             </div>
-            {event && (
-                <EventOverlay
-                    key={event.sequence}
-                    event={event}
-                    dailyText={dailyText}
-                    props={props}
-                    base={base}
-                />
-            )}
+            {!props.eventPosition && eventOverlay}
+            {globalEventOverlay}
         </div>
     );
 }

@@ -17,6 +17,7 @@ import {
     parseSequence,
     prefersReducedMotion,
     resolveEventTransition,
+    type ClickPosition,
     type VisualEvent,
 } from './EnergyGameUtils';
 
@@ -42,6 +43,7 @@ interface EnergyGameRxData {
     animations: boolean;
     show_light_names: boolean;
     record_sparkles: boolean;
+    effect_at_last_click: boolean;
     compact: boolean;
     accent_color: string;
 }
@@ -68,6 +70,8 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
     private readonly rootRef = React.createRef<HTMLDivElement>();
     private unmounted = false;
     private wasConnected: boolean | null = null;
+    private lastClickPosition: ClickPosition | null = null;
+    private clickTrackingEnabled = false;
 
     constructor(props: VisRxWidgetProps) {
         super(props);
@@ -167,6 +171,12 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                         { name: 'animations', type: 'checkbox', label: 'eg_animations', default: true },
                         { name: 'show_light_names', type: 'checkbox', label: 'eg_show_light_names', default: true },
                         { name: 'record_sparkles', type: 'checkbox', label: 'eg_record_sparkles', default: true },
+                        {
+                            name: 'effect_at_last_click',
+                            type: 'checkbox',
+                            label: 'eg_effect_at_last_click',
+                            default: false,
+                        },
                         { name: 'compact', type: 'checkbox', label: 'eg_compact', default: false },
                     ],
                 },
@@ -217,6 +227,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
         if (socket?.registerConnectionHandler) {
             socket.registerConnectionHandler(this.onConnectionChange);
         }
+        this.updateClickTracking();
         this.checkSequence();
     }
 
@@ -229,12 +240,14 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
             this.tracker.reset();
             this.cancelTransient();
         }
+        this.updateClickTracking();
         this.checkSequence();
     }
 
     componentWillUnmount(): void {
         this.unmounted = true;
         this.cancelTransient();
+        this.updateClickTracking(false);
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
         if (this.motionQuery) {
@@ -309,6 +322,27 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
         this.wasConnected = connected;
     };
 
+    private readonly onDocumentClick = (event: MouseEvent): void => {
+        if (!this.clickTrackingEnabled || this.unmounted) {
+            return;
+        }
+        this.lastClickPosition = { x: event.clientX, y: event.clientY };
+    };
+
+    private updateClickTracking(force?: boolean): void {
+        const enabled = force ?? parseBoolean(this.state.rxData?.effect_at_last_click);
+        if (enabled === this.clickTrackingEnabled || typeof document === 'undefined') {
+            return;
+        }
+        if (enabled) {
+            document.addEventListener('click', this.onDocumentClick, true);
+        } else {
+            document.removeEventListener('click', this.onDocumentClick, true);
+            this.lastClickPosition = null;
+        }
+        this.clickTrackingEnabled = enabled;
+    }
+
     private checkSequence(): void {
         const decision = this.tracker.observe(parseSequence(this.readValue('oid_seq')));
         if (
@@ -353,6 +387,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
             lightCount,
             lightNames,
             receivedAt: Date.now(),
+            clickPosition: this.lastClickPosition ? { ...this.lastClickPosition } : undefined,
         });
     }
 
@@ -402,6 +437,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
         super.renderWidgetBody(props);
         const rx = this.state.rxData;
         const inEditor = !!(this.props as any).editMode;
+        const effectAtLastClick = parseBoolean(rx.effect_at_last_click);
         const content = (
             <div
                 ref={this.rootRef}
@@ -431,6 +467,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                     lang={String((this.props as any).context?.lang || Generic.getLanguage() || 'en')}
                     width={this.state.size.width}
                     height={this.state.size.height}
+                    eventPosition={effectAtLastClick && !inEditor ? this.state.activeEvent?.clickPosition : null}
                     t={tr}
                 />
             </div>

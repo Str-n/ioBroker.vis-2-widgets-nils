@@ -9,6 +9,12 @@ export interface VisualEvent {
     lightCount: number | null;
     lightNames: string[];
     receivedAt: number;
+    clickPosition?: ClickPosition;
+}
+
+export interface ClickPosition {
+    x: number;
+    y: number;
 }
 
 export const EVENT_DURATION_MS: Record<EventKind, number> = {
