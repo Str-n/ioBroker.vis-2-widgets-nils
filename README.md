@@ -9,6 +9,37 @@
 
 ## Widgets
 
+### Home Screen Fullscreen
+
+Add **Home Screen Fullscreen** to the **EG** view, save, then open
+`http://192.168.178.40:8082/vis-2/index.html#EG` in the device browser and wait for
+the dashboard to load before adding it to the home screen. Remove an existing
+shortcut and add it again to pick up the new installation settings. On iOS, use
+Safari's Share → Add to Home Screen (enable **Open as Web App** if offered).
+On Android, use Chrome's Add to Home screen / Install app menu.
+
+The widget is visible only in the editor and has no runtime DOM or touch area.
+It injects mobile web-app meta tags and replaces the page's manifest link with
+the bundled `home-screen.webmanifest`. These settings remain until page reload,
+even when navigating to another view. The manifest launches `index.html#EG` on
+the current server, requests Android fullscreen, and allows iOS to use standalone
+mode. iOS may retain the system status bar; a widget cannot force it away.
+
+Chrome's normal install promotion requires HTTPS; the HTTP LAN URL may create a
+regular browser shortcut instead. Use a trusted HTTPS endpoint for reliable app
+installation. Browser support for metadata injected after page load varies. If
+installation ignores it, the same manifest link and mobile meta tags must be
+included in the host vis-2 HTML head before load. No widget can bypass these
+browser restrictions. This widget does not provide offline operation.
+
+The launch view and app name are defined in
+`src-widgets/public/home-screen.webmanifest`; rebuild and reinstall the home-screen
+app after changing them. Build with `npm run build` and deploy the widget package
+using your usual ioBroker workflow before adding the widget in vis-2.
+
+References: [Apple web-app configuration](https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html),
+[Chrome installation criteria](https://web.dev/articles/install-criteria).
+
 For a standalone, hot-reloading preview of the button widgets, run `npm run preview:widgets` and open
 <http://localhost:4174/test-dashboard.html>. It uses mock ioBroker values and does not require a deployment.
 

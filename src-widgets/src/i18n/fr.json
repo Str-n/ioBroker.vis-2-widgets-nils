@@ -482,5 +482,6 @@
   "eg_combo": "Combo",
   "eg_energy_combo": "Combo d'énergie",
   "eg_lights_saved": "%s lumières économisées",
-  "eg_score_unavailable": "Score indisponible"
+  "eg_score_unavailable": "Score indisponible",
+  "home_screen_fullscreen": "Home Screen Fullscreen"
 }

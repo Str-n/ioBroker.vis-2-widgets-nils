@@ -1,0 +1,11 @@
+{
+    "id": "../../index.html#EG",
+    "name": "Home",
+    "short_name": "Home",
+    "start_url": "../../index.html#EG",
+    "scope": "../../",
+    "display": "fullscreen",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [{ "src": "img/home-screen.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

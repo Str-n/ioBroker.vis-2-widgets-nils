@@ -482,5 +482,6 @@
   "eg_combo": "Комбо",
   "eg_energy_combo": "Энергетическое комбо",
   "eg_lights_saved": "Сэкономлено ламп: %s",
-  "eg_score_unavailable": "Очки недоступны"
+  "eg_score_unavailable": "Очки недоступны",
+  "home_screen_fullscreen": "Home Screen Fullscreen"
 }

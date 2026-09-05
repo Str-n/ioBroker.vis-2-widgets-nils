@@ -199,11 +199,12 @@
           "Navigate",
           "Html",
           "ThemeSwitcher",
+          "HomeScreenFullscreen",
           "Vacuum",
           "WasherDryer",
           "Wizard",
           "EnergyGame",
-          "WeatherUtils"
+          "Weather"
         ]
       }
     },

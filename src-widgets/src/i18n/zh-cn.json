@@ -482,5 +482,6 @@
   "eg_combo": "连击",
   "eg_energy_combo": "能量连击",
   "eg_lights_saved": "已节省 %s 盏灯",
-  "eg_score_unavailable": "分数不可用"
+  "eg_score_unavailable": "分数不可用",
+  "home_screen_fullscreen": "Home Screen Fullscreen"
 }

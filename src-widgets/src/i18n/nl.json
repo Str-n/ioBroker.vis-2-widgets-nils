@@ -482,5 +482,6 @@
   "eg_combo": "Combo",
   "eg_energy_combo": "Energiecombo",
   "eg_lights_saved": "%s lampen bespaard",
-  "eg_score_unavailable": "Score niet beschikbaar"
+  "eg_score_unavailable": "Score niet beschikbaar",
+  "home_screen_fullscreen": "Home Screen Fullscreen"
 }

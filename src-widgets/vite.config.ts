@@ -32,6 +32,7 @@ const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
                           './Map': './src/Map',
                           './Html': './src/Html',
                           './ThemeSwitcher': './src/ThemeSwitcher',
+                          './HomeScreenFullscreen': './src/HomeScreenFullscreen',
                           './WasherDryer': './src/WasherDryer',
                           './Wizard': './src/Wizard',
                           './RGBLight': './src/RGBLight',

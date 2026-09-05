@@ -482,5 +482,6 @@
   "eg_combo": "Комбо",
   "eg_energy_combo": "Енергетичне комбо",
   "eg_lights_saved": "Збережено ламп: %s",
-  "eg_score_unavailable": "Бали недоступні"
+  "eg_score_unavailable": "Бали недоступні",
+  "home_screen_fullscreen": "Home Screen Fullscreen"
 }

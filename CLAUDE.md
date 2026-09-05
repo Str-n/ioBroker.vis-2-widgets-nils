@@ -31,7 +31,7 @@ cd src-widgets && npm start   # Vite dev server on port 4173, proxies to ioBroke
 1. Deletes `src-widgets/build/` and `widgets/`
 2. `npm install` in `src-widgets/`
 3. `tsc && vite build` via `@iobroker/build-tools`
-4. Copies build output to `widgets/vis-2-widgets-nils/`
+4. Copies build output to `widgets/vis-2-widgets-nils-fork/`
    - Patches echarts/zrender SVG renderer bug: injects `isFunction` definition before its first use in `installSVGRenderer` chunks
 
 ## Widget Architecture
@@ -40,28 +40,37 @@ cd src-widgets && npm start   # Vite dev server on port 4173, proxies to ioBroke
 
 All widgets extend `Generic<RxData, State>` which inherits from `window.visRxWidget` (provided by vis-2 runtime). Provides:
 - `getPropertyValue(stateName)` — reads reactive state values
-- `getI18nPrefix()` — returns `'vis_2_widgets_material_'` (auto-prepended to all i18n keys)
+- `getI18nPrefix()` — returns `'vis_2_widgets_nils_'` (auto-prepended to all i18n keys)
 - `getHistoryInstance()` — detects history/sql/influxdb adapters
 - `getObjectIcon()` / `getParentObject()` — ioBroker object helpers
 
 ### Widget Registration Pattern
 
-Each widget file exports a class with:
-1. `static getWidgetInfo(): RxWidgetInfo` — declares widget ID (e.g. `'tplMaterial2Actual'`), metadata, and configuration fields grouped in tabs
-2. `render()` — React JSX with Material-UI components
-3. State access via `this.state.values`, config via `this.state.rxData`, socket via `this.props.context.socket`
+Use `src-widgets/src/SwitchButton.tsx` as the working reference for editor palette registration. Each widget file default-exports a class extending `Generic` with:
+
+1. `static getWidgetInfo(): RxWidgetInfo` — declares a unique persisted widget ID (e.g. `'tplNils2SwitchButton'`), `visSet: 'vis-2-widgets-nils-fork'`, `visName`, `visWidgetLabel`, `visAttrs`, `visDefaultStyle`, and `visPrev`
+2. Instance `getWidgetInfo()` — returns the class's static `getWidgetInfo()` result
+3. `renderWidgetBody(props)` — calls `super.renderWidgetBody(props)` and renders the widget content; the inherited `render()` supplies the widget container
+4. State access via `this.state.values`, config via `this.state.rxData`, socket via `this.props.context.socket`
+
+Keep existing widget IDs unchanged: saved dashboards refer to them. Invisible runtime widgets should still show a placeholder in edit mode; see `HomeScreenFullscreen.tsx` for an example.
 
 ### Module Federation (vite.config.ts)
 
-Federation name: `vis2nilsWidgets`, entry: `customWidgets.js`. Exposes 19 widget modules + translations. Shared dependencies managed by `@iobroker/types-vis-2/modulefederation.vis.config`.
+Federation name: `vis2nilsForkWidgets`, entry: `customWidgets.js`. Exposes widget modules + translations. Shared dependencies managed by `@iobroker/types-vis-2/modulefederation.vis.config`.
 
 ### Adding a New Widget
 
-1. Create `src-widgets/src/NewWidget.tsx` extending `Generic<RxData, State>`
-2. Implement `static getWidgetInfo()` with widget metadata and config fields
-3. Implement `render()` with React/MUI
-4. Add translation keys to all 11 `src-widgets/src/i18n/*.json` files (en, de, ru, pt, nl, fr, it, es, pl, uk, zh-cn)
-5. Add expose entry in `src-widgets/vite.config.ts` exposes object
+1. Create `src-widgets/src/NewWidget.tsx` with a default-exported class extending `Generic<RxData, State>` and both widget-info methods described above.
+2. Implement `renderWidgetBody()` with React/MUI and configure the default editor dimensions in `visDefaultStyle`.
+3. Add the `visWidgetLabel` key and any configuration labels to all 11 `src-widgets/src/i18n/*.json` files (en, de, ru, pt, nl, fr, it, es, pl, uk, zh-cn). Use unprefixed keys in these dictionaries; `translations.ts` exports them with the prefix from `Generic`.
+4. Put a preview image in `src-widgets/public/img/` and set `visPrev` to `widgets/vis-2-widgets-nils-fork/img/<filename>`.
+5. Add `'./NewWidget': './src/NewWidget'` to the federation `exposes` object in `src-widgets/vite.config.ts`.
+6. **Register `"NewWidget"` in `io-package.json` under `common.visWidgets.vis2nilsForkWidgets.components`.** The component name must match the federation expose name without `./`. Exposing the module alone is insufficient for palette discovery.
+7. Run `npm run build` from the repository root to build and copy the distributable assets. With dependencies already installed, `npm run build --prefix src-widgets` followed by `npm run copy-files` also builds and copies them.
+8. Deploy the updated package, including `io-package.json` and the generated `widgets/` assets, using the ioBroker installation/upload workflow, then reload the vis-2 editor. Open the fork's widget set and verify the new widget's label, preview, and ability to be added to a view.
+
+For registration checks, compare with `SwitchButton` in both `io-package.json` and `vite.config.ts`, verify that the preview exists in the copied `widgets/` directory, and confirm the new expose appears in the generated `mf-stats.json` and federation loader. The standalone preview in `src-widgets/preview/main.tsx` is separate from editor palette registration. Build checks alone do not verify visibility in a running editor.
 
 ### Key Widget Files
 
@@ -74,7 +83,7 @@ Federation name: `vis2nilsWidgets`, entry: `customWidgets.js`. Exposes 19 widget
 ## Internationalization
 
 - 11 languages, JSON files in `src-widgets/src/i18n/`
-- All widget i18n keys are auto-prefixed with `vis_2_widgets_material_` (defined in `Generic.getI18nPrefix()`)
+- All widget i18n keys are auto-prefixed with `vis_2_widgets_nils_` (defined in `Generic.getI18nPrefix()`)
 - When adding/changing widget config fields, update all 11 JSON files
 
 ## Code Quality
