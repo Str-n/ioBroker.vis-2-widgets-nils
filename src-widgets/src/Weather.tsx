@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Use style/color on these icons: their bundled MUI sx processor may be newer than the host vis theme.
 import { AirRounded, CloudOutlined, WaterDropRounded } from '@mui/icons-material';
 import { Box, Tooltip, Typography } from '@mui/material';
 
@@ -57,7 +58,8 @@ function WeatherIcon({ src, label, size }: { src?: string; label?: string; size:
         return (
             <CloudOutlined
                 aria-label={label}
-                sx={{ width: size, height: size, color: 'text.secondary' }}
+                color="disabled"
+                style={{ width: size, height: size }}
             />
         );
     }
@@ -329,13 +331,16 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                     >
                         <Tooltip title={this.translated('precipitation')}>
                             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.35 }}>
-                                <WaterDropRounded sx={{ fontSize: 15, color: 'info.main' }} />
+                                <WaterDropRounded
+                                    color="info"
+                                    style={{ fontSize: 15 }}
+                                />
                                 <Typography variant="caption">{this.formatPrecipitation(precipitation)}</Typography>
                             </Box>
                         </Tooltip>
                         <Tooltip title={this.translated('wind_speed')}>
                             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.35 }}>
-                                <AirRounded sx={{ fontSize: 16 }} />
+                                <AirRounded style={{ fontSize: 16 }} />
                                 <Typography variant="caption">
                                     {wind === undefined ? '–' : `${Math.round(wind)} km/h`}
                                 </Typography>
@@ -408,7 +413,10 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                                         color: 'text.secondary',
                                     }}
                                 >
-                                    <WaterDropRounded sx={{ fontSize: 11, color: 'info.main' }} />
+                                    <WaterDropRounded
+                                        color="info"
+                                        style={{ fontSize: 11 }}
+                                    />
                                     <Typography sx={{ fontSize: 10, lineHeight: 1 }}>
                                         {this.formatPrecipitation(day.precipitation)}
                                     </Typography>
