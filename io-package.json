@@ -202,7 +202,8 @@
           "Vacuum",
           "WasherDryer",
           "Wizard",
-          "EnergyGame"
+          "EnergyGame",
+          "WeatherUtils"
         ]
       }
     },

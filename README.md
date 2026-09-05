@@ -66,6 +66,16 @@ As button: You can show a small thumbnail of view, and by pressing on it, it wil
 
 Additionally, it can show a history if you activated it.
 
+### Compact weather
+
+The compact weather widget is designed for an approximately 370 × 150 px tile. It shows the current temperature and
+condition, today's high/low, precipitation and wind speed, plus one or two forecast days.
+
+It uses the `openweathermap` adapter by default and automatically binds its `forecast.current`, `forecast.day0`, and
+`forecast.day1` states. An optional location label can be entered manually. To display a local outdoor sensor instead of
+the API temperature, select its state under **Current temperature override**; all other values continue to come from
+OpenWeatherMap. Individual API state IDs can be changed under **Advanced weather bindings**.
+
 ### Actual value with chart
 
 ![Actual value](img/material-actual-value-1.png)

@@ -1,6 +1,7 @@
 import Generic from './Generic';
 import type { SingleWidget, WidgetStyle, DetectorDevice, View, SingleWidgetId } from '@iobroker/types-vis-2';
 import { Types } from '@iobroker/type-detector';
+import { createOpenWeatherMapBindings } from './WeatherUtils';
 
 export type WidgetType =
     | 'auto'
@@ -377,18 +378,24 @@ export function getDeviceWidget(device: DetectorDevice, standardIcons?: boolean)
     }
 
     if (device.deviceType === 'weatherForecast') {
+        const idParts = device._id.split('.');
+        const instance =
+            idParts[0] === 'openweathermap' && idParts[1] ? `${idParts[0]}.${idParts[1]}` : 'openweathermap.0';
         return {
-            tpl: 'tplOpenWeatherMapWeather',
+            tpl: 'tplNils2Weather',
             style,
             widgetSet: 'vis-2-widgets-nils-fork',
             data: {
                 name: Generic.getText(device.common.name),
                 widgetTitle: Generic.t(device.deviceType).replace('vis_2_widgets_nils_', ''),
                 wizardId: device._id,
-                type: 'all',
                 g_common: true,
-                days: '6',
-                instance: '0',
+                instance,
+                locationName: '',
+                oidTemperatureOverride: '',
+                forecastDays: 2,
+                temperatureDigits: 0,
+                ...createOpenWeatherMapBindings(instance),
             },
         };
     }

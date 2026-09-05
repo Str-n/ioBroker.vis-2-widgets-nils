@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="370" height="150" viewBox="0 0 370 150">
+  <rect width="370" height="150" rx="12" fill="#18202b"/>
+  <text x="14" y="22" fill="#a8b3c2" font-family="Arial, sans-serif" font-size="11">Berlin · Partly cloudy</text>
+  <g transform="translate(18 42)">
+    <circle cx="25" cy="19" r="17" fill="#ffca55"/>
+    <path d="M14 43c-8 0-14-5-14-12s6-12 14-12c3-8 10-13 19-13 12 0 22 9 22 21v2c7 1 12 6 12 13 0 8-6 14-15 14H14z" fill="#d7e3f1"/>
+  </g>
+  <text x="92" y="77" fill="#fff" font-family="Arial, sans-serif" font-size="31" font-weight="500">18°</text>
+  <text x="92" y="95" fill="#a8b3c2" font-family="Arial, sans-serif" font-size="11">H 21° · L 12°</text>
+  <text x="18" y="126" fill="#62b5f8" font-family="Arial, sans-serif" font-size="11">● 0.4 mm</text>
+  <text x="79" y="126" fill="#a8b3c2" font-family="Arial, sans-serif" font-size="11">≋ 14 km/h</text>
+  <line x1="170" y1="12" x2="170" y2="138" stroke="#394454"/>
+  <line x1="265" y1="12" x2="265" y2="138" stroke="#394454"/>
+  <g fill="#fff" font-family="Arial, sans-serif" text-anchor="middle">
+    <text x="220" y="29" font-size="11" font-weight="600">Sat</text><text x="220" y="82" font-size="14">20° <tspan fill="#a8b3c2">11°</tspan></text><text x="220" y="112" fill="#62b5f8" font-size="10">● 0 mm</text>
+    <text x="310" y="29" font-size="11" font-weight="600">Sun</text><text x="310" y="82" font-size="14">19° <tspan fill="#a8b3c2">10°</tspan></text><text x="310" y="112" fill="#62b5f8" font-size="10">● 2.4 mm</text>
+  </g>
+  <g fill="#d7e3f1">
+    <circle cx="220" cy="54" r="12"/><circle cx="310" cy="54" r="12"/>
+  </g>
+</svg>

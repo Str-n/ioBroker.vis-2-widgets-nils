@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import './preview.css';
+import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
 
 type Settings = { rxData: Record<string, any>; values: Record<string, any>; style: React.CSSProperties };
 type PreviewProps = { id: string; view: string; context: Record<string, any>; customSettings: Settings };
@@ -9,7 +10,15 @@ type PreviewProps = { id: string; view: string; context: Record<string, any>; cu
 // Widget modules inherit from this global when imported. The preview only needs
 // their state/rendering API, not the editor, drag/drop, or a live socket.
 class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>> {
-    static t(key: string): string { return key.replaceAll('_', ' '); }
+    static t(key: string): string {
+        const translations: Record<string, string> = {
+            high_short: 'H',
+            low_short: 'L',
+            precipitation: 'Precipitation',
+            wind_speed: 'Wind speed',
+        };
+        return translations[key] || key.replaceAll('_', ' ');
+    }
     static getLanguage(): string { return 'en'; }
     static getDerivedStateFromProps(props: PreviewProps): Record<string, unknown> {
         return { rxData: props.customSettings.rxData, values: props.customSettings.values, rxStyle: props.customSettings.style };
@@ -30,7 +39,12 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
     componentDidUpdate(): void {}
     componentWillUnmount(): void {}
     renderWidgetBody(_props: Record<string, unknown>): React.ReactNode { return null; }
-    formatValue(value: unknown): string { return value == null ? '' : String(value); }
+    formatValue(value: unknown, digits?: number): string {
+        if (value == null) {
+            return '';
+        }
+        return typeof value === 'number' && digits !== undefined ? value.toFixed(digits) : String(value);
+    }
     wrapContent(content: React.ReactNode): React.ReactNode { return content; }
     getWidgetView(view: string, options?: { style?: React.CSSProperties }): React.ReactNode {
         const samples: Record<string, { eyebrow: string; title: string; value: string; color: string }> = {
@@ -55,8 +69,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'),
+const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: Weather }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/Weather'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -69,7 +83,29 @@ const objects: Record<string, Record<string, any>> = {
 };
 
 function App(): React.JSX.Element {
-    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35 };
+    const weatherBindings = createOpenWeatherMapBindings('openweathermap.0');
+    const weatherValues = {
+        [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
+        [`${weatherBindings.oidCurrentTemperatureMin}.val`]: 12,
+        [`${weatherBindings.oidCurrentTemperatureMax}.val`]: 21,
+        [`${weatherBindings.oidCurrentDescription}.val`]: 'Partly cloudy',
+        [`${weatherBindings.oidCurrentPrecipitation}.val`]: 0.4,
+        [`${weatherBindings.oidCurrentWindSpeed}.val`]: 14,
+        ...Object.fromEntries([
+            [new Date(2026, 8, 5, 12).getTime(), 11, 20, 0],
+            [new Date(2026, 8, 6, 12).getTime(), 10, 19, 2.4],
+        ].flatMap(([date, min, max, precipitation], index) => {
+            const day = index + 1;
+            return [
+                [`${weatherBindings[`oidDay${day}Date`]}.val`, date],
+                [`${weatherBindings[`oidDay${day}Description`]}.val`, index ? 'Rain showers' : 'Partly cloudy'],
+                [`${weatherBindings[`oidDay${day}TemperatureMin`]}.val`, min],
+                [`${weatherBindings[`oidDay${day}TemperatureMax`]}.val`, max],
+                [`${weatherBindings[`oidDay${day}Precipitation`]}.val`, precipitation],
+            ];
+        })),
+    };
+    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -120,6 +156,14 @@ function App(): React.JSX.Element {
             <article className="thermostat-card"><ThermostatCompact {...commonProps as any} id="thermostat-compact" customSettings={{ values, style: { width: 180, height: 42 }, rxData: {
                 noCard: true, widgetTitle: 'Living room', 'oid-temp-set': 'preview.temperature.set', 'oid-temp-actual': 'preview.temperature.actual',
                 'oid-humidity': 'preview.humidity', 'oid-power': '', 'oid-mode': '', 'oid-boost': '', 'oid-party': '', unit: '°C', step: '0.5', timeout: 500, externalDialog: false, count: 0,
+            } }} /></article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Compact weather</h2><p>OpenWeatherMap conditions, a local temperature override and a two-day outlook.</p></div></div>
+            <article className="thermostat-card"><Weather {...commonProps as any} id="weather" customSettings={{ values, style: { width: 370, height: 150 }, rxData: {
+                noCard: true, widgetTitle: 'Weather', instance: 'openweathermap.0', locationName: 'Berlin',
+                oidTemperatureOverride: 'preview.outdoor.temperature', forecastDays: 2,
+                temperatureDigits: 0, advanced: false, ...weatherBindings,
             } }} /></article>
         </section>
         <section>
