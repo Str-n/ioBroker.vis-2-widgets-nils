@@ -386,8 +386,9 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
     const width = Math.max(120, props.width || 400);
     const height = Math.max(80, props.height || 260);
     const compact = props.compact || width < 300 || height < 190;
+    const horizontal = width >= 280 && height < 190;
     const base = Math.max(150, Math.min(width, height * 1.45));
-    const dailySize = clamp(base * (compact ? 0.17 : 0.2), 30, 96);
+    const dailySize = clamp(base * (horizontal ? 0.25 : compact ? 0.17 : 0.2), 30, 96);
     const secondarySize = clamp(base * 0.075, 14, 32);
     const labelSize = clamp(base * 0.03, 9, 13);
     const padding = compact ? 8 : clamp(base * 0.035, 10, 20);
@@ -399,7 +400,12 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
     return (
         <div
             className="nils-eg"
-            style={{ padding, color: props.palette.text }}
+            style={{
+                padding,
+                color: props.palette.text,
+                flexDirection: horizontal ? 'row' : 'column',
+                gap: horizontal ? 12 : 0,
+            }}
         >
             {props.showTitle && !compact && (
                 <div
@@ -422,6 +428,7 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     alignItems: 'center',
                     justifyContent: 'center',
                     minHeight: 0,
+                    minWidth: 0,
                 }}
             >
                 {!compact && (
@@ -439,7 +446,9 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     style={{
                         fontSize: dailySize,
                         fontWeight: 800,
-                        minWidth: `${Math.max(2, dailyText.length) * 0.62}em`,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                         textAlign: 'center',
                         textShadow: `0 0 ${Math.round(dailySize * 0.25)}px ${props.palette.accent}66`,
                         marginTop: compact ? 0 : 4,
@@ -454,8 +463,20 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     {props.labels.daily}
                 </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: horizontal ? 'column' : 'row',
+                    justifyContent: 'space-around',
+                    alignItems: horizontal ? 'stretch' : 'flex-end',
+                    gap: horizontal ? 8 : 12,
+                    flex: horizontal ? '0 1 48%' : undefined,
+                    minWidth: 0,
+                    borderLeft: horizontal ? `1px solid ${props.palette.textSecondary}` : undefined,
+                    paddingLeft: horizontal ? 12 : 0,
+                }}
+            >
+                <div style={{ minWidth: 0, flex: horizontal ? undefined : 1 }}>
                     <div
                         className="nils-eg-num"
                         style={{ fontSize: secondarySize, fontWeight: 700 }}
@@ -475,11 +496,11 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     style={{
                         position: 'relative',
                         minWidth: 0,
-                        flex: 1,
+                        flex: horizontal ? undefined : 1,
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        padding: '6px 10px',
+                        alignItems: horizontal ? 'flex-start' : 'flex-end',
+                        padding: horizontal ? '2px 0' : '6px 10px',
                         borderRadius: 12,
                     }}
                 >

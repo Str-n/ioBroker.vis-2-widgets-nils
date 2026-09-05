@@ -8,11 +8,11 @@ export function createOpenWeatherMapBindings(instance = 'openweathermap.0'): Ope
     const current = `${root}.current`;
     const bindings: OpenWeatherMapBindings = {
         oidCurrentTemperature: `${current}.temperature`,
-        oidCurrentTemperatureMin: `${current}.temperatureMin`,
-        oidCurrentTemperatureMax: `${current}.temperatureMax`,
+        oidCurrentTemperatureMin: `day0.temperatureMin`,
+        oidCurrentTemperatureMax: `day0.temperatureMax`,
         oidCurrentDescription: `${current}.state`,
         oidCurrentIcon: `${current}.icon`,
-        oidCurrentPrecipitation: `${current}.precipitation`,
+        oidCurrentPrecipitation: `day0.precipitation`,
         oidCurrentWindSpeed: `${current}.windSpeed`,
     };
 

@@ -101,12 +101,6 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                             type: 'checkbox',
                         },
                         {
-                            name: 'widgetTitle',
-                            label: 'name',
-                            default: 'Weather',
-                            hidden: 'data.noCard === true',
-                        },
-                        {
                             name: 'instance',
                             label: 'openweathermap_instance',
                             type: 'instance',
@@ -257,8 +251,8 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                     boxSizing: 'border-box',
                     display: 'flex',
                     width: '100%',
-                    height: noCard || !this.state.rxData.widgetTitle ? '100%' : 'calc(100% - 32px)',
-                    minHeight: 76,
+                    height: '100%',
+                    minHeight: 0,
                     overflow: 'hidden',
                     color: 'text.primary',
                 }}
@@ -269,10 +263,10 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        flex: '1 1 44%',
-                        minWidth: 118,
+                        flex: '1 1 50%',
+                        minWidth: 0,
                         px: 1.25,
-                        py: 0.75,
+                        py: 1,
                     }}
                 >
                     <Tooltip
@@ -308,17 +302,18 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                                     ? this.formatTemperature(currentTemperature)
                                     : `${this.formatTemperature(currentMax)} / ${this.formatTemperature(currentMin)}`}
                             </Typography>
-                            {hasCurrent ? (
-                                <Typography
-                                    variant="caption"
-                                    sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
-                                >
-                                    {this.translated('high_short')} {this.formatTemperature(currentMax)} ·{' '}
-                                    {this.translated('low_short')} {this.formatTemperature(currentMin)}
-                                </Typography>
-                            ) : null}
                         </Box>
                     </Box>
+
+                    {hasCurrent ? (
+                        <Typography
+                            variant="caption"
+                            sx={{ color: 'text.secondary', whiteSpace: 'normal' }}
+                        >
+                            {this.translated('high_short')} {this.formatTemperature(currentMax)} ·{' '}
+                            {this.translated('low_short')} {this.formatTemperature(currentMin)}
+                        </Typography>
+                    ) : null}
 
                     <Box
                         sx={{
@@ -352,8 +347,8 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                 <Box
                     sx={{
                         display: 'grid',
-                        gridTemplateColumns: `repeat(${forecastCount}, minmax(72px, 1fr))`,
-                        flex: '1 1 56%',
+                        gridTemplateColumns: `repeat(${forecastCount}, minmax(0, 1fr))`,
+                        flex: '1 1 50%',
                         minWidth: 0,
                         borderLeft: 1,
                         borderColor: 'divider',
@@ -432,6 +427,11 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
             return content;
         }
 
-        return this.wrapContent(content, null, { padding: 0, height: 'calc(100% - 16px)' });
+        return this.wrapContent(
+            content,
+            null,
+            { padding: 0, height: '100%', boxSizing: 'border-box' },
+            { display: 'none' },
+        );
     }
 }

@@ -89,10 +89,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
             visAttrs: [
                 {
                     name: 'common',
-                    fields: [
-                        { name: 'noCard', label: 'without_card', type: 'checkbox' },
-                        { name: 'widgetTitle', label: 'name', hidden: 'data.noCard', default: 'Energy Saver' },
-                    ],
+                    fields: [{ name: 'noCard', label: 'without_card', type: 'checkbox' }],
                 },
                 {
                     name: 'eg_scores',
@@ -424,7 +421,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                         record: rx.label_record || tr('eg_record'),
                         unit: rx.label_unit || tr('eg_energy'),
                     }}
-                    showTitle={!!rx.noCard && !!rx.widgetTitle}
+                    showTitle={false}
                     animationsEnabled={rx.animations !== false}
                     reducedMotion={this.state.reducedMotion}
                     showLightNames={rx.show_light_names !== false}
@@ -438,6 +435,14 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                 />
             </div>
         );
-        return this.wrapContent(content, null, { padding: 0, height: '100%', boxSizing: 'border-box' });
+        if (rx.noCard || props.widget.usedInWidget) {
+            return content;
+        }
+        return this.wrapContent(
+            content,
+            null,
+            { padding: 0, height: '100%', boxSizing: 'border-box' },
+            { display: 'none' },
+        );
     }
 }
