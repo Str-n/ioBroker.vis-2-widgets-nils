@@ -47,6 +47,13 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
     }
     wrapContent(content: React.ReactNode): React.ReactNode { return content; }
     getWidgetView(view: string, options?: { style?: React.CSSProperties }): React.ReactNode {
+        if (view === 'weather') {
+            return <Weather {...this.props as any} id="carousel-weather" customSettings={{
+                values: this.state.values,
+                style: { width: '100%', height: '100%' },
+                rxData: { ...createOpenWeatherMapBindings(), noCard: true, forecastDays: 2, locationName: 'Berlin' },
+            }} />;
+        }
         const samples: Record<string, { eyebrow: string; title: string; value: string; color: string }> = {
             climate: { eyebrow: 'Living room', title: 'Climate', value: '21.5 °C', color: '#5b8cff' },
             energy: { eyebrow: 'Today', title: 'Solar energy', value: '8.4 kWh', color: '#f5b942' },
@@ -160,11 +167,25 @@ function App(): React.JSX.Element {
         </section>
         <section>
             <div className="section-heading"><div><h2>Compact weather</h2><p>OpenWeatherMap conditions, a local temperature override and a two-day outlook.</p></div></div>
-            <article className="thermostat-card"><Weather {...commonProps as any} id="weather" customSettings={{ values, style: { width: 370, height: 150 }, rxData: {
-                noCard: true, widgetTitle: 'Weather', instance: 'openweathermap.0', locationName: 'Berlin',
-                oidTemperatureOverride: 'preview.outdoor.temperature', forecastDays: 2,
-                temperatureDigits: 0, advanced: false, ...weatherBindings,
-            } }} /></article>
+            <div className="weather-examples sh-app">
+                {[
+                    { id: 'weather', title: 'SmartHome card', width: 480, height: 200, days: 2, noCard: false, missing: false },
+                    { id: 'weather-compact', title: 'Existing 370 × 150 size', width: 370, height: 150, days: 2, noCard: false, missing: false },
+                    { id: 'weather-narrow', title: 'Narrow · single forecast', width: 280, height: 300, days: 1, noCard: false, missing: false },
+                    { id: 'weather-missing', title: 'Embedded · unavailable data', width: 370, height: 150, days: 2, noCard: true, missing: true },
+                ].map(example => <div key={example.id}>
+                    <p>{example.title}</p>
+                    <Weather {...commonProps as any} id={example.id} customSettings={{
+                        values: example.missing ? {} : values,
+                        style: { width: example.width, height: example.height, maxWidth: '100%' },
+                        rxData: {
+                            noCard: example.noCard, widgetTitle: 'Weather', instance: 'openweathermap.0', locationName: 'Berlin',
+                            oidTemperatureOverride: 'preview.outdoor.temperature', forecastDays: example.days,
+                            temperatureDigits: 0, advanced: false, ...weatherBindings,
+                        },
+                    }} />
+                </div>)}
+            </div>
         </section>
         <section>
             <div className="section-heading"><div><h2>Blinds</h2><p>Click the window to open its control dialog.</p></div></div>
@@ -181,7 +202,7 @@ function App(): React.JSX.Element {
         <section>
             <div className="section-heading"><div><h2>Stack card carousel</h2><p>Swipe the card or use the controls to move between embedded views.</p></div></div>
             <article className="thermostat-card carousel-preview"><StackCardCarousel {...commonProps as any} id="stack-card-carousel" customSettings={{ values, style: { width: 420, height: 320 }, rxData: {
-                count: 3, view1: 'climate', view2: 'energy', view3: 'security',
+                count: 3, view1: 'weather', view2: 'climate', view3: 'security',
             } }} /></article>
         </section>
     </main>;

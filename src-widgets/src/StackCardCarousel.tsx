@@ -2,10 +2,11 @@ import React from 'react';
 
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
-import { Card, IconButton } from '@mui/material';
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
+import '../public/smarthome.css';
+import './StackCardCarousel.css';
 
 interface StackCardCarouselRxData {
     count: number;
@@ -22,6 +23,7 @@ const SWIPE_THRESHOLD = 45;
 class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarouselState> {
     private readonly refContainer: React.RefObject<HTMLDivElement | null> = React.createRef();
     private pointerStartX: number | null = null;
+    private pointerStartY = 0;
 
     constructor(props: VisRxWidgetProps) {
         super(props);
@@ -116,10 +118,16 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
     };
 
     private handlePointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
-        if (this.state.editMode || event.button !== 0) {
+        if (
+            this.state.editMode ||
+            event.button !== 0 ||
+            !event.isPrimary ||
+            (event.target as HTMLElement).closest('button, input, select, textarea, a, [role="slider"]')
+        ) {
             return;
         }
         this.pointerStartX = event.clientX;
+        this.pointerStartY = event.clientY;
     };
 
     private handlePointerUp = (event: React.PointerEvent<HTMLDivElement>): void => {
@@ -128,7 +136,10 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
         }
         const distance = event.clientX - this.pointerStartX;
         this.pointerStartX = null;
-        if (Math.abs(distance) >= SWIPE_THRESHOLD) {
+        if (
+            Math.abs(distance) >= SWIPE_THRESHOLD &&
+            Math.abs(distance) > Math.abs(event.clientY - this.pointerStartY)
+        ) {
             this.showCard(this.state.activeCard + (distance < 0 ? 1 : -1));
         }
     };
@@ -138,145 +149,85 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
         const count = this.getCardCount();
         const activeCard = Math.min(this.state.activeCard, count - 1);
 
+        const view = this.state.rxData[`view${activeCard + 1}`];
+        const recursive = view === this.props.view;
+
         return (
             <div
                 ref={this.refContainer}
-                className="vis-widget-body"
+                className="vis-widget-body sh-theme sh-carousel"
+                role="region"
+                aria-roledescription="carousel"
+                aria-label="Cards"
                 onPointerDown={this.handlePointerDown}
                 onPointerUp={this.handlePointerUp}
                 onPointerCancel={() => (this.pointerStartX = null)}
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    overflow: 'hidden',
-                    touchAction: 'pan-y',
-                    userSelect: 'none',
-                }}
+                onPointerLeave={() => (this.pointerStartX = null)}
             >
-                <div style={{ position: 'absolute', inset: '8px 16px 48px' }}>
-                    {Array.from({ length: count }, (_, index) => {
-                        const distance = (index - activeCard + count) % count;
-                        const inStack = distance < Math.min(count, 3);
-                        const view = this.state.rxData[`view${index + 1}`];
-                        const recursive = view === this.props.view;
-
-                        return (
-                            <Card
-                                key={index}
-                                elevation={Math.max(1, 8 - distance * 2)}
-                                aria-hidden={distance !== 0}
-                                sx={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    zIndex: count - distance,
-                                    borderRadius: 4,
-                                    overflow: 'hidden',
-                                    opacity: inStack ? 1 : 0,
-                                    pointerEvents: distance === 0 ? 'auto' : 'none',
-                                    transform: inStack
-                                        ? `translateY(${distance * 9}px) scale(${1 - distance * 0.035})`
-                                        : 'translateY(24px) scale(.88)',
-                                    transformOrigin: 'center bottom',
-                                    transition: 'transform 260ms ease, opacity 220ms ease, box-shadow 260ms ease',
-                                    border: theme => `1px solid ${theme.palette.divider}`,
-                                    bgcolor: 'background.paper',
-                                }}
-                            >
-                                {recursive ? (
-                                    <div
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            display: 'grid',
-                                            placeItems: 'center',
-                                            color: 'var(--mui-palette-text-secondary, rgba(0, 0, 0, .6))',
-                                        }}
-                                    >
-                                        Cannot use recursive views
-                                    </div>
-                                ) : view ? (
-                                    this.getWidgetView(view, {
-                                        style: { width: '100%', height: '100%', overflow: 'hidden' },
-                                    })
-                                ) : (
-                                    <div
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            display: 'grid',
-                                            placeItems: 'center',
-                                            color: 'var(--mui-palette-text-secondary, rgba(0, 0, 0, .6))',
-                                        }}
-                                    >
-                                        Select a view for card {index + 1}
-                                    </div>
-                                )}
-                                {this.state.editMode && distance === 0 ? (
-                                    <div style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
-                                ) : null}
-                            </Card>
-                        );
-                    })}
-                </div>
-
                 <div
-                    style={{
-                        position: 'absolute',
-                        left: 8,
-                        right: 8,
-                        bottom: 4,
-                        height: 40,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                    }}
+                    className="sh-carousel__card"
+                    role="group"
+                    aria-roledescription="slide"
+                    aria-label={`Card ${activeCard + 1} of ${count}`}
+                    key={activeCard}
                 >
-                    <IconButton
-                        size="small"
-                        aria-label="Previous card"
-                        disabled={count < 2 || this.state.editMode}
-                        onClick={() => this.showCard(activeCard - 1)}
-                    >
-                        <KeyboardArrowLeft />
-                    </IconButton>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 32, gap: 7 }}>
-                        {count <= 8 ? Array.from({ length: count }, (_, index) => (
-                            <button
-                                key={index}
-                                type="button"
-                                aria-label={`Show card ${index + 1}`}
-                                aria-current={index === activeCard ? 'true' : undefined}
-                                disabled={this.state.editMode}
-                                onClick={() => this.showCard(index)}
-                                style={{
-                                    width: index === activeCard ? 18 : 7,
-                                    height: 7,
-                                    padding: 0,
-                                    border: 0,
-                                    borderRadius: 999,
-                                    cursor: this.state.editMode ? 'default' : 'pointer',
-                                    background: index === activeCard
-                                        ? 'var(--mui-palette-primary-main, #1976d2)'
-                                        : 'var(--mui-palette-action-disabled, rgba(0, 0, 0, .26))',
-                                    transition: 'width 180ms ease, background-color 180ms ease',
-                                }}
-                            />
-                        )) : (
-                            <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
+                    {recursive ? (
+                        <div className="sh-carousel__placeholder">Cannot use recursive views</div>
+                    ) : view ? (
+                        this.getWidgetView(view, {
+                            style: { width: '100%', height: '100%', overflow: 'hidden', background: 'transparent' },
+                        })
+                    ) : (
+                        <div className="sh-carousel__placeholder">Select a view for card {activeCard + 1}</div>
+                    )}
+                    {this.state.editMode ? <div className="sh-carousel__edit-overlay" /> : null}
+                </div>
+                {count > 1 ? (
+                    <div className="sh-carousel__navigation">
+                        <button
+                            type="button"
+                            className="sh-carousel__control"
+                            aria-label="Previous card"
+                            disabled={this.state.editMode}
+                            onClick={() => this.showCard(activeCard - 1)}
+                        >
+                            <KeyboardArrowLeft style={{ width: 24, height: 24 }} />
+                        </button>
+                        <div className={`sh-carousel__pagination${count > 3 ? ' sh-carousel__pagination--dense' : ''}`}>
+                            {count <= 5 ? (
+                                <div className="sh-carousel__dots">
+                                    {Array.from({ length: count }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            type="button"
+                                            className="sh-carousel__control sh-carousel__dot"
+                                            aria-label={`Show card ${index + 1}`}
+                                            aria-current={index === activeCard ? 'true' : undefined}
+                                            disabled={this.state.editMode}
+                                            onClick={() => this.showCard(index)}
+                                        >
+                                            <span />
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            <span
+                                className={`sh-carousel__counter${count <= 5 ? ' sh-carousel__counter--alternative' : ''}`}
+                            >
                                 {activeCard + 1} / {count}
                             </span>
-                        )}
+                        </div>
+                        <button
+                            type="button"
+                            className="sh-carousel__control"
+                            aria-label="Next card"
+                            disabled={this.state.editMode}
+                            onClick={() => this.showCard(activeCard + 1)}
+                        >
+                            <KeyboardArrowRight style={{ width: 24, height: 24 }} />
+                        </button>
                     </div>
-                    <IconButton
-                        size="small"
-                        aria-label="Next card"
-                        disabled={count < 2 || this.state.editMode}
-                        onClick={() => this.showCard(activeCard + 1)}
-                    >
-                        <KeyboardArrowRight />
-                    </IconButton>
-                </div>
+                ) : null}
             </div>
         );
     }

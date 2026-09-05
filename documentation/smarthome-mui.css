@@ -1,0 +1,487 @@
+:root {
+  --sh-bg: #16324a;
+  --sh-surface: #1d3c57;
+  --sh-surface-2: #244b68;
+  --sh-floor: #3b5b73;
+  --sh-wall: #94a3b8;
+  --sh-primary: #3b82f6;
+  --sh-secondary: #60a5fa;
+  --sh-info: #22d3ee;
+  --sh-success: #10b981;
+  --sh-warning: #f59e0b;
+  --sh-error: #ef4444;
+  --sh-text: #f8fafc;
+  --sh-text-secondary: #c3d0de;
+  --sh-divider: rgba(148, 163, 184, 0.28);
+  --sh-control-off: #6f879b;
+  --sh-control-on: #f6c453;
+
+  --sh-radius-card: 22px;
+  --sh-radius-control: 14px;
+  --sh-radius-chip: 16px;
+  --sh-shadow-1: 0 4px 12px rgba(0, 0, 0, 0.14);
+  --sh-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --sh-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.35);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sh-bg);
+  color: var(--sh-text);
+  font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------
+   Shared MUI surface language
+   ------------------------------ */
+
+.MuiPaper-root,
+.MuiCard-root {
+  color: var(--sh-text);
+  background-image: none !important;
+}
+
+.MuiCard-root {
+  background-color: var(--sh-surface);
+  border-radius: var(--sh-radius-card);
+  box-shadow: var(--sh-shadow-2);
+}
+
+.MuiPaper-rounded {
+  border-radius: var(--sh-radius-card);
+}
+
+.MuiDivider-root {
+  border-color: var(--sh-divider);
+}
+
+.MuiTypography-root {
+  color: inherit;
+}
+
+.MuiTypography-body2,
+.MuiTypography-caption,
+.MuiFormHelperText-root {
+  color: var(--sh-text-secondary);
+}
+
+/* Stable-looking sensor and weather numerals */
+.sh-tabular,
+.sh-weather-value,
+.sh-sensor-chip,
+.sh-room-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------
+   App shell
+   ------------------------------ */
+
+.sh-app {
+  min-height: 100vh;
+  background: var(--sh-bg);
+  color: var(--sh-text);
+}
+
+.sh-content {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.sh-section {
+  margin-block: 16px;
+}
+
+/* ------------------------------
+   Weather card
+   ------------------------------ */
+
+.sh-weather-card {
+  background: var(--sh-surface) !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--sh-radius-card);
+  box-shadow: var(--sh-shadow-2);
+  overflow: hidden;
+}
+
+.sh-weather-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(84px, 0.65fr) minmax(84px, 0.65fr);
+  align-items: stretch;
+}
+
+.sh-weather-current,
+.sh-weather-forecast {
+  padding: 18px 20px;
+}
+
+.sh-weather-forecast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-left: 1px solid var(--sh-divider);
+}
+
+.sh-weather-value {
+  font-size: clamp(42px, 9vw, 64px);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.sh-weather-meta {
+  color: var(--sh-text-secondary);
+  font-size: 0.875rem;
+}
+
+.sh-weather-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--sh-text);
+}
+
+@media (max-width: 520px) {
+  .sh-weather-grid {
+    grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(68px, 0.65fr));
+  }
+
+  .sh-weather-current,
+  .sh-weather-forecast {
+    padding: 14px;
+  }
+}
+
+/* ------------------------------
+   Floor plan
+   ------------------------------ */
+
+.sh-floorplan {
+  position: relative;
+  background: var(--sh-floor);
+  border-radius: var(--sh-radius-card);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.sh-floorplan svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sh-floorplan-wall {
+  stroke: var(--sh-wall);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sh-floorplan-wall--outer {
+  stroke-width: 2.4;
+  opacity: 1;
+}
+
+.sh-floorplan-wall--inner {
+  opacity: 0.9;
+}
+
+.sh-room {
+  fill: rgba(255, 255, 255, 0.025);
+  transition: fill 160ms ease;
+}
+
+.sh-room[data-selected="true"],
+.sh-room.is-selected {
+  fill: rgba(59, 130, 246, 0.1);
+}
+
+.sh-room-label {
+  fill: var(--sh-text-secondary);
+  font-family: Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+/* ------------------------------
+   Device controls
+   ------------------------------ */
+
+.sh-device-button.MuiIconButton-root,
+.MuiIconButton-root.sh-device-button {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  color: var(--sh-text);
+  background: var(--sh-control-off);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--sh-shadow-1);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.sh-device-button.MuiIconButton-root:hover {
+  background: #7f96a9;
+}
+
+.sh-device-button.MuiIconButton-root:active {
+  transform: scale(0.96);
+}
+
+.sh-device-button[data-state="on"],
+.sh-device-button.is-on {
+  color: var(--sh-control-on);
+  background: rgba(111, 135, 155, 0.92);
+  box-shadow:
+    var(--sh-shadow-1),
+    0 0 18px rgba(246, 196, 83, 0.26);
+}
+
+.sh-device-button[data-state="offline"],
+.sh-device-button.is-offline {
+  color: rgba(248, 250, 252, 0.55);
+  background: rgba(111, 135, 155, 0.55);
+  box-shadow: none;
+}
+
+.sh-device-button[data-state="error"],
+.sh-device-button.is-error {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.72);
+}
+
+/* ------------------------------
+   Sensor chip
+   ------------------------------ */
+
+.sh-sensor-chip.MuiChip-root,
+.MuiChip-root.sh-sensor-chip {
+  height: 36px;
+  color: var(--sh-text);
+  background: rgba(29, 60, 87, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--sh-radius-chip);
+  box-shadow: var(--sh-shadow-1);
+  font-weight: 500;
+}
+
+.sh-sensor-chip .MuiChip-icon,
+.sh-sensor-chip .MuiSvgIcon-root {
+  color: var(--sh-info);
+}
+
+.sh-sensor-chip .MuiChip-label {
+  padding-inline: 10px;
+}
+
+/* ------------------------------
+   Schnellzugriff / Quick access
+   ------------------------------ */
+
+.sh-quick-access {
+  padding: 14px 16px 16px;
+  background: var(--sh-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--sh-radius-card);
+  box-shadow: var(--sh-shadow-1);
+}
+
+.sh-quick-access__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.sh-quick-access__items {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 1px;
+}
+
+.sh-quick-access__items::-webkit-scrollbar {
+  display: none;
+}
+
+.sh-quick-action.MuiButton-root,
+.MuiButton-root.sh-quick-action,
+.sh-quick-action.MuiChip-root,
+.MuiChip-root.sh-quick-action {
+  flex: 0 0 auto;
+  min-height: 42px;
+  color: var(--sh-text);
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  box-shadow: none;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.sh-quick-action.MuiButton-root {
+  padding-inline: 12px;
+}
+
+.sh-quick-action.MuiButton-root:hover,
+.sh-quick-action.MuiChip-root:hover {
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.sh-quick-action[data-active="true"],
+.sh-quick-action.is-active {
+  color: #fff;
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.34);
+}
+
+.sh-quick-action[data-device="light"][data-active="true"] .MuiSvgIcon-root,
+.sh-quick-action.is-light-on .MuiSvgIcon-root {
+  color: var(--sh-control-on);
+}
+
+/* ------------------------------
+   Bottom navigation
+   ------------------------------ */
+
+.sh-bottom-nav.MuiBottomNavigation-root,
+.MuiBottomNavigation-root.sh-bottom-nav {
+  min-height: 68px;
+  background: rgba(20, 46, 68, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--sh-radius-card);
+  box-shadow: var(--sh-shadow-2);
+  overflow: hidden;
+}
+
+.sh-bottom-nav .MuiBottomNavigationAction-root {
+  min-width: 0;
+  color: var(--sh-text-secondary);
+}
+
+.sh-bottom-nav .MuiBottomNavigationAction-root.Mui-selected {
+  color: var(--sh-primary);
+}
+
+.sh-bottom-nav .MuiBottomNavigationAction-label {
+  font-size: 0.72rem;
+}
+
+.sh-bottom-nav .MuiBottomNavigationAction-label.Mui-selected {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Optional selected indicator */
+.sh-bottom-nav .MuiBottomNavigationAction-root.Mui-selected::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 28px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--sh-primary);
+}
+
+/* ------------------------------
+   Buttons / switches
+   ------------------------------ */
+
+.MuiButton-containedPrimary {
+  background-color: var(--sh-primary);
+  color: #fff;
+  border-radius: 14px;
+  box-shadow: none;
+  text-transform: none;
+}
+
+.MuiButton-containedPrimary:hover {
+  background-color: #2f75e8;
+  box-shadow: none;
+}
+
+.MuiButton-outlinedPrimary {
+  color: var(--sh-secondary);
+  border-color: rgba(96, 165, 250, 0.65);
+  border-radius: 14px;
+  text-transform: none;
+}
+
+.MuiSwitch-switchBase.Mui-checked {
+  color: #fff;
+}
+
+.MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: var(--sh-primary);
+  opacity: 1;
+}
+
+.MuiSwitch-track {
+  background-color: var(--sh-control-off);
+  opacity: 0.9;
+}
+
+/* ------------------------------
+   Focus and accessibility
+   ------------------------------ */
+
+.MuiButtonBase-root:focus-visible,
+.MuiButton-root:focus-visible,
+.MuiIconButton-root:focus-visible,
+.MuiChip-root[tabindex]:focus-visible,
+.sh-focusable:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus-ring);
+}
+
+.sh-muted {
+  color: var(--sh-text-secondary);
+}
+
+.sh-status-success {
+  color: var(--sh-success);
+}
+
+.sh-status-warning {
+  color: var(--sh-warning);
+}
+
+.sh-status-error {
+  color: var(--sh-error);
+}
+
+/* ------------------------------
+   Motion preferences
+   ------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

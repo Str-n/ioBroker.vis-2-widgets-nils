@@ -2,7 +2,7 @@ import React from 'react';
 
 // Use style/color on these icons: their bundled MUI sx processor may be newer than the host vis theme.
 import { AirRounded, CloudOutlined, WaterDropRounded } from '@mui/icons-material';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 
 import type {
     RxRenderWidgetProps,
@@ -14,6 +14,8 @@ import type {
 
 import Generic from './Generic';
 import { createOpenWeatherMapBindings } from './WeatherUtils';
+import '../public/smarthome.css';
+import './Weather.css';
 
 const setOpenWeatherMapBindings = (
     _field: RxWidgetInfoAttributesField,
@@ -58,8 +60,7 @@ function WeatherIcon({ src, label, size }: { src?: string; label?: string; size:
         return (
             <CloudOutlined
                 aria-label={label}
-                color="disabled"
-                style={{ width: size, height: size }}
+                style={{ width: size, height: size, color: 'var(--sh-text-secondary)' }}
             />
         );
     }
@@ -151,8 +152,8 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
                 },
             ],
             visDefaultStyle: {
-                width: 370,
-                height: 150,
+                width: 480,
+                height: 200,
                 position: 'relative',
             },
             visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_weather.svg',
@@ -245,193 +246,94 @@ export default class Weather extends Generic<WeatherRxData, WeatherState> {
         const noCard =
             this.state.rxData.noCard === true || this.state.rxData.noCard === 'true' || props.widget.usedInWidget;
 
-        const content = (
-            <Box
-                sx={{
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    width: '100%',
-                    height: '100%',
-                    minHeight: 0,
-                    overflow: 'hidden',
-                    color: 'text.primary',
-                }}
-            >
-                <Box
-                    sx={{
-                        boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        flex: '1 1 50%',
-                        minWidth: 0,
-                        px: 1.25,
-                        py: 1,
-                    }}
-                >
-                    <Tooltip
-                        title={description}
-                        placement="top"
-                    >
-                        <Typography
-                            variant="caption"
-                            noWrap
-                            sx={{ color: 'text.secondary', lineHeight: 1.2 }}
-                        >
-                            {location ? `${location} · ${description}` : description}
-                        </Typography>
-                    </Tooltip>
-
-                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.75, minHeight: 44 }}>
-                        <WeatherIcon
-                            src={icon}
-                            label={description}
-                            size={48}
-                        />
-                        <Box sx={{ minWidth: 0 }}>
-                            <Typography
-                                component="div"
-                                sx={{
-                                    fontSize: hasCurrent ? 30 : 20,
-                                    fontWeight: 500,
-                                    lineHeight: 1,
-                                    letterSpacing: '-0.04em',
-                                }}
-                            >
+        // The carousel/container owns the border and shadow. Weather only supplies
+        // its tonal background, or stays transparent when embedded.
+        return (
+            <div className={`sh-theme sh-weather${noCard ? ' sh-weather--bare' : ''}`}>
+                <div className="sh-weather__layout">
+                    <div className="sh-weather__current">
+                        <div className="sh-weather__description">
+                            {location ? <span className="sh-weather__location">{location}</span> : null}
+                            <span>{description}</span>
+                        </div>
+                        <div className="sh-weather__reading">
+                            <WeatherIcon
+                                src={icon}
+                                label={description}
+                                size={48}
+                            />
+                            <span className={`sh-weather__value${hasCurrent ? '' : ' sh-weather__value--range'}`}>
                                 {hasCurrent
                                     ? this.formatTemperature(currentTemperature)
                                     : `${this.formatTemperature(currentMax)} / ${this.formatTemperature(currentMin)}`}
-                            </Typography>
-                        </Box>
-                    </Box>
-
-                    {hasCurrent ? (
-                        <Typography
-                            variant="caption"
-                            sx={{ color: 'text.secondary', whiteSpace: 'normal' }}
-                        >
-                            {this.translated('high_short')} {this.formatTemperature(currentMax)} ·{' '}
-                            {this.translated('low_short')} {this.formatTemperature(currentMin)}
-                        </Typography>
-                    ) : null}
-
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            gap: 1.25,
-                            color: 'text.secondary',
-                            minHeight: 18,
-                        }}
-                    >
-                        <Tooltip title={this.translated('precipitation')}>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.35 }}>
-                                <WaterDropRounded
-                                    color="info"
-                                    style={{ fontSize: 15 }}
-                                />
-                                <Typography variant="caption">{this.formatPrecipitation(precipitation)}</Typography>
-                            </Box>
-                        </Tooltip>
-                        <Tooltip title={this.translated('wind_speed')}>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.35 }}>
-                                <AirRounded style={{ fontSize: 16 }} />
-                                <Typography variant="caption">
-                                    {wind === undefined ? '–' : `${Math.round(wind)} km/h`}
-                                </Typography>
-                            </Box>
-                        </Tooltip>
-                    </Box>
-                </Box>
-
-                <Box
-                    sx={{
-                        display: 'grid',
-                        gridTemplateColumns: `repeat(${forecastCount}, minmax(0, 1fr))`,
-                        flex: '1 1 50%',
-                        minWidth: 0,
-                        borderLeft: 1,
-                        borderColor: 'divider',
-                    }}
-                >
-                    {forecast.map((day, index) => (
-                        <Tooltip
-                            key={index}
-                            title={day.description || ''}
-                            placement="top"
-                        >
-                            <Box
-                                sx={{
-                                    boxSizing: 'border-box',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-around',
-                                    minWidth: 0,
-                                    px: 0.35,
-                                    py: 0.65,
-                                    borderLeft: index ? 1 : 0,
-                                    borderColor: 'divider',
-                                }}
+                            </span>
+                        </div>
+                        {hasCurrent ? (
+                            <div className="sh-weather__meta">
+                                {this.translated('high_short')} {this.formatTemperature(currentMax)} ·{' '}
+                                {this.translated('low_short')} {this.formatTemperature(currentMin)}
+                            </div>
+                        ) : null}
+                        <div className="sh-weather__details">
+                            <span
+                                className="sh-weather__detail"
+                                aria-label={`${this.translated('precipitation')}: ${this.formatPrecipitation(precipitation)}`}
                             >
-                                <Typography
-                                    variant="caption"
-                                    noWrap
-                                    sx={{ width: '100%', textAlign: 'center', fontWeight: 600 }}
-                                >
-                                    {this.formatDay(day.date)}
-                                </Typography>
-                                <WeatherIcon
-                                    src={day.icon}
-                                    label={day.description}
-                                    size={34}
+                                <WaterDropRounded
+                                    aria-hidden="true"
+                                    style={{ fontSize: 16, color: 'var(--sh-info)' }}
                                 />
-                                <Typography
-                                    variant="caption"
-                                    noWrap
-                                    sx={{ fontWeight: 600, lineHeight: 1.1 }}
-                                >
-                                    {this.formatTemperature(day.max)}{' '}
-                                    <Box
-                                        component="span"
-                                        sx={{ color: 'text.secondary', fontWeight: 400 }}
-                                    >
-                                        {this.formatTemperature(day.min)}
-                                    </Box>
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        gap: 0.2,
-                                        color: 'text.secondary',
-                                    }}
-                                >
-                                    <WaterDropRounded
-                                        color="info"
-                                        style={{ fontSize: 11 }}
+                                {this.formatPrecipitation(precipitation)}
+                            </span>
+                            <span
+                                className="sh-weather__detail"
+                                aria-label={`${this.translated('wind_speed')}: ${wind === undefined ? '–' : `${Math.round(wind)} km/h`}`}
+                            >
+                                <AirRounded
+                                    aria-hidden="true"
+                                    style={{ fontSize: 16, color: 'var(--sh-info)' }}
+                                />
+                                {wind === undefined ? '–' : `${Math.round(wind)} km/h`}
+                            </span>
+                        </div>
+                    </div>
+                    <div
+                        className="sh-weather__forecast"
+                        style={{ gridTemplateColumns: `repeat(${forecastCount}, minmax(0, 1fr))` }}
+                    >
+                        {forecast.map((day, index) => (
+                            <Tooltip
+                                key={index}
+                                title={day.description || ''}
+                                placement="top"
+                            >
+                                <div className="sh-weather__day">
+                                    <span className="sh-weather__day-name">{this.formatDay(day.date)}</span>
+                                    <WeatherIcon
+                                        src={day.icon}
+                                        label={day.description}
+                                        size={40}
                                     />
-                                    <Typography sx={{ fontSize: 10, lineHeight: 1 }}>
+                                    <div className="sh-weather__temperatures">
+                                        <span>{this.formatTemperature(day.max)}</span>
+                                        <span className="sh-weather__low">{this.formatTemperature(day.min)}</span>
+                                    </div>
+                                    <span
+                                        className="sh-weather__detail"
+                                        aria-label={`${this.translated('precipitation')}: ${this.formatPrecipitation(day.precipitation)}`}
+                                    >
+                                        <WaterDropRounded
+                                            aria-hidden="true"
+                                            style={{ fontSize: 16, color: 'var(--sh-info)' }}
+                                        />
                                         {this.formatPrecipitation(day.precipitation)}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Tooltip>
-                    ))}
-                </Box>
-            </Box>
-        );
-
-        if (noCard) {
-            return content;
-        }
-
-        return this.wrapContent(
-            content,
-            null,
-            { padding: 0, height: '100%', boxSizing: 'border-box' },
-            { display: 'none' },
+                                    </span>
+                                </div>
+                            </Tooltip>
+                        ))}
+                    </div>
+                </div>
+            </div>
         );
     }
 }
