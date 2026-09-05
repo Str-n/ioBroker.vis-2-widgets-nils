@@ -14,3 +14,7 @@
     flex-direction: column;
     align-items: center;
 }
+
+.sh-colors .thermostat-compact-humidity {
+    color: var(--sh-info);
+}

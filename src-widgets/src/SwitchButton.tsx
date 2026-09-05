@@ -18,6 +18,7 @@ import { Icon } from '@iobroker/gui-components';
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetState } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
+import '../public/smarthome.css';
 
 const MATERIAL_ICON_MAP: Record<string, React.ElementType> = {
     flashon: FlashOn,
@@ -428,13 +429,27 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
 
         const disabled = this.state.rxData.readOnly === true || this.state.rxData.readOnly === 'true';
         const hasControls = !!(this.getControlId('brightness') || this.getControlId('color_temperature'));
+        const isLight =
+            hasControls ||
+            [this.state.rxData['icon-on'], this.state.rxData['icon-off']].some(name => {
+                const icon = getIconFromName(name);
+                return icon === Lightbulb || icon === LightbulbOutlined;
+            });
 
         return (
             <>
                 <Fab
                     ref={this.fabRef}
                     size="small"
-                    color={isOn ? 'primary' : 'default'}
+                    className="sh-colors sh-control"
+                    data-sh-active={isOn}
+                    data-sh-device={isLight ? 'light' : 'switch'}
+                    style={
+                        {
+                            '--sh-control-color': color,
+                            '--sh-control-background': background,
+                        } as React.CSSProperties
+                    }
                     disabled={disabled}
                     onPointerDown={e => {
                         e.stopPropagation();
@@ -466,9 +481,6 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                         height: '100%',
                         minWidth: 0,
                         minHeight: 0,
-                        ...(background ? { backgroundColor: background } : {}),
-                        ...(background ? { '&:hover': { backgroundColor: background } } : {}),
-                        ...(color ? { color } : {}),
                         padding: 0,
                         touchAction: 'manipulation',
                     }}
@@ -494,8 +506,8 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                                 maxWidth: 18,
                                 maxHeight: 18,
                                 borderRadius: '50%',
-                                color: '#fff',
-                                backgroundColor: 'rgba(0, 0, 0, 0.58)',
+                                color: 'var(--sh-text)',
+                                backgroundColor: 'var(--sh-bg)',
                                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.35)',
                                 pointerEvents: 'none',
                             }}

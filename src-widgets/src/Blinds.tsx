@@ -12,6 +12,7 @@ import type {
 
 import BlindsBase, { type BlindsBaseRxData, type BlindsBaseState, type HelperObject } from './Components/BlindsBase';
 import WindowClosed from './Components/WindowClosed';
+import '../public/smarthome.css';
 
 const styles: Record<string, CSSProperties> = {
     cardContent: {
@@ -28,7 +29,7 @@ const styles: Record<string, CSSProperties> = {
         zIndex: 2,
         width: '100%',
         height: '100%',
-        color: 'rgba(255, 255, 255, 0.92)',
+        color: 'var(--sh-text)',
         transition: 'transform 0.2s ease, color 0.2s ease',
     },
     fabWindow: {
@@ -46,9 +47,8 @@ const styles: Record<string, CSSProperties> = {
         left: '27%',
         width: '46%',
         maxHeight: '42%',
-        background:
-            'repeating-linear-gradient(to bottom, rgba(222, 232, 239, 0.9) 0 3px, rgba(194, 210, 221, 0.9) 3px 4px)',
-        boxShadow: '0 0 0 1px rgba(30, 49, 61, 0.25)',
+        background: 'repeating-linear-gradient(to bottom, var(--sh-text) 0 3px, var(--sh-text-secondary) 3px 4px)',
+        boxShadow: '0 0 0 1px var(--sh-divider)',
         transition: 'height 0.25s ease',
     },
     fabWindowState: {
@@ -61,9 +61,9 @@ const styles: Record<string, CSSProperties> = {
         justifyContent: 'center',
         width: 11,
         height: 11,
-        border: '1px solid rgba(0, 0, 0, 0.3)',
+        border: '1px solid var(--sh-divider)',
         borderRadius: '50%',
-        color: '#10202b',
+        color: 'var(--sh-bg)',
         fontSize: '0.45rem',
         fontWeight: 800,
         lineHeight: 1,
@@ -412,7 +412,7 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
         return (
             <Fab
                 size="small"
-                color="primary"
+                className="sh-colors sh-control"
                 aria-label={ariaLabel}
                 onClick={
                     hasControl
@@ -450,7 +450,7 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
                     <WindowClosed
                         style={{
                             ...styles.fabWindowIcon,
-                            ...(isOpen ? { color: '#b9f2ce' } : undefined),
+                            ...(isOpen ? { color: 'var(--sh-success)' } : undefined),
                         }}
                     />
                 </div>
@@ -459,7 +459,7 @@ export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
                         aria-hidden="true"
                         style={{
                             ...styles.fabWindowState,
-                            background: isOpen ? '#7be0a2' : '#dce7ed',
+                            background: isOpen ? 'var(--sh-success)' : 'var(--sh-text-secondary)',
                         }}
                     >
                         {stateLabel}

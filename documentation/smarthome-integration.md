@@ -3,14 +3,35 @@
 Weather now loads the shared palette from `src-widgets/public/smarthome.css` and
 its component layout from `src-widgets/src/Weather.css`. The public stylesheet
 is also copied into the build for use by vis project layouts. It contains no
-global body, MUI, or SVG overrides. StackCardCarousel uses the same foundation. SwitchButton, ThermostatCompact,
-and Blinds are unchanged.
+global body, MUI, or SVG overrides. StackCardCarousel, SwitchButton,
+ThermostatCompact, and Blinds use the same foundation.
 
 The written style guide is the palette/spacing specification; the PNG is the
 composition reference. The implementation uses scoped CSS tokens because the
 host owns the MUI theme and this widget set already accommodates differing host
 and bundled MUI versions. It does not replace the editor's theme or install a
 global CssBaseline. New components can reuse the tokens through CSS or MUI `sx`.
+
+## Compact device colors
+
+SwitchButton, ThermostatCompact, and the Blinds button opt in using `sh-colors
+sh-control`. `sh-colors` supplies only palette variables, so existing typography,
+geometry, and elevation are preserved. One central rule in `public/smarthome.css`
+controls their foreground/background colors, including hover and disabled states.
+
+- Lights recognized by the built-in bulb icons or configured brightness/color
+  temperature controls use amber when on. Other switches use secondary blue.
+  Inactive icons use the primary text color on a neutral secondary surface.
+- The thermostat uses the main surface and text colors, with cyan humidity.
+- Blinds use the neutral surface, pale slats, and the shared success color for
+  the existing open-window cue. Position rendering and state labels are unchanged.
+- SwitchButton's explicit `colorOn`/`colorOff` and `backgroundOn`/`backgroundOff`
+  still take precedence over its generic `color`/`background`, then the shared
+  defaults. Clear these editor attributes to adopt the central palette. Custom
+  image icons retain their own image colors.
+
+This pass changes compact control colors only. Detail dialogs and the light
+popover retain their existing host theme and layouts.
 
 ## Weather
 

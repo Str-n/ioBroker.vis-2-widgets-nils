@@ -1,7 +1,8 @@
 /* Opt-in foundation. No body, :root, or global MUI overrides. Also served as
    widgets/vis-2-widgets-nils-fork/smarthome.css for vis project layouts. */
 .sh-theme,
-.sh-app {
+.sh-app,
+.sh-colors {
     --sh-bg: #16324a;
     --sh-surface: #1d3c57;
     --sh-surface-2: #244b68;
@@ -23,10 +24,41 @@
     --sh-radius-chip: 16px;
     --sh-shadow-control: 0 4px 12px rgba(0, 0, 0, 0.14);
     --sh-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.sh-theme,
+.sh-app {
     color: var(--sh-text);
     font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 14px;
     line-height: 1.4;
+}
+
+/* Color-only opt-in for existing controls. Geometry, typography, and elevation
+   remain owned by each widget. Explicit widget colors override these defaults. */
+.sh-colors.sh-control,
+.sh-colors.sh-control:hover,
+.sh-colors.sh-control:active {
+    color: var(--sh-control-color, var(--sh-control-state-color, var(--sh-text)));
+    background-color: var(--sh-control-background, var(--sh-surface-2));
+    background-image: none;
+}
+
+.sh-control[data-sh-active='true'] {
+    --sh-control-state-color: var(--sh-secondary);
+}
+
+.sh-control[data-sh-device='light'][data-sh-active='true'] {
+    --sh-control-state-color: var(--sh-control-on);
+}
+
+.sh-control[data-sh-device='sensor'] {
+    --sh-control-background: var(--sh-surface);
+}
+
+.sh-colors.sh-control.Mui-disabled {
+    color: var(--sh-text-secondary);
+    background-color: var(--sh-surface);
 }
 
 .sh-app {

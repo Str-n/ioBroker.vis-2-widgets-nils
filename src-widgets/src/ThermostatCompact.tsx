@@ -7,6 +7,7 @@ import type { RxRenderWidgetProps, RxWidgetInfo } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
 import Thermostat from './Thermostat';
+import '../public/smarthome.css';
 import './ThermostatCompact.css';
 
 export default class ThermostatCompact extends Thermostat {
@@ -61,10 +62,10 @@ export default class ThermostatCompact extends Thermostat {
             <>
                 <Button
                     variant="contained"
-                    color="primary"
+                    data-sh-device="sensor"
                     size="small"
                     onClick={() => this.setState({ dialog: true })}
-                    className={`thermostat-compact-button${
+                    className={`sh-colors sh-control thermostat-compact-button${
                         this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected'
                             ? ' thermostat-compact-button--with-humidity'
                             : ''
@@ -74,7 +75,12 @@ export default class ThermostatCompact extends Thermostat {
                         <span>{label}</span>
                         {this.state.rxData['oid-humidity'] &&
                         this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
-                            <span style={{ fontSize: 10, fontWeight: 'normal' }}>{humidityLabel}</span>
+                            <span
+                                className="thermostat-compact-humidity"
+                                style={{ fontSize: 10, fontWeight: 'normal' }}
+                            >
+                                {humidityLabel}
+                            </span>
                         ) : null}
                     </span>
                 </Button>

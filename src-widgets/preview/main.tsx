@@ -148,6 +148,15 @@ function App(): React.JSX.Element {
                     } }} />
                     <strong>{title}</strong><code>{String(values[`${oid}.val`])}</code>
                 </article>)}
+                {[
+                    { id: 'default-light', oid: 'preview.green', iconOn: 'lightbulb', iconOff: 'lightbulb-outlined', title: 'Shared light colors' },
+                    { id: 'default-switch', oid: 'preview.numeric', iconOn: 'power', iconOff: 'power', title: 'Shared switch colors' },
+                ].map(example => <article className="preview-card" key={example.id} data-preview={example.id}>
+                    <SwitchButton {...commonProps as any} id={example.id} customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
+                        oid: example.oid, 'icon-on': example.iconOn, 'icon-off': example.iconOff, readOnly: false,
+                    } }} />
+                    <strong>{example.title}</strong>
+                </article>)}
                 <article className="preview-card">
                     <SwitchButton {...commonProps as any} id="switch-light-controls" customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
                         oid: 'preview.light', brightness: 'preview.light.brightness', color_temperature: 'preview.light.temperature', color_temperature_scale: 10,
