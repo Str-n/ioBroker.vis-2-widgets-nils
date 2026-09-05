@@ -45,15 +45,15 @@
 }
 
 .sh-carousel__navigation {
-    flex: 0 0 48px;
+    flex: 0 0 20px;
 }
 
 .sh-carousel__control {
     display: grid;
     place-items: center;
-    flex: 0 0 48px;
-    width: 48px;
-    height: 48px;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: 0;
     border-radius: var(--sh-radius-control);
@@ -61,11 +61,15 @@
     color: var(--sh-text-secondary);
     cursor: pointer;
     touch-action: manipulation;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.sh-carousel__control:hover:not(:disabled) {
-    background: var(--sh-surface-2);
-    color: var(--sh-text);
+.sh-carousel__control:hover,
+.sh-carousel__control:active,
+.sh-carousel__control:focus {
+    background: transparent;
+    box-shadow: none;
 }
 
 .sh-carousel__control:focus-visible {
@@ -78,15 +82,21 @@
     opacity: 0.5;
 }
 
+.sh-carousel__dot {
+    flex-basis: 24px;
+    width: 24px;
+}
+
 .sh-carousel__dot span {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 999px;
     background: var(--sh-control-off);
 }
 
 .sh-carousel__dot[aria-current='true'] span {
-    width: 20px;
+    width: 8px;
+    height: 8px;
     background: var(--sh-primary);
 }
 
@@ -102,7 +112,7 @@
     display: none;
 }
 
-@container sh-carousel (max-width: 335px) {
+@container sh-carousel (max-width: 199px) {
     .sh-carousel__pagination--dense .sh-carousel__dots {
         display: none;
     }
@@ -112,7 +122,7 @@
     }
 }
 
-@container sh-carousel (max-width: 239px) {
+@container sh-carousel (max-width: 151px) {
     .sh-carousel__dots {
         display: none;
     }

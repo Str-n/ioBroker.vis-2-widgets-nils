@@ -38,8 +38,9 @@ The weather is embedded in the carousel under `w000083`, with view
 `visview_widgetkarte1`. StackCardCarousel now owns the 22px rounded border and restrained shadow.
 Only the selected view is mounted; background cards have been removed. Keep
 Weather cardless there for a transparent background. Previous/next buttons,
-indicator buttons, and horizontal swipes change the active view. Indicator
-buttons have 48px targets; a numeric counter replaces them when space is limited
+indicator buttons, and horizontal swipes change the active view. Indicators use 6px dots (8px for the active card), with 24px-wide buttons and
+40px-high controls. Button backgrounds remain transparent on touch, hover, and
+click; keyboard focus uses an outline. A numeric counter replaces dots when space is limited
 or more than five views are configured. A single view has no navigation row.
 Switching views unmounts the previous view, so its local transient UI state resets
 when revisited; ioBroker states remain the source of device data.
@@ -85,3 +86,8 @@ Build with `npm run build` in `src-widgets`; use the repository's
 `npm run copy-files` when preparing the adapter distribution. Installing or
 uploading that distribution and editing project CSS are separate from the local
 source changes. Back up the project CSS before applying the bridge.
+
+Run `node scripts/check-carousel-preview.cjs http://127.0.0.1:4174/test-dashboard.html`
+against the running preview for desktop and mobile regression checks. The checks
+use real Chromium touch gestures over Weather, including stopped bubbling events,
+vertical/short drags, indicator taps, and transparent pressed/hover states.

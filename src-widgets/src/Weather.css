@@ -8,6 +8,9 @@
     min-width: 0;
     container: sh-weather / inline-size;
     overflow: auto;
+    /* This is a scroll container: declare pan-y here too, so the browser does
+       not take over horizontal gestures before the parent carousel sees them. */
+    touch-action: pan-y;
     font-variant-numeric: tabular-nums;
 }
 

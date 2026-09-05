@@ -24,6 +24,8 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
     private readonly refContainer: React.RefObject<HTMLDivElement | null> = React.createRef();
     private pointerStartX: number | null = null;
     private pointerStartY = 0;
+    private swipePointerId: number | null = null;
+    private suppressSwipeClick = false;
 
     constructor(props: VisRxWidgetProps) {
         super(props);
@@ -118,28 +120,53 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
     };
 
     private handlePointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
+        this.suppressSwipeClick = false;
         if (
             this.state.editMode ||
             event.button !== 0 ||
             !event.isPrimary ||
-            (event.target as HTMLElement).closest('button, input, select, textarea, a, [role="slider"]')
+            (event.target as Element).closest('.sh-carousel') !== event.currentTarget ||
+            (event.target as Element).closest(
+                'button, input, select, textarea, a, [role="slider"], [role="button"], [contenteditable="true"]',
+            )
         ) {
             return;
         }
         this.pointerStartX = event.clientX;
         this.pointerStartY = event.clientY;
+        this.swipePointerId = event.pointerId;
+    };
+
+    private handlePointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
+        if (this.pointerStartX === null || event.pointerId !== this.swipePointerId) {
+            return;
+        }
+        const distanceX = Math.abs(event.clientX - this.pointerStartX);
+        const distanceY = Math.abs(event.clientY - this.pointerStartY);
+        if (distanceY >= SWIPE_THRESHOLD && distanceY > distanceX) {
+            this.cancelSwipe();
+        } else if (distanceX >= SWIPE_THRESHOLD && distanceX > distanceY) {
+            // Capture only a confirmed swipe, preserving normal taps in embedded widgets.
+            event.currentTarget.setPointerCapture(event.pointerId);
+        }
+    };
+
+    private cancelSwipe = (): void => {
+        this.pointerStartX = null;
+        this.swipePointerId = null;
     };
 
     private handlePointerUp = (event: React.PointerEvent<HTMLDivElement>): void => {
-        if (this.pointerStartX === null) {
+        if (this.pointerStartX === null || event.pointerId !== this.swipePointerId) {
             return;
         }
         const distance = event.clientX - this.pointerStartX;
-        this.pointerStartX = null;
+        this.cancelSwipe();
         if (
             Math.abs(distance) >= SWIPE_THRESHOLD &&
             Math.abs(distance) > Math.abs(event.clientY - this.pointerStartY)
         ) {
+            this.suppressSwipeClick = true;
             this.showCard(this.state.activeCard + (distance < 0 ? 1 : -1));
         }
     };
@@ -159,10 +186,30 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
                 role="region"
                 aria-roledescription="carousel"
                 aria-label="Cards"
-                onPointerDown={this.handlePointerDown}
-                onPointerUp={this.handlePointerUp}
-                onPointerCancel={() => (this.pointerStartX = null)}
-                onPointerLeave={() => (this.pointerStartX = null)}
+                // Embedded vis widgets can stop bubbling pointer events.
+                onPointerDownCapture={this.handlePointerDown}
+                onPointerMoveCapture={this.handlePointerMove}
+                onPointerUpCapture={this.handlePointerUp}
+                onPointerCancelCapture={this.cancelSwipe}
+                onLostPointerCapture={event => {
+                    // Touch starts with implicit capture on the child. Transferring
+                    // it to the carousel must not cancel the gesture we just claimed.
+                    if (event.target === event.currentTarget) {
+                        this.cancelSwipe();
+                    }
+                }}
+                onPointerLeave={event => {
+                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+                        this.cancelSwipe();
+                    }
+                }}
+                onClickCapture={event => {
+                    if (this.suppressSwipeClick && event.detail > 0) {
+                        this.suppressSwipeClick = false;
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                }}
             >
                 <div
                     className="sh-carousel__card"
@@ -191,7 +238,7 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
                             disabled={this.state.editMode}
                             onClick={() => this.showCard(activeCard - 1)}
                         >
-                            <KeyboardArrowLeft style={{ width: 24, height: 24 }} />
+                            <KeyboardArrowLeft style={{ width: 20, height: 20 }} />
                         </button>
                         <div className={`sh-carousel__pagination${count > 3 ? ' sh-carousel__pagination--dense' : ''}`}>
                             {count <= 5 ? (
@@ -224,7 +271,7 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
                             disabled={this.state.editMode}
                             onClick={() => this.showCard(activeCard + 1)}
                         >
-                            <KeyboardArrowRight style={{ width: 24, height: 24 }} />
+                            <KeyboardArrowRight style={{ width: 20, height: 20 }} />
                         </button>
                     </div>
                 ) : null}
