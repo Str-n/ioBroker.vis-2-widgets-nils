@@ -56,12 +56,31 @@ interface EnergyGameState extends VisRxWidgetState {
 }
 
 const BASE = '0_userdata.0.energyGame';
+const LAST_CLICK_MAX_AGE_MS = 5_000;
+const viewportEffectClaims = new Map<string, { owner: symbol; expiresAt: number }>();
+
+function claimViewportEffect(source: string, sequence: number, owner: symbol, expiresAt: number): boolean {
+    const key = JSON.stringify([source, sequence]);
+    const now = Date.now();
+    viewportEffectClaims.forEach((entry, entryKey) => {
+        if (entry.expiresAt <= now) {
+            viewportEffectClaims.delete(entryKey);
+        }
+    });
+    const claim = viewportEffectClaims.get(key);
+    if (claim && claim.expiresAt > now) {
+        return claim.owner === owner;
+    }
+    viewportEffectClaims.set(key, { owner, expiresAt });
+    return true;
+}
 
 function tr(key: string, ...args: (string | number)[]): string {
     return Generic.t(key, ...args.map(String));
 }
 
 export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameState> {
+    private readonly instanceId = Symbol('EnergyGame');
     private readonly tracker = new EventSequenceTracker();
     private snapshotTimer: ReturnType<typeof setTimeout> | null = null;
     private eventTimer: ReturnType<typeof setTimeout> | null = null;
@@ -70,7 +89,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
     private readonly rootRef = React.createRef<HTMLDivElement>();
     private unmounted = false;
     private wasConnected: boolean | null = null;
-    private lastClickPosition: ClickPosition | null = null;
+    private lastClickPosition: (ClickPosition & { clickedAt: number }) | null = null;
     private clickTrackingEnabled = false;
 
     constructor(props: VisRxWidgetProps) {
@@ -326,7 +345,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
         if (!this.clickTrackingEnabled || this.unmounted) {
             return;
         }
-        this.lastClickPosition = { x: event.clientX, y: event.clientY };
+        this.lastClickPosition = { x: event.clientX, y: event.clientY, clickedAt: Date.now() };
     };
 
     private updateClickTracking(force?: boolean): void {
@@ -380,14 +399,38 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
             lightCount = snapshot.lightCount ?? lightCount;
             lightNames = snapshot.lightNames.length ? snapshot.lightNames : lightNames;
         }
+        const receivedAt = Date.now();
+        const eventKind = classifyEventKind(kind, delta);
+        const effectAtLastClick = parseBoolean(this.state.rxData?.effect_at_last_click);
+        const viewportEffect = effectAtLastClick || eventKind === 'NEW_RECORD';
+        const lastClick = this.lastClickPosition;
+        const clickAge = lastClick ? receivedAt - lastClick.clickedAt : Infinity;
+        const clickPosition =
+            effectAtLastClick &&
+            eventKind !== 'NEW_RECORD' &&
+            lastClick &&
+            clickAge >= 0 &&
+            clickAge <= LAST_CLICK_MAX_AGE_MS
+                ? { x: lastClick.x, y: lastClick.y }
+                : undefined;
+        const effectSuppressed =
+            viewportEffect &&
+            !claimViewportEffect(
+                String(this.state.rxData?.oid_seq || BASE),
+                sequence,
+                this.instanceId,
+                receivedAt + EVENT_DURATION_MS[eventKind],
+            );
         this.enqueueEvent({
             sequence,
-            kind: classifyEventKind(kind, delta),
+            kind: eventKind,
             delta,
             lightCount,
             lightNames,
-            receivedAt: Date.now(),
-            clickPosition: this.lastClickPosition ? { ...this.lastClickPosition } : undefined,
+            receivedAt,
+            clickPosition,
+            viewportEffect,
+            effectSuppressed,
         });
     }
 
@@ -437,7 +480,6 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
         super.renderWidgetBody(props);
         const rx = this.state.rxData;
         const inEditor = !!(this.props as any).editMode;
-        const effectAtLastClick = parseBoolean(rx.effect_at_last_click);
         const content = (
             <div
                 ref={this.rootRef}
@@ -467,7 +509,6 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                     lang={String((this.props as any).context?.lang || Generic.getLanguage() || 'en')}
                     width={this.state.size.width}
                     height={this.state.size.height}
-                    eventPosition={effectAtLastClick && !inEditor ? this.state.activeEvent?.clickPosition : null}
                     t={tr}
                 />
             </div>

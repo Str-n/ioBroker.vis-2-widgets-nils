@@ -45,13 +45,12 @@ export interface EnergyGameViewProps {
     lang: string;
     width: number;
     height: number;
-    eventPosition?: ClickPosition | null;
     t: (key: string, ...args: (string | number)[]) => string;
 }
 
 const STYLE_ID = 'nils-energy-game-styles';
 const CSS = `
-.nils-eg{position:relative;width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;box-sizing:border-box;user-select:none}
+.nils-eg{position:relative;width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;overflow:visible;box-sizing:border-box;user-select:none}
 .nils-eg *{box-sizing:border-box}.nils-eg-num{font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap}.nils-eg-label{text-transform:uppercase;letter-spacing:.16em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nils-eg-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;pointer-events:none}.nils-eg-centre{position:absolute;left:50%;top:50%;pointer-events:none}
 @keyframes nils-eg-rise{0%{opacity:0;transform:translate3d(0,14px,0) scale(.8)}18%{opacity:1;transform:translate3d(0,-2px,0) scale(1.12)}72%{opacity:1;transform:translate3d(0,-10px,0) scale(1)}100%{opacity:0;transform:translate3d(0,-24px,0) scale(.96)}}
 @keyframes nils-eg-fade{0%{opacity:0}14%{opacity:1}82%{opacity:1}100%{opacity:0}}@keyframes nils-eg-ring{0%{opacity:.8;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.8)}}
@@ -164,12 +163,14 @@ function EventOverlay({
     dailyText,
     props,
     base,
+    viewport,
     position,
 }: {
     event: VisualEvent;
     dailyText: string;
     props: EnergyGameViewProps;
     base: number;
+    viewport: boolean;
     position?: ClickPosition | null;
 }): React.JSX.Element {
     const duration = `${EVENT_DURATION_MS[event.kind]}ms`;
@@ -201,20 +202,27 @@ function EventOverlay({
             style={
                 {
                     '--dur': duration,
-                    ...(position
-                        ? {
-                              position: 'fixed',
-                              inset: 'auto',
-                              left: position.x,
-                              top: position.y,
-                              width: Math.min(Math.max(base * 1.1, 240), 480),
-                              height: Math.min(Math.max(base * 0.8, 180), 360),
-                              transform: 'translate(-50%, -50%)',
-                              zIndex: 2147483647,
-                              overflow: 'visible',
-                          }
+                    ...(viewport
+                        ? position
+                            ? {
+                                  position: 'fixed',
+                                  inset: 'auto',
+                                  left: position.x,
+                                  top: position.y,
+                                  width: Math.min(Math.max(base * 1.1, 240), 480),
+                                  height: Math.min(Math.max(base * 0.8, 180), 360),
+                                  transform: 'translate(-50%, -50%)',
+                                  zIndex: 2147483647,
+                                  overflow: 'visible',
+                              }
+                            : {
+                                  position: 'fixed',
+                                  inset: 0,
+                                  zIndex: 2147483647,
+                                  overflow: 'visible',
+                              }
                         : {}),
-                } as React.CSSProperties
+                } as React.CSSProperties & { '--dur': string }
             }
         >
             {record && (
@@ -415,7 +423,8 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
     const labelSize = clamp(base * 0.03, 9, 13);
     const padding = compact ? 8 : clamp(base * 0.035, 10, 20);
     const dailyText = formatScore(props.daily, props.lang);
-    const event = props.animationsEnabled ? props.activeEvent : null;
+    const event = props.animationsEnabled && !props.activeEvent?.effectSuppressed ? props.activeEvent : null;
+    const viewportEvent = !!event?.viewportEffect;
     const eventOverlay = event ? (
         <EventOverlay
             key={event.sequence}
@@ -423,11 +432,13 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
             dailyText={dailyText}
             props={props}
             base={base}
-            position={props.eventPosition}
+            viewport={viewportEvent}
+            position={event?.clickPosition}
         />
     ) : null;
+    const canUsePortal = typeof document !== 'undefined' && !!document.body;
     const globalEventOverlay =
-        event && props.eventPosition && typeof document !== 'undefined' && document.body
+        viewportEvent && canUsePortal
             ? createPortal(eventOverlay, document.body, `nils-eg-event-${event.sequence}`)
             : null;
     const recordTitle = props.recordBrokenAt
@@ -474,23 +485,38 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     />
                 )}
                 <div
-                    key={event?.sequence || 'idle'}
-                    className={`nils-eg-num${event && !props.reducedMotion ? ' nils-eg-pop' : ''}`}
-                    role="status"
-                    aria-live="polite"
-                    aria-label={`${props.labels.daily}: ${props.daily === null ? props.t('eg_score_unavailable') : dailyText}`}
                     style={{
-                        fontSize: dailySize,
-                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
                         maxWidth: '100%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        textAlign: 'center',
-                        textShadow: `0 0 ${Math.round(dailySize * 0.25)}px ${props.palette.accent}66`,
-                        marginTop: compact ? 0 : 4,
                     }}
                 >
-                    {dailyText}
+                    {compact && (
+                        <Bolt
+                            size={clamp(dailySize * 0.42, 14, 26)}
+                            color={props.palette.accent}
+                        />
+                    )}
+                    <div
+                        key={event?.sequence || 'idle'}
+                        className={`nils-eg-num${event && !props.reducedMotion ? ' nils-eg-pop' : ''}`}
+                        role="status"
+                        aria-live="polite"
+                        aria-label={`${props.labels.daily}: ${props.daily === null ? props.t('eg_score_unavailable') : dailyText}`}
+                        style={{
+                            fontSize: dailySize,
+                            fontWeight: 800,
+                            maxWidth: '100%',
+                            overflow: 'visible',
+                            textAlign: 'center',
+                            textShadow: `0 0 ${Math.round(dailySize * 0.25)}px ${props.palette.accent}66`,
+                            marginTop: compact ? 0 : 4,
+                        }}
+                    >
+                        {dailyText}
+                    </div>
                 </div>
                 <div
                     className="nils-eg-label"
@@ -588,7 +614,7 @@ export default function EnergyGameView(props: EnergyGameViewProps): React.JSX.El
                     </div>
                 </div>
             </div>
-            {!props.eventPosition && eventOverlay}
+            {(!viewportEvent || !canUsePortal) && eventOverlay}
             {globalEventOverlay}
         </div>
     );

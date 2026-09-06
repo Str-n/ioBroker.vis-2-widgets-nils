@@ -10,6 +10,8 @@ export interface VisualEvent {
     lightNames: string[];
     receivedAt: number;
     clickPosition?: ClickPosition;
+    viewportEffect?: boolean;
+    effectSuppressed?: boolean;
 }
 
 export interface ClickPosition {
