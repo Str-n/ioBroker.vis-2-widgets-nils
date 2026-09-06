@@ -1,0 +1,45 @@
+.sh-horizontal-scroll-view {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sh-control-off) transparent;
+    touch-action: pan-x;
+}
+
+.sh-horizontal-scroll-view::-webkit-scrollbar {
+    height: 6px;
+}
+
+.sh-horizontal-scroll-view::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: var(--sh-control-off);
+}
+
+.sh-horizontal-scroll-view::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sh-horizontal-scroll-view__content {
+    position: relative;
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.sh-horizontal-scroll-view__placeholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--sh-text-secondary);
+    text-align: center;
+}
+
+.sh-horizontal-scroll-view__edit-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}

@@ -1,0 +1,43 @@
+.sh-labeled-switch-button {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.sh-labeled-switch-button__control {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+}
+
+.sh-labeled-switch-button__labels {
+    width: 100%;
+    min-width: 0;
+}
+
+.sh-labeled-switch-button__primary,
+.sh-labeled-switch-button__secondary {
+    overflow: hidden;
+    padding-inline: 2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sh-labeled-switch-button__primary {
+    color: var(--sh-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 18px;
+}
+
+.sh-labeled-switch-button__secondary {
+    color: var(--sh-text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+}

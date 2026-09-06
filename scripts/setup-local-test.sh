@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SWITCH_WIDGET_ID="tplNils2SwitchButton"
 SWITCH_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/SwitchButton.tsx"
+LABELED_SWITCH_WIDGET_ID="tplNils2LabeledSwitchButton"
+LABELED_SWITCH_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/LabeledSwitchButton.tsx"
 COMPACT_WIDGET_ID="tplNils2ThermostatCompact"
 COMPACT_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/ThermostatCompact.tsx"
 BLINDS_WIDGET_ID="tplNils2Blinds"
@@ -12,6 +14,8 @@ ENERGY_GAME_WIDGET_ID="tplNils2EnergyGame"
 ENERGY_GAME_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/EnergyGame.tsx"
 STACK_CARD_CAROUSEL_WIDGET_ID="tplNils2StackCardCarousel"
 STACK_CARD_CAROUSEL_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/StackCardCarousel.tsx"
+HORIZONTAL_SCROLL_VIEW_WIDGET_ID="tplNils2HorizontalScrollView"
+HORIZONTAL_SCROLL_VIEW_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/HorizontalScrollView.tsx"
 PREVIEW_SOURCE="${ROOT_DIR}/src-widgets/preview/main.tsx"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -19,7 +23,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo ""
     echo "Usage: ./scripts/setup-local-test.sh"
     echo ""
-    echo "This script validates and previews SwitchButton, ThermostatCompact, Blinds, EnergyGame, and StackCardCarousel with local mock states."
+    echo "This script validates and previews SwitchButton, LabeledSwitchButton, ThermostatCompact, Blinds, EnergyGame, StackCardCarousel, and HorizontalScrollView with local mock states."
     echo "Open: http://localhost:4174/test-dashboard.html"
     exit 0
 fi
@@ -43,6 +47,25 @@ if ! grep -Fq "brightness: 'preview.light.brightness'" "${PREVIEW_SOURCE}" ||
    ! grep -Fq "color_temperature: 'preview.light.temperature'" "${PREVIEW_SOURCE}" ||
    ! grep -Fq "color_temperature_scale: 10" "${PREVIEW_SOURCE}"; then
     echo "The parameterized SwitchButton light controls are missing from the local test dashboard." >&2
+    exit 1
+fi
+
+if ! grep -Fq "'status-oid': 'preview.separate-status'" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "action: 'on'" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "action: 'off'" "${PREVIEW_SOURCE}"; then
+    echo "The SwitchButton status ID and fixed on/off actions are missing from the local test dashboard." >&2
+    exit 1
+fi
+
+if ! grep -Fq "id: '${LABELED_SWITCH_WIDGET_ID}'" "${LABELED_SWITCH_WIDGET_SOURCE}"; then
+    echo "LabeledSwitchButton must keep the persisted widget ID ${LABELED_SWITCH_WIDGET_ID}." >&2
+    exit 1
+fi
+
+if ! grep -Fq "import('../src/LabeledSwitchButton')" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "textLine1: 'Living room'" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "textLine2: 'Light'" "${PREVIEW_SOURCE}"; then
+    echo "LabeledSwitchButton is missing from the local test dashboard." >&2
     exit 1
 fi
 
@@ -86,6 +109,17 @@ if ! grep -Fq "import('../src/StackCardCarousel')" "${PREVIEW_SOURCE}"; then
     exit 1
 fi
 
+if ! grep -Fq "id: '${HORIZONTAL_SCROLL_VIEW_WIDGET_ID}'" "${HORIZONTAL_SCROLL_VIEW_WIDGET_SOURCE}"; then
+    echo "HorizontalScrollView must keep the widget ID ${HORIZONTAL_SCROLL_VIEW_WIDGET_ID}." >&2
+    exit 1
+fi
+
+if ! grep -Fq "import('../src/HorizontalScrollView')" "${PREVIEW_SOURCE}" ||
+   ! grep -Fq "view: 'horizontal-demo'" "${PREVIEW_SOURCE}"; then
+    echo "HorizontalScrollView is missing from the local test dashboard." >&2
+    exit 1
+fi
+
 if [[ ! -d "${ROOT_DIR}/node_modules" ]]; then
     echo "Installing root dependencies..."
     (cd "${ROOT_DIR}" && npm install)
@@ -103,7 +137,7 @@ Local widget test environment
 ========================================
 Project root: ${ROOT_DIR}
 Dashboard URL: http://localhost:4174/test-dashboard.html
-Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including brightness/temperature controls), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID}), StackCardCarousel (${STACK_CARD_CAROUSEL_WIDGET_ID})
+Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including separate status, fixed actions, and brightness/temperature controls), LabeledSwitchButton (${LABELED_SWITCH_WIDGET_ID}), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID}), StackCardCarousel (${STACK_CARD_CAROUSEL_WIDGET_ID}), HorizontalScrollView (${HORIZONTAL_SCROLL_VIEW_WIDGET_ID})
 
 This environment starts the Vite dev server for quick widget checks before deployment to the Raspberry Pi.
 Press Ctrl+C to stop the server.

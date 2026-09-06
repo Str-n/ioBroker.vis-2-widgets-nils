@@ -54,6 +54,19 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
                 rxData: { ...createOpenWeatherMapBindings(), noCard: true, forecastDays: 2, locationName: 'Berlin' },
             }} />;
         }
+        if (view === 'horizontal-demo') {
+            return <div className="horizontal-mock-view" style={options?.style}>
+                {[
+                    ['Living room', 'Light', 'On'],
+                    ['Kitchen', 'Temperature', '21.8 °C'],
+                    ['Bedroom', 'Blinds', '35%'],
+                ].map(([room, device, value]) => <article className="horizontal-mock-card" key={room}>
+                    <span>{room}</span>
+                    <strong>{device}</strong>
+                    <b>{value}</b>
+                </article>)}
+            </div>;
+        }
         const samples: Record<string, { eyebrow: string; title: string; value: string; color: string }> = {
             climate: { eyebrow: 'Living room', title: 'Climate', value: '21.5 °C', color: '#5b8cff' },
             energy: { eyebrow: 'Today', title: 'Solar energy', value: '8.4 kWh', color: '#f5b942' },
@@ -76,8 +89,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: Weather }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/Weather'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -112,7 +125,7 @@ function App(): React.JSX.Element {
             ];
         })),
     };
-    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues };
+    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -121,7 +134,10 @@ function App(): React.JSX.Element {
         },
         setValue: (id: string, value: unknown) => setValues(old => ({ ...old, [`${id}.val`]: value })),
         systemConfig: { common: { dateFormat: 'DD.MM.YYYY', isFloatComma: false } },
-        themeType: 'dark', views: { preview: { widgets: {} } },
+        themeType: 'dark', views: {
+            preview: { settings: {}, widgets: {} },
+            'horizontal-demo': { settings: { sizex: 760, sizey: 190 }, widgets: {} },
+        },
     }), []);
     const commonProps = {
         view: 'preview', context, editMode: false, runtime: true, isRelative: true, selectedWidgets: [],
@@ -157,6 +173,25 @@ function App(): React.JSX.Element {
                     } }} />
                     <strong>{example.title}</strong>
                 </article>)}
+                <article className="preview-card" data-preview="separate-status">
+                    <SwitchButton {...commonProps as any} id="switch-separate-status" customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
+                        oid: 'preview.separate-command', 'status-oid': 'preview.separate-status',
+                        'icon-on': 'power', 'icon-off': 'power', colorOn: '#66df8b', readOnly: false,
+                    } }} />
+                    <strong>Separate status</strong><code>write: {String(values['preview.separate-command.val'])} · status: {String(values['preview.separate-status.val'])}</code>
+                </article>
+                <article className="preview-card" data-preview="always-on">
+                    <SwitchButton {...commonProps as any} id="switch-always-on" customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
+                        oid: 'preview.always-on', action: 'on', 'icon-on': 'toggleon', 'icon-off': 'toggle-off', readOnly: false,
+                    } }} />
+                    <strong>Always on</strong><code>{String(values['preview.always-on.val'])}</code>
+                </article>
+                <article className="preview-card" data-preview="always-off">
+                    <SwitchButton {...commonProps as any} id="switch-always-off" customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
+                        oid: 'preview.always-off', action: 'off', 'icon-on': 'toggleon', 'icon-off': 'toggle-off', readOnly: false,
+                    } }} />
+                    <strong>Always off</strong><code>{String(values['preview.always-off.val'])}</code>
+                </article>
                 <article className="preview-card">
                     <SwitchButton {...commonProps as any} id="switch-light-controls" customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
                         oid: 'preview.light', brightness: 'preview.light.brightness', color_temperature: 'preview.light.temperature', color_temperature_scale: 10,
@@ -164,6 +199,14 @@ function App(): React.JSX.Element {
                         background: 'transparent', backgroundOn: '#fbbf2428', backgroundOff: '#64748b24', readOnly: false,
                     } }} />
                     <strong>Light controls</strong><code>{String(values['preview.light.val'])} · {values['preview.light.brightness.val']}% · {values['preview.light.temperature.val'] * 10}K</code>
+                </article>
+                <article className="preview-card">
+                    <LabeledSwitchButton {...commonProps as any} id="labeled-switch" customSettings={{ values, style: { width: 96, height: 88 }, rxData: {
+                        oid: 'preview.light', brightness: 'preview.light.brightness', color_temperature: 'preview.light.temperature', color_temperature_scale: 10,
+                        'icon-on': 'lightbulb', 'icon-off': 'lightbulb-outlined', colorOn: '#fbbf24', readOnly: false,
+                        textLine1: 'Living room', textLine2: 'Light',
+                    } }} />
+                    <code>{String(values['preview.light.val'])}</code>
                 </article>
             </div>
         </section>
@@ -212,6 +255,12 @@ function App(): React.JSX.Element {
             <div className="section-heading"><div><h2>Stack card carousel</h2><p>Swipe the card or use the controls to move between embedded views.</p></div></div>
             <article className="thermostat-card carousel-preview"><StackCardCarousel {...commonProps as any} id="stack-card-carousel" customSettings={{ values, style: { width: 420, height: 320 }, rxData: {
                 count: 3, view1: 'weather', view2: 'climate', view3: 'security',
+            } }} /></article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Horizontal scroll view</h2><p>Drag or use a trackpad to scroll through a wide embedded view.</p></div></div>
+            <article className="thermostat-card horizontal-scroll-preview"><HorizontalScrollView {...commonProps as any} id="horizontal-scroll-view" customSettings={{ values, style: { width: 420, height: 210, maxWidth: '100%' }, rxData: {
+                view: 'horizontal-demo',
             } }} /></article>
         </section>
     </main>;
