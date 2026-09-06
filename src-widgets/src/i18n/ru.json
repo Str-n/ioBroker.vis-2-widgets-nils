@@ -495,5 +495,11 @@
   "eg_energy_combo": "Энергетическое комбо",
   "eg_lights_saved": "Сэкономлено ламп: %s",
   "eg_score_unavailable": "Очки недоступны",
-  "home_screen_fullscreen": "Home Screen Fullscreen"
+  "home_screen_fullscreen": "Home Screen Fullscreen",
+  "thermostat_set_point_mode": "Объект режима уставки (0 = Авто, 1 = Ручной)",
+  "thermostat_auto": "Авто",
+  "thermostat_manual": "Ручной",
+  "thermostat_decrease": "Уменьшить температуру",
+  "thermostat_increase": "Увеличить температуру",
+  "thermostat_history": "История"
 }

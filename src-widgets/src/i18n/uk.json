@@ -495,5 +495,11 @@
   "eg_energy_combo": "Енергетичне комбо",
   "eg_lights_saved": "Збережено ламп: %s",
   "eg_score_unavailable": "Бали недоступні",
-  "home_screen_fullscreen": "Home Screen Fullscreen"
+  "home_screen_fullscreen": "Home Screen Fullscreen",
+  "thermostat_set_point_mode": "Об’єкт режиму заданої температури (0 = Авто, 1 = Ручний)",
+  "thermostat_auto": "Авто",
+  "thermostat_manual": "Ручний",
+  "thermostat_decrease": "Зменшити температуру",
+  "thermostat_increase": "Збільшити температуру",
+  "thermostat_history": "Історія"
 }

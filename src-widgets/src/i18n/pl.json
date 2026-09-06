@@ -495,5 +495,11 @@
   "eg_energy_combo": "Combo energii",
   "eg_lights_saved": "Zaoszczędzono %s świateł",
   "eg_score_unavailable": "Wynik niedostępny",
-  "home_screen_fullscreen": "Home Screen Fullscreen"
+  "home_screen_fullscreen": "Home Screen Fullscreen",
+  "thermostat_set_point_mode": "Obiekt trybu temperatury zadanej (0 = Auto, 1 = Ręczny)",
+  "thermostat_auto": "Auto",
+  "thermostat_manual": "Ręczny",
+  "thermostat_decrease": "Obniż temperaturę",
+  "thermostat_increase": "Podnieś temperaturę",
+  "thermostat_history": "Historia"
 }

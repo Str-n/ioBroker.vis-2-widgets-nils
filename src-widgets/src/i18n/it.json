@@ -495,5 +495,11 @@
   "eg_energy_combo": "Combo energia",
   "eg_lights_saved": "%s luci risparmiate",
   "eg_score_unavailable": "Punteggio non disponibile",
-  "home_screen_fullscreen": "Home Screen Fullscreen"
+  "home_screen_fullscreen": "Home Screen Fullscreen",
+  "thermostat_set_point_mode": "Oggetto modalità setpoint (0 = Auto, 1 = Manuale)",
+  "thermostat_auto": "Auto",
+  "thermostat_manual": "Manuale",
+  "thermostat_decrease": "Diminuire la temperatura",
+  "thermostat_increase": "Aumentare la temperatura",
+  "thermostat_history": "Cronologia"
 }

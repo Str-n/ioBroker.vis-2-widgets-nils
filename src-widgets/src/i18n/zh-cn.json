@@ -495,5 +495,11 @@
   "eg_energy_combo": "能量连击",
   "eg_lights_saved": "已节省 %s 盏灯",
   "eg_score_unavailable": "分数不可用",
-  "home_screen_fullscreen": "Home Screen Fullscreen"
+  "home_screen_fullscreen": "Home Screen Fullscreen",
+  "thermostat_set_point_mode": "设定温度模式对象（0 = 自动，1 = 手动）",
+  "thermostat_auto": "自动",
+  "thermostat_manual": "手动",
+  "thermostat_decrease": "降低温度",
+  "thermostat_increase": "升高温度",
+  "thermostat_history": "历史记录"
 }

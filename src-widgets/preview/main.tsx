@@ -12,6 +12,12 @@ type PreviewProps = { id: string; view: string; context: Record<string, any>; cu
 class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>> {
     static t(key: string): string {
         const translations: Record<string, string> = {
+            thermostat_auto: 'Auto',
+            thermostat_manual: 'Manual',
+            thermostat_increase: 'Increase temperature',
+            thermostat_decrease: 'Decrease temperature',
+            desired_temperature: 'Set temperature',
+            actual_temperature: 'Room temperature',
             high_short: 'H',
             low_short: 'L',
             precipitation: 'Precipitation',
@@ -89,8 +95,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -125,7 +131,7 @@ function App(): React.JSX.Element {
             ];
         })),
     };
-    const initialValues = { 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues };
+    const initialValues = { 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -211,10 +217,20 @@ function App(): React.JSX.Element {
             </div>
         </section>
         <section>
+            <div className="section-heading"><div><h2>Thermostat</h2><p>Setpoint capped at 25°C. Auto writes 0; Manual writes 1.</p></div></div>
+            <article className="thermostat-card" data-preview="thermostat" style={{ padding: 16, gridTemplateColumns: 'minmax(0, 1fr)', background: '#1D3C57' }}>
+                <Thermostat {...commonProps as any} id="thermostat" customSettings={{ values, style: { width: 560, maxWidth: '100%', height: 260 }, rxData: {
+                    noCard: true, 'oid-temp-set': 'preview.temperature.set', 'oid-temp-actual': 'preview.temperature.actual',
+                    'oid-humidity': 'preview.humidity', 'oid-set-point-mode': 'preview.SET_POINT_MODE', step: '0.5', unit: '°C',
+                } }} />
+                <output data-preview="thermostat-values">{JSON.stringify({ setpoint: values['preview.temperature.set.val'], mode: values['preview.SET_POINT_MODE.val'] })}</output>
+            </article>
+        </section>
+        <section>
             <div className="section-heading"><div><h2>Compact thermostat button</h2><p>The real compact widget, backed by local temperature data.</p></div></div>
             <article className="thermostat-card"><ThermostatCompact {...commonProps as any} id="thermostat-compact" customSettings={{ values, style: { width: 180, height: 42 }, rxData: {
                 noCard: true, widgetTitle: 'Living room', 'oid-temp-set': 'preview.temperature.set', 'oid-temp-actual': 'preview.temperature.actual',
-                'oid-humidity': 'preview.humidity', 'oid-power': '', 'oid-mode': '', 'oid-boost': '', 'oid-party': '', unit: '°C', step: '0.5', timeout: 500, externalDialog: false, count: 0,
+                'oid-humidity': 'preview.humidity', 'oid-set-point-mode': 'preview.SET_POINT_MODE', 'oid-power': '', 'oid-mode': '', 'oid-boost': '', 'oid-party': '', unit: '°C', step: '0.5', timeout: 500, externalDialog: false, count: 0,
             } }} /></article>
         </section>
         <section>

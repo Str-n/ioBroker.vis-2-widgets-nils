@@ -495,5 +495,11 @@
   "eg_energy_combo": "Energiecombo",
   "eg_lights_saved": "%s lampen bespaard",
   "eg_score_unavailable": "Score niet beschikbaar",
-  "home_screen_fullscreen": "Home Screen Fullscreen"
+  "home_screen_fullscreen": "Home Screen Fullscreen",
+  "thermostat_set_point_mode": "Instelpuntmodus-object (0 = Auto, 1 = Handmatig)",
+  "thermostat_auto": "Auto",
+  "thermostat_manual": "Handmatig",
+  "thermostat_decrease": "Temperatuur verlagen",
+  "thermostat_increase": "Temperatuur verhogen",
+  "thermostat_history": "Geschiedenis"
 }

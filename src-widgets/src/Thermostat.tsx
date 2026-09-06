@@ -1,8 +1,18 @@
 import React from 'react';
 
-import { CircularSliderWithChildren } from 'react-circular-slider-svg';
-
-import { Box, Button, Dialog, DialogContent, DialogTitle, IconButton, Slider, Tooltip } from '@mui/material';
+import {
+    Box,
+    Button,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    Slider,
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography,
+    Tooltip,
+} from '@mui/material';
 
 import {
     WbSunny as WbSunnyIcon,
@@ -14,7 +24,10 @@ import {
     Dry as DryIcon,
     Park as ParkIcon,
     Houseboat as HouseboatIcon,
-    MoreVert as MoreVertIcon,
+    Add,
+    Remove,
+    WaterDropOutlined,
+    ShowChart,
     Close as IconClose,
     Thermostat as ThermostatIcon,
     Celebration as CelebrationIcon,
@@ -49,49 +62,6 @@ const BUTTONS: Record<string, React.JSX.Element> = {
 };
 
 const styles: Record<string, any> = {
-    thermostatCircleDiv: {
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        '& svg circle': {
-            cursor: 'pointer',
-        },
-        '&>div': {
-            margin: 'auto',
-            '&>div': {
-                top: '35% !important',
-            },
-        },
-    },
-    moreButton: {
-        position: 'absolute',
-        top: 4,
-        right: 4,
-    },
-    thermostatButtonsDiv: {
-        textAlign: 'center',
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%',
-        position: 'absolute',
-        bottom: 8,
-        left: 0,
-    },
-    thermostatNewValueLight: {
-        animation: 'vis-2-widgets-nils-fork-newValueAnimationLight 2s ease-in-out',
-    },
-    thermostatNewValueDark: {
-        animation: 'vis-2-widgets-nils-fork-newValueAnimationDark 2s ease-in-out',
-    },
-    thermostatDesiredTemp: {
-        fontWeight: 'bold',
-        display: 'flex',
-        alignItems: 'center',
-        width: '100%',
-        left: 0,
-        transform: 'none',
-    },
     tooltip: {
         pointerEvents: 'none',
     },
@@ -128,6 +98,7 @@ interface ThermostatRxData {
     unit: string;
     'oid-power': string;
     'oid-mode': string;
+    'oid-set-point-mode': string;
     'oid-boost': string;
     'oid-party': string;
     step: string;
@@ -150,8 +121,6 @@ interface ThermostatState extends VisRxWidgetState {
     // external dialog
     dialog: boolean;
     dialogTab: number;
-    size: number;
-    horizontal: boolean;
 
     modeObject: { common: ioBroker.StateCommon; _id: string } | undefined;
     tempObject: { common: ioBroker.StateCommon; _id: string } | null | undefined;
@@ -171,7 +140,6 @@ interface ThermostatState extends VisRxWidgetState {
         | null;
     min: number | undefined | null;
     max: number | undefined | null;
-    step: number | undefined | null;
 }
 
 export default class Thermostat extends Generic<ThermostatRxData, ThermostatState> {
@@ -185,8 +153,6 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             ...this.state,
             showDialog: false,
             dialogTab: 0,
-            size: 0,
-            horizontal: false,
         };
     }
 
@@ -232,7 +198,10 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                                             const values = Object.values(states);
                                             for (const state of values) {
                                                 const role = state.common.role;
-                                                if (role && role.includes('value.temperature')) {
+                                                if (state._id.endsWith('.SET_POINT_MODE')) {
+                                                    data['oid-set-point-mode'] = state._id;
+                                                    changed = true;
+                                                } else if (role && role.includes('value.temperature')) {
                                                     data['oid-temp-actual'] = state._id;
                                                     changed = true;
                                                 } else if (role?.includes('power')) {
@@ -292,6 +261,11 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                             name: 'oid-power',
                             type: 'id',
                             label: 'power_oid',
+                        },
+                        {
+                            name: 'oid-set-point-mode',
+                            type: 'id',
+                            label: 'thermostat_set_point_mode',
                         },
                         {
                             name: 'oid-mode',
@@ -435,7 +409,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             ],
             visDefaultStyle: {
                 width: '100%',
-                height: 120,
+                height: 320,
                 position: 'relative',
             },
             visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_thermostat.png',
@@ -562,8 +536,9 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
         if (this.state.rxData['oid-temp-set'] && this.state.rxData['oid-temp-set'] !== 'nothing_selected') {
             const tempObj = _objects[this.state.rxData['oid-temp-set']];
             newState.min = tempObj?.common?.min === undefined ? 12 : tempObj.common.min;
-            newState.max = tempObj?.common?.max === undefined ? 30 : tempObj.common.max;
-            newState.tempObject = { common: tempObj.common, _id: tempObj._id };
+            newState.max = Math.min(25, tempObj?.common?.max ?? 25);
+            newState.min = Math.min(newState.min, newState.max);
+            newState.tempObject = tempObj ? { common: tempObj.common, _id: tempObj._id } : null;
         } else {
             newState.tempObject = null;
             newState.max = null;
@@ -572,7 +547,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
 
         if (this.state.rxData['oid-temp-actual'] && this.state.rxData['oid-temp-actual'] !== 'nothing_selected') {
             const tempStateObj = _objects[this.state.rxData['oid-temp-actual']];
-            newState.tempStateObject = { common: tempStateObj.common, _id: tempStateObj._id };
+            newState.tempStateObject = tempStateObj ? { common: tempStateObj.common, _id: tempStateObj._id } : null;
         } else {
             newState.tempStateObject = null;
         }
@@ -685,51 +660,6 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
         );
     }
 
-    componentDidUpdate(prevProps: VisRxWidgetProps, prevState: typeof this.state): void {
-        super.componentDidUpdate(prevProps, prevState);
-
-        if (this.refService?.current) {
-            let w = this.refService.current.clientWidth;
-            let h = this.refService.current.clientHeight;
-            let size = w;
-            const widget = this.props.context.views[this.props.view].widgets[this.props.id];
-            if (!this.state.rxData.noCard && !widget.usedInWidget) {
-                h -= 32; // padding
-                w -= 32; // padding
-            }
-
-            const withTitle = this.state.rxData.widgetTitle && !this.state.rxData.noCard && !widget.usedInWidget;
-            const withModes = this.thermIsWithModeButtons() || this.thermIsWithPowerButton();
-
-            if (withTitle && withModes) {
-                h -= 36 + 28; // title and mode buttons
-            } else if (withTitle) {
-                h -= 36; // title
-            } else if (withModes) {
-                h -= 28; // title
-            }
-
-            if (h < 0) {
-                h = 0;
-            }
-
-            // with title and with modes
-            if (w > h) {
-                size = h;
-            } else {
-                size = w;
-            }
-
-            if (size < 80) {
-                size = 0;
-            }
-
-            if (size !== this.state.size) {
-                this.setState({ size });
-            }
-        }
-    }
-
     thermIsWithPowerButton(): boolean {
         return !!this.state.rxData['oid-power'] && this.state.rxData['oid-power'] !== 'nothing_selected';
     }
@@ -794,72 +724,37 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             }, 50);
         }
 
-        let tempValue = this.state.values[`${this.state.rxData['oid-temp-set']}.val`];
-        if (tempValue === undefined) {
-            tempValue = null;
-        }
-        if (
-            tempValue !== null &&
-            (this.state.min === null || this.state.min === undefined || tempValue < this.state.min)
-        ) {
-            tempValue = this.state.min;
-        } else if (
-            tempValue !== null &&
-            (this.state.max === null || this.state.max === undefined || tempValue > this.state.max)
-        ) {
-            tempValue = this.state.max;
-        }
-
-        if (
-            tempValue === null &&
-            this.state.min !== null &&
-            this.state.min !== undefined &&
-            this.state.max !== null &&
-            this.state.max !== undefined
-        ) {
-            tempValue = (this.state.max - this.state.min) / 2 + this.state.min;
-        }
-
-        let actualTemp = this.state.values[`${this.state.rxData['oid-temp-actual']}.val`];
-        if (actualTemp === undefined) {
-            actualTemp = null;
-        }
+        const min = this.state.min ?? 12;
+        const max = Math.min(25, this.state.max ?? 25);
+        const step = Number(this.state.rxData.step) || 0.5;
+        const rawValue = this.state.values[`${this.state.rxData['oid-temp-set']}.val`];
+        const tempValue = rawValue === null || rawValue === undefined || rawValue === '' ? null : Number(rawValue);
+        const hasTemperature = tempValue !== null && Number.isFinite(tempValue);
+        const sliderValue = hasTemperature ? Math.max(min, Math.min(max, tempValue)) : min;
+        const actualTemp = this.state.values[`${this.state.rxData['oid-temp-actual']}.val`];
         const humidity = this.state.values[`${this.state.rxData['oid-humidity']}.val`];
-
-        let handleSize = Math.round(this.state.size / 25);
-        if (handleSize < 8) {
-            handleSize = 8;
-        }
-
-        // console.log(this.state.min, this.state.max, tempValue);
-
-        const chartButton = this.state.isChart ? (
-            <IconButton
-                style={{
-                    ...(withTitle ? undefined : styles.moreButton),
-                    right: this.state.rxData.externalDialog ? undefined : withTitle ? undefined : 4,
-                    left: this.state.rxData.externalDialog ? 16 : undefined,
-                    top: this.state.rxData.externalDialog ? 16 : withTitle ? undefined : 4,
-                    zIndex: 2,
-                }}
-                onClick={() => this.setState({ showDialog: true })}
-            >
-                <MoreVertIcon />
-            </IconButton>
-        ) : null;
-
-        actualTemp = actualTemp !== null ? this.formatValue(actualTemp) : null;
-
+        const unit = this.state.rxData.unit || this.state.tempObject?.common?.unit || '°C';
+        const modeId =
+            this.state.rxData['oid-set-point-mode'] && this.state.rxData['oid-set-point-mode'] !== 'nothing_selected'
+                ? this.state.rxData['oid-set-point-mode']
+                : this.state.rxData['oid-mode']?.endsWith('.SET_POINT_MODE')
+                  ? this.state.rxData['oid-mode']
+                  : '';
+        const modeValue = this.state.values[`${modeId}.val`];
+        const selectedMode = modeValue === 0 || modeValue === '0' ? 0 : modeValue === 1 || modeValue === '1' ? 1 : null;
+        const updateTemperature = (value: number, commit = false): void => {
+            const next = Math.max(min, Math.min(max, Math.round(value / step) * step));
+            this.setState(state => ({ values: { ...state.values, [`${state.rxData['oid-temp-set']}.val`]: next } }));
+            if (commit) {
+                this.props.context.setValue(this.state.rxData['oid-temp-set'], next);
+            }
+        };
         const thermIsWithModeButtons = this.thermIsWithModeButtons();
         const thermIsWithPowerButton = this.thermIsWithPowerButton();
-        const arcColor =
-            this.props.customSettings?.viewStyle?.overrides?.palette?.primary?.main ||
-            this.props.context.theme?.palette.primary.main ||
-            '#448aff';
 
         let modesButton: React.JSX.Element[] = [];
         if (thermIsWithModeButtons) {
-            if (this.state.modes?.length) {
+            if (this.state.modes?.length && modeId !== this.state.rxData['oid-mode']) {
                 modesButton = this.state.modes.map((mode, i) => {
                     const icon =
                         mode.icon === true ? (
@@ -1025,227 +920,238 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
 
         const content = (
             <Box
-                component="div"
-                sx={styles.thermostatCircleDiv}
-                style={{ height: withTitle ? 'calc(100% - 36px)' : '100%' }}
+                sx={{
+                    height: withTitle ? 'calc(100% - 36px)' : '100%',
+                    minHeight: 0,
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    color: 'text.primary',
+                    fontVariantNumeric: 'tabular-nums',
+                    '& .MuiButton-root, & .MuiToggleButton-root, & .MuiIconButton-root': {
+                        minHeight: 48,
+                        borderRadius: '14px',
+                    },
+                    '& .MuiIconButton-root': { minWidth: 48 },
+                }}
             >
-                <style>
-                    {`
-@keyframes vis-2-widgets-nils-fork-newValueAnimationLight {
-    0% {
-        color: #00bd00;
-    },
-    80% {
-        color: #008000;
-    },
-    100% {
-        color: #000;
-    }
-}
-
-@keyframes vis-2-widgets-nils-fork-newValueAnimationDark {
-    0% {
-        color: #008000;
-    }
-    80% {
-        color: #00bd00;
-    }
-    100% {
-        color: #ffffff;
-    }
-}                          
-                            `}
-                </style>
-                {/* if no header, draw button here */}
-                {withTitle ? null : chartButton}
-                {this.state.size && this.state.tempObject ? (
-                    <CircularSliderWithChildren
-                        minValue={this.state.min === null || this.state.min === undefined ? 12 : this.state.min}
-                        maxValue={this.state.max === null || this.state.max === undefined ? 30 : this.state.max}
-                        size={this.state.size}
-                        arcColor={arcColor}
-                        arcBackgroundColor={this.props.context.themeType === 'dark' ? '#DDD' : '#222'}
-                        startAngle={40}
-                        // step={0.5}
-                        handleSize={handleSize}
-                        endAngle={320}
-                        handle1={{
-                            value: tempValue,
-                            onChange: value => {
-                                const values: VisRxWidgetStateValues = JSON.parse(JSON.stringify(this.state.values));
-                                if (this.state.rxData.step === '0.5') {
-                                    values[`${this.state.rxData['oid-temp-set']}.val`] = Math.round(value * 2) / 2;
-                                } else {
-                                    values[`${this.state.rxData['oid-temp-set']}.val`] = Math.round(value);
-                                }
-                                this.setState({ values });
-                            },
-                        }}
-                        onControlFinished={() =>
-                            this.props.context.setValue(
-                                this.state.rxData['oid-temp-set'],
-                                this.state.values[`${this.state.rxData['oid-temp-set']}.val`],
-                            )
-                        }
-                    >
-                        {tempValue !== null ? (
-                            <Tooltip
-                                title={Generic.t('desired_temperature')}
-                                slotProps={{ popper: { sx: styles.tooltip } }}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        flex: 1,
+                    }}
+                >
+                    <Box sx={{ position: 'relative', width: 200, height: 154, flexShrink: 0 }}>
+                        <Box
+                            component="svg"
+                            viewBox="0 0 200 154"
+                            aria-hidden="true"
+                            sx={{ width: '100%', height: '100%', overflow: 'visible' }}
+                        >
+                            <Box
+                                component="path"
+                                d="M 30 132 A 80 80 0 1 1 170 132"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                                sx={{ color: 'divider' }}
+                            />
+                            <Box
+                                component="path"
+                                d="M 30 132 A 80 80 0 1 1 170 132"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                                pathLength="100"
+                                strokeDasharray={`${hasTemperature && max > min ? ((sliderValue - min) / (max - min)) * 100 : 0} 100`}
+                                sx={{ color: 'primary.main' }}
+                            />
+                        </Box>
+                        <Box sx={{ position: 'absolute', inset: '48px 16px 0', textAlign: 'center' }}>
+                            <Typography
+                                variant="caption"
+                                color="text.secondary"
                             >
-                                <div
-                                    style={{
-                                        ...styles.thermostatDesiredTemp,
-                                        fontSize: Math.round(this.state.size / 6),
-                                        ...this.customStyle,
-                                    }}
+                                {Generic.t('desired_temperature')}
+                            </Typography>
+                            <Typography sx={{ fontSize: 40, fontWeight: 500, lineHeight: 1.3, ...this.customStyle }}>
+                                {hasTemperature ? this.formatValue(tempValue) : '–'}
+                                <Box
+                                    component="span"
+                                    sx={{ fontSize: 18, ml: 0.5, color: 'text.secondary' }}
                                 >
-                                    <ThermostatIcon
-                                        style={{ width: this.state.size / 8, height: this.state.size / 8 }}
-                                    />
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'top',
-                                            ...this.customStyle,
-                                        }}
-                                    >
-                                        {this.formatValue(tempValue)}
-                                        <span
-                                            style={{
-                                                fontSize: Math.round(this.state.size / 12),
-                                                fontWeight: 'normal',
-                                            }}
-                                        >
-                                            {this.state.rxData.unit || this.state.tempObject?.common?.unit}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Tooltip>
-                        ) : null}
-                        {actualTemp !== null ? (
-                            <Tooltip
-                                title={Generic.t('actual_temperature')}
-                                slotProps={{ popper: { sx: styles.tooltip } }}
-                            >
-                                <div
-                                    style={{
-                                        ...(this.props.context.themeType === 'dark'
-                                            ? styles.thermostatNewValueDark
-                                            : styles.thermostatNewValueLight),
-                                        fontSize: Math.round((this.state.size * 0.6) / 6),
-                                        opacity: 0.7,
-                                        ...this.customStyle,
-                                    }}
-                                    key={`${actualTemp}valText`}
-                                >
-                                    {actualTemp}
-                                    {this.state.rxData.unit || this.state.tempStateObject?.common?.unit}
-                                </div>
-                            </Tooltip>
-                        ) : null}
-                    </CircularSliderWithChildren>
-                ) : this.state.tempObject ? (
-                    <div style={{ width: '100%' }}>
-                        <Slider
-                            style={{ width: 'calc(100% - 50px)', display: 'inline-block' }}
-                            min={this.state.min === null || this.state.min === undefined ? 12 : this.state.min}
-                            max={this.state.max === null || this.state.max === undefined ? 30 : this.state.max}
-                            step={this.state.step || 0.5}
-                            value={tempValue}
-                            valueLabelDisplay="auto"
-                            onChange={(_e, value: number | number[]): void => {
-                                const values: VisRxWidgetStateValues = JSON.parse(JSON.stringify(this.state.values));
-                                if (this.state.rxData.step === '0.5') {
-                                    values[`${this.state.rxData['oid-temp-set']}.val`] =
-                                        Math.round((value as number) * 2) / 2;
-                                } else {
-                                    values[`${this.state.rxData['oid-temp-set']}.val`] = Math.round(value as number);
-                                }
-                                this.setState({ values });
-                            }}
-                            onChangeCommitted={() =>
-                                this.props.context.setValue(
-                                    this.state.rxData['oid-temp-set'],
-                                    this.state.values[`${this.state.rxData['oid-temp-set']}.val`],
-                                )
-                            }
-                        />
-                        <div
-                            style={{
-                                textAlign: 'center',
-                                display: 'inline-block',
-                                flexDirection: 'column',
-                                width: 50,
+                                    {unit}
+                                </Box>
+                            </Typography>
+                        </Box>
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 24,
+                                right: 24,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                color: 'text.secondary',
+                                fontSize: 12,
                             }}
                         >
-                            {tempValue !== null ? (
-                                <Tooltip
-                                    title={Generic.t('desired_temperature')}
-                                    slotProps={{ popper: { sx: styles.tooltip } }}
+                            <span>{this.formatValue(min)}°</span>
+                            <span>{this.formatValue(max)}°</span>
+                        </Box>
+                    </Box>
+                    <Box sx={{ flex: '1 1 200px', maxWidth: 360, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center', mb: 1 }}>
+                            {this.state.rxData['oid-temp-actual'] &&
+                            this.state.rxData['oid-temp-actual'] !== 'nothing_selected' ? (
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        bgcolor: 'action.hover',
+                                        borderRadius: '16px',
+                                        px: 1.5,
+                                        py: 1,
+                                    }}
                                 >
-                                    <div
-                                        style={{
-                                            ...styles.thermostatDesiredTemp,
-                                            fontSize: 12,
-                                            ...this.customStyle,
-                                        }}
-                                    >
-                                        <ThermostatIcon style={{ width: 24, height: 24 }} />
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'top',
-                                                ...this.customStyle,
-                                            }}
+                                    <ThermostatIcon sx={{ color: 'info.main' }} />
+                                    <Box>
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
                                         >
-                                            {this.formatValue(tempValue)}
-                                            <span
-                                                style={{
-                                                    fontSize: 10,
-                                                    fontWeight: 'normal',
-                                                }}
-                                            >
-                                                {this.state.rxData.unit || this.state.tempObject?.common?.unit}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Tooltip>
+                                            {Generic.t('actual_temperature')}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            {this.formatValue(actualTemp) || '–'} {unit}
+                                        </Typography>
+                                    </Box>
+                                </Box>
                             ) : null}
-                            {actualTemp !== null ? (
-                                <Tooltip
-                                    title={Generic.t('actual_temperature')}
-                                    slotProps={{ popper: { sx: styles.tooltip } }}
+                            {this.state.rxData['oid-humidity'] &&
+                            this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        bgcolor: 'action.hover',
+                                        borderRadius: '16px',
+                                        px: 1.5,
+                                        py: 1,
+                                    }}
                                 >
-                                    <div
-                                        style={{
-                                            ...(this.props.context.themeType === 'dark'
-                                                ? styles.thermostatNewValueDark
-                                                : styles.thermostatNewValueLight),
-                                            fontSize: Math.round(10),
-                                            opacity: 0.7,
-                                            ...this.customStyle,
-                                        }}
-                                        key={`${actualTemp}valText`}
-                                    >
-                                        {actualTemp}
-                                        {this.state.rxData.unit || this.state.tempStateObject?.common?.unit}
-                                    </div>
-                                </Tooltip>
+                                    <WaterDropOutlined sx={{ color: 'info.main' }} />
+                                    <Box>
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                        >
+                                            {Generic.t('humidity')}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            {this.formatValue(humidity) || '–'}{' '}
+                                            {this.state.humidityObject?.common?.unit || '%'}
+                                        </Typography>
+                                    </Box>
+                                </Box>
                             ) : null}
-                        </div>
-                    </div>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <IconButton
+                                aria-label={Generic.t('thermostat_decrease')}
+                                disabled={!this.state.tempObject || !hasTemperature || sliderValue <= min}
+                                onClick={() => updateTemperature(sliderValue - step, true)}
+                            >
+                                <Remove />
+                            </IconButton>
+                            <Slider
+                                aria-label={Generic.t('desired_temperature')}
+                                min={min}
+                                max={max}
+                                step={step}
+                                value={sliderValue}
+                                disabled={!this.state.tempObject || min >= max}
+                                valueLabelDisplay="auto"
+                                getAriaValueText={value => `${this.formatValue(value)} ${unit}`}
+                                onChange={(_event, value) => updateTemperature(value)}
+                                onChangeCommitted={(_event, value) => updateTemperature(value, true)}
+                            />
+                            <IconButton
+                                aria-label={Generic.t('thermostat_increase')}
+                                disabled={!this.state.tempObject || !hasTemperature || sliderValue >= max}
+                                onClick={() => updateTemperature(sliderValue + step, true)}
+                            >
+                                <Add />
+                            </IconButton>
+                        </Box>
+                        {modeId ? (
+                            <ToggleButtonGroup
+                                exclusive
+                                fullWidth
+                                value={selectedMode}
+                                aria-label={Generic.t('thermostat_set_point_mode')}
+                                sx={{ mt: 1, bgcolor: 'action.hover', borderRadius: '14px' }}
+                                onChange={(_event, value: number | null) => {
+                                    if (value === null) {
+                                        return;
+                                    }
+                                    this.setState(state => ({ values: { ...state.values, [`${modeId}.val`]: value } }));
+                                    this.props.context.setValue(modeId, value);
+                                }}
+                            >
+                                <ToggleButton
+                                    value={0}
+                                    color="primary"
+                                    sx={{ gap: 1, textTransform: 'none' }}
+                                >
+                                    <ThermostatAutoIcon fontSize="small" />
+                                    {Generic.t('thermostat_auto')}
+                                </ToggleButton>
+                                <ToggleButton
+                                    value={1}
+                                    color="primary"
+                                    sx={{ gap: 1, textTransform: 'none' }}
+                                >
+                                    <PanToolIcon fontSize="small" />
+                                    {Generic.t('thermostat_manual')}
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                        ) : null}
+                    </Box>
+                </Box>
+                {modesButton.length || this.state.isChart ? (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                            borderTop: 1,
+                            borderColor: 'divider',
+                            pt: 1,
+                        }}
+                    >
+                        {modesButton}
+                        {this.state.isChart ? (
+                            <Button
+                                startIcon={<ShowChart />}
+                                color="inherit"
+                                onClick={() => this.setState({ showDialog: true, dialogTab: 1 })}
+                            >
+                                {Generic.t('thermostat_history')}
+                            </Button>
+                        ) : null}
+                    </Box>
                 ) : null}
-                {this.state.rxData['oid-humidity'] && this.state.rxData['oid-humidity'] !== 'nothing_selected' ? (
-                    <Tooltip title={Generic.t('humidity')} slotProps={{ popper: { sx: styles.tooltip } }}>
-                        <div style={{ textAlign: 'center', opacity: 0.7, ...this.customStyle }}>
-                            {humidity === null || humidity === undefined
-                                ? Generic.t('humidity')
-                                : `${this.formatValue(humidity)}${this.state.humidityObject?.common?.unit || '%'}`}
-                        </div>
-                    </Tooltip>
-                ) : null}
-                <div style={{ ...styles.thermostatButtonsDiv, bottom: 8 }}>{modesButton}</div>
                 {this.renderChartDialog()}
             </Box>
         );
@@ -1265,7 +1171,9 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                             <Close />
                         </IconButton>
                     </DialogTitle>
-                    <DialogContent style={{ minWidth: 150, minHeight: 150 }}>{content}</DialogContent>
+                    <DialogContent sx={{ width: 560, maxWidth: '100%', boxSizing: 'border-box' }}>
+                        {content}
+                    </DialogContent>
                 </Dialog>
             ) : null;
         }
@@ -1274,6 +1182,9 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             return content;
         }
 
-        return this.wrapContent(content, withTitle ? chartButton : null, { textAlign: 'center' });
+        return this.wrapContent(content, null, {
+            borderRadius: 20,
+            backgroundColor: this.props.context.theme?.palette.background.paper,
+        });
     }
 }

@@ -88,7 +88,8 @@ export default class ThermostatCompact extends Thermostat {
                 <Dialog
                     open={!!this.state.dialog}
                     onClose={() => this.setState({ dialog: false })}
-                    maxWidth="lg"
+                    maxWidth="sm"
+                    sx={{ '& .MuiDialog-paper': { borderRadius: '20px' } }}
                     fullWidth
                 >
                     <DialogTitle>
