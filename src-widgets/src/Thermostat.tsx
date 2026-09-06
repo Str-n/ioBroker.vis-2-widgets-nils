@@ -27,7 +27,7 @@ import {
     Add,
     Remove,
     WaterDropOutlined,
-    ShowChart,
+    // ShowChart, // History is disabled until the runtime chart crash is fixed.
     Close as IconClose,
     Thermostat as ThermostatIcon,
     Celebration as CelebrationIcon,
@@ -46,6 +46,7 @@ import type {
 
 import ObjectChart from './Components/ObjectChart';
 import Generic from './Generic';
+import './Thermostat.css';
 
 const BUTTONS: Record<string, React.JSX.Element> = {
     AUTO: <ThermostatAutoIcon style={{ width: 24, height: 24 }} />,
@@ -920,13 +921,14 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
 
         const content = (
             <Box
+                className="thermostat-controls"
                 sx={{
                     height: withTitle ? 'calc(100% - 36px)' : '100%',
                     minHeight: 0,
                     overflow: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 2,
+                    gap: 1,
                     color: 'text.primary',
                     fontVariantNumeric: 'tabular-nums',
                     '& .MuiButton-root, & .MuiToggleButton-root, & .MuiIconButton-root': {
@@ -936,17 +938,8 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                     '& .MuiIconButton-root': { minWidth: 48 },
                 }}
             >
-                <Box
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 2,
-                        flexWrap: 'wrap',
-                        flex: 1,
-                    }}
-                >
-                    <Box sx={{ position: 'relative', width: 200, height: 154, flexShrink: 0 }}>
+                <Box className="thermostat-layout">
+                    <Box className="thermostat-gauge">
                         <Box
                             component="svg"
                             viewBox="0 0 200 154"
@@ -974,14 +967,17 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                                 sx={{ color: 'primary.main' }}
                             />
                         </Box>
-                        <Box sx={{ position: 'absolute', inset: '48px 16px 0', textAlign: 'center' }}>
+                        <Box className="thermostat-gauge-value">
                             <Typography
                                 variant="caption"
                                 color="text.secondary"
                             >
                                 {Generic.t('desired_temperature')}
                             </Typography>
-                            <Typography sx={{ fontSize: 40, fontWeight: 500, lineHeight: 1.3, ...this.customStyle }}>
+                            <Typography
+                                className="thermostat-setpoint"
+                                sx={{ fontWeight: 500, lineHeight: 1.3, ...this.customStyle }}
+                            >
                                 {hasTemperature ? this.formatValue(tempValue) : '–'}
                                 <Box
                                     component="span"
@@ -1007,8 +1003,8 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                             <span>{this.formatValue(max)}°</span>
                         </Box>
                     </Box>
-                    <Box sx={{ flex: '1 1 200px', maxWidth: 360, minWidth: 0 }}>
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center', mb: 1 }}>
+                    <Box className="thermostat-adjustments">
+                        <Box className="thermostat-sensors">
                             {this.state.rxData['oid-temp-actual'] &&
                             this.state.rxData['oid-temp-actual'] !== 'nothing_selected' ? (
                                 <Box
@@ -1018,11 +1014,13 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                                         gap: 1,
                                         bgcolor: 'action.hover',
                                         borderRadius: '16px',
-                                        px: 1.5,
+                                        px: 1,
+                                        minWidth: 0,
                                         py: 1,
                                     }}
                                 >
-                                    <ThermostatIcon sx={{ color: 'info.main' }} />
+                                    {/* Icon bundles may use a newer MUI than the host: avoid their sx processor. */}
+                                    <ThermostatIcon color="info" />
                                     <Box>
                                         <Typography
                                             variant="caption"
@@ -1045,11 +1043,12 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                                         gap: 1,
                                         bgcolor: 'action.hover',
                                         borderRadius: '16px',
-                                        px: 1.5,
+                                        px: 1,
+                                        minWidth: 0,
                                         py: 1,
                                     }}
                                 >
-                                    <WaterDropOutlined sx={{ color: 'info.main' }} />
+                                    <WaterDropOutlined color="info" />
                                     <Box>
                                         <Typography
                                             variant="caption"
@@ -1065,7 +1064,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                                 </Box>
                             ) : null}
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 48 }}>
                             <IconButton
                                 aria-label={Generic.t('thermostat_decrease')}
                                 disabled={!this.state.tempObject || !hasTemperature || sliderValue <= min}
@@ -1128,7 +1127,7 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                         ) : null}
                     </Box>
                 </Box>
-                {modesButton.length || this.state.isChart ? (
+                {modesButton.length ? (
                     <Box
                         sx={{
                             display: 'flex',
@@ -1141,6 +1140,8 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                         }}
                     >
                         {modesButton}
+                        {/* History temporarily disabled: opening the chart crashes in the vis-2 runtime.
+                        Keep the action and renderChartDialog implementation for a future fix.
                         {this.state.isChart ? (
                             <Button
                                 startIcon={<ShowChart />}
@@ -1149,10 +1150,10 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
                             >
                                 {Generic.t('thermostat_history')}
                             </Button>
-                        ) : null}
+                        ) : null} */}
                     </Box>
                 ) : null}
-                {this.renderChartDialog()}
+                {/* History temporarily disabled: {this.renderChartDialog()} */}
             </Box>
         );
 
@@ -1160,12 +1161,14 @@ export default class Thermostat extends Generic<ThermostatRxData, ThermostatStat
             return this.state.dialog ? (
                 <Dialog
                     open={!0}
+                    className="thermostat-dialog"
                     onClose={() => this.setState({ dialog: false })}
                 >
-                    <DialogTitle>
-                        {this.state.rxData.widgetTitle}
+                    <DialogTitle className="thermostat-dialog-title">
+                        <span>{this.state.rxData.widgetTitle}</span>
                         <IconButton
-                            style={{ float: 'right', zIndex: 2 }}
+                            aria-label={Generic.t('close')}
+                            style={{ minWidth: 48, minHeight: 48 }}
                             onClick={() => this.setState({ dialog: false })}
                         >
                             <Close />

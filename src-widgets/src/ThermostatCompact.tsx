@@ -87,21 +87,23 @@ export default class ThermostatCompact extends Thermostat {
 
                 <Dialog
                     open={!!this.state.dialog}
+                    className="thermostat-dialog"
                     onClose={() => this.setState({ dialog: false })}
                     maxWidth="sm"
                     sx={{ '& .MuiDialog-paper': { borderRadius: '20px' } }}
                     fullWidth
                 >
-                    <DialogTitle>
-                        {this.state.rxData.widgetTitle || Generic.t('thermostat')}
+                    <DialogTitle className="thermostat-dialog-title">
+                        <span>{this.state.rxData.widgetTitle || Generic.t('thermostat')}</span>
                         <IconButton
-                            style={{ float: 'right', zIndex: 2 }}
+                            aria-label={Generic.t('close')}
+                            style={{ minWidth: 48, minHeight: 48 }}
                             onClick={() => this.setState({ dialog: false })}
                         >
                             <IconClose />
                         </IconButton>
                     </DialogTitle>
-                    <DialogContent style={{ minWidth: 180, minHeight: 180 }}>{fullContent}</DialogContent>
+                    <DialogContent>{fullContent}</DialogContent>
                 </Dialog>
             </>
         );
