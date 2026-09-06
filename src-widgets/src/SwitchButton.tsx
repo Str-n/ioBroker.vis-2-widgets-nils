@@ -42,8 +42,9 @@ const MATERIAL_ICON_MAP: Record<string, React.ElementType> = {
 
 interface SwitchButtonRxData {
     oid: string;
-    'status-oid'?: string;
-    action?: 'toggle' | 'off' | 'on';
+    statusValue?: string | number | boolean;
+    action?: 'toggle' | 'off' | 'on' | 'value';
+    targetValue?: string | number | boolean;
     brightness?: string;
     color_temperature?: string;
     color_temperature_scale?: number | string;
@@ -108,10 +109,11 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                             label: 'switch_button_oid',
                         },
                         {
-                            name: 'status-oid',
-                            type: 'id',
-                            label: 'status_id',
-                            noInit: true,
+                            name: 'statusValue',
+                            type: 'text',
+                            label: 'switch_button_status_value',
+                            noButton: true,
+                            clearButton: true,
                         },
                         {
                             name: 'action',
@@ -121,8 +123,17 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                                 { value: 'toggle', label: 'switch_button_action_toggle' },
                                 { value: 'off', label: 'switch_button_action_off' },
                                 { value: 'on', label: 'switch_button_action_on' },
+                                { value: 'value', label: 'switch_button_action_value' },
                             ],
                             default: 'toggle',
+                        },
+                        {
+                            name: 'targetValue',
+                            type: 'text',
+                            label: 'switch_button_target_value',
+                            default: '0',
+                            noButton: true,
+                            hidden: 'data.action !== "value"',
                         },
                         {
                             name: 'brightness',
@@ -232,14 +243,9 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         return id && id !== 'nothing_selected' ? id : undefined;
     }
 
-    private getStatusId(): string {
-        const statusId = this.state.rxData['status-oid'];
-        return statusId && statusId !== 'nothing_selected' ? statusId : this.state.rxData.oid;
-    }
-
-    private getAction(): 'toggle' | 'off' | 'on' {
+    private getAction(): 'toggle' | 'off' | 'on' | 'value' {
         const action = this.state.rxData.action;
-        return action === 'off' || action === 'on' ? action : 'toggle';
+        return action === 'off' || action === 'on' || action === 'value' ? action : 'toggle';
     }
 
     private async readControlObjects(): Promise<void> {
@@ -310,7 +316,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         this.longPressTriggered = true;
         const action = this.getAction();
         if (action !== 'toggle' || !this.isOn(rawValue)) {
-            this.props.context.setValue(this.state.rxData.oid, this.getPressValue(rawValue));
+            this.writePressValue(rawValue);
         }
         this.setState({
             controlsOpen: true,
@@ -380,7 +386,38 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         );
     }
 
+    private coerceConfiguredValue(
+        configuredValue: string | number | boolean,
+        currentValue: unknown,
+    ): string | number | boolean {
+        if (typeof configuredValue !== 'string') {
+            return configuredValue;
+        }
+
+        if (typeof currentValue === 'number') {
+            const numericValue = Number(configuredValue);
+            return configuredValue.trim() !== '' && Number.isFinite(numericValue) ? numericValue : configuredValue;
+        }
+
+        if (typeof currentValue === 'boolean') {
+            const normalized = configuredValue.trim().toLowerCase();
+            if (normalized === 'true' || normalized === '1') {
+                return true;
+            }
+            if (normalized === 'false' || normalized === '0') {
+                return false;
+            }
+        }
+
+        return configuredValue;
+    }
+
     private isOn(value: unknown): boolean {
+        const statusValue = this.state.rxData.statusValue;
+        if (statusValue !== undefined && statusValue !== null && statusValue !== '') {
+            return Object.is(value, this.coerceConfiguredValue(statusValue, value));
+        }
+
         if (value === true || value === 'true') {
             return true;
         }
@@ -416,10 +453,17 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
         return !isOn;
     }
 
-    private getPressValue(currentValue: unknown): boolean | number {
+    private getPressValue(currentValue: unknown): boolean | number | string | undefined {
         const action = this.getAction();
         if (action === 'toggle') {
             return this.getNextValue(currentValue);
+        }
+
+        if (action === 'value') {
+            const targetValue = this.state.rxData.targetValue;
+            return targetValue === undefined || targetValue === null
+                ? undefined
+                : this.coerceConfiguredValue(targetValue, currentValue);
         }
 
         const turnOn = action === 'on';
@@ -433,6 +477,13 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
             }
         }
         return turnOn;
+    }
+
+    private writePressValue(currentValue: unknown): void {
+        const pressValue = this.getPressValue(currentValue);
+        if (pressValue !== undefined) {
+            this.props.context.setValue(this.state.rxData.oid, pressValue);
+        }
     }
 
     private getIconElement(iconName: string | undefined): React.JSX.Element {
@@ -469,7 +520,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
             return null;
         }
 
-        const rawValue = this.state.values[`${this.getStatusId()}.val`];
+        const rawValue = this.state.values[`${oid}.val`];
         const isOn = this.isOn(rawValue);
         const iconName = isOn ? this.state.rxData['icon-on'] : this.state.rxData['icon-off'];
         const color = (isOn ? this.state.rxData.colorOn : this.state.rxData.colorOff) || this.state.rxData.color;
@@ -522,7 +573,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                             return;
                         }
                         if (!disabled) {
-                            this.props.context.setValue(oid, this.getPressValue(rawValue));
+                            this.writePressValue(rawValue);
                         }
                     }}
                     sx={{
