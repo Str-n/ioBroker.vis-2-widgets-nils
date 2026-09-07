@@ -1,6 +1,7 @@
 // Read-only runtime regression check. Optionally serve a local production build only to this browser:
-// node scripts/check-thermostat-runtime.cjs https://host:8082/vis-2/#EG src-widgets/build
+// node scripts/check-thermostat-runtime.cjs https://host:8082/vis-2/#EG src-widgets/build [project.css]
 // Opens/closes dialogs; never changes device states or uploads files to the server.
+/* global document, getComputedStyle -- Evaluated in Chromium by Puppeteer. */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -9,6 +10,7 @@ const puppeteer = require('puppeteer');
 async function main() {
     assert.ok(process.argv[2], 'Provide the vis-2 runtime URL');
     const build = process.argv[3] && path.resolve(process.argv[3]);
+    const projectCss = process.argv[4] && fs.readFileSync(process.argv[4], 'utf8');
     const browser = await puppeteer.launch({ headless: true, acceptInsecureCerts: true, args: ['--no-sandbox'] });
     try {
         const page = await browser.newPage();
@@ -44,6 +46,39 @@ async function main() {
         await page.setViewport({ width: 390, height: 750, isMobile: true, hasTouch: true });
         await page.goto(process.argv[2], { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForSelector('.thermostat-compact-button', { timeout: 90000 });
+        if (projectCss) {
+            await page.waitForSelector('#vis_user');
+            // Change only this temporary browser's style element. Never save project CSS.
+            await page.$eval(
+                '#vis_user',
+                (element, css) => {
+                    element.textContent = css;
+                },
+                projectCss,
+            );
+            await page.waitForFunction(
+                () =>
+                    getComputedStyle(document.documentElement)
+                        .getPropertyValue('--mui-palette-primary-mainChannel')
+                        .trim() === '168 217 239',
+            );
+            await page.waitForNetworkIdle({ idleTime: 500, timeout: 20000 });
+            await page.waitForFunction(() =>
+                [...document.querySelectorAll('.vis-view img')].every(img => img.complete),
+            );
+            assert.equal(
+                await page.$eval(
+                    '#root > div > .MuiBox-root:has(> .MuiTabs-root)',
+                    element => getComputedStyle(element).backgroundColor,
+                ),
+                'rgb(45, 78, 99)',
+            );
+            assert.equal(
+                await page.$eval('.sh-carousel .vis-view', element => getComputedStyle(element).backgroundColor),
+                'rgba(0, 0, 0, 0)',
+            );
+            await page.screenshot({ path: '/tmp/smarthome-ocean-EG.png' });
+        }
         // Wait for state objects to load before opening the controls.
         await new Promise(resolve => setTimeout(resolve, 2000));
         const count = await page.$$eval('.thermostat-compact-button', elements => elements.length);
@@ -75,6 +110,12 @@ async function main() {
                 historyVisible: false,
             });
             if (index === 0) {
+                if (projectCss) {
+                    assert.equal(
+                        await page.$eval('.MuiDialog-paper', element => getComputedStyle(element).backgroundColor),
+                        'rgb(45, 78, 99)',
+                    );
+                }
                 await page.screenshot({ path: '/tmp/thermostat-390x750.png' });
             }
             assert.deepEqual(errors, []);

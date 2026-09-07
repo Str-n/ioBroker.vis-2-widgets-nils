@@ -1,0 +1,193 @@
+@import url('/vis-2/widgets/vis-2-widgets-nils-fork/smarthome.css');
+
+
+:root {
+    --design-width: 390;
+    --design-height: 700;
+    /* ===== Primary (based on #2E4A5A) ===== */
+    --mui-palette-primary-main: #2E4A5A;
+    --mui-palette-primary-light: #4F6E82;
+    --mui-palette-primary-dark: #1C2F3A;
+    --mui-palette-primary-contrastText: #F2F7FA;
+
+    /* ===== Background ===== */
+    --mui-palette-background-default: #477592;
+    --mui-palette-background-paper: #3E6A86;
+
+    /* ===== Secondary (harmonized with primary) ===== */
+    --mui-palette-secondary-main: #5FA8D3;
+    --mui-palette-secondary-light: #7FC2E8;
+    --mui-palette-secondary-dark: #3C7FA3;
+    --mui-palette-secondary-contrastText: #F2F7FA;
+
+    /* ===== Neutral / Grey ===== */
+    --mui-palette-grey-50: #F2F7FA;
+    --mui-palette-grey-100: #DCE5EB;
+    --mui-palette-grey-200: #B9C8D3;
+    --mui-palette-grey-300: #94A8B6;
+    --mui-palette-grey-400: #6F8797;
+    --mui-palette-grey-500: #4A6170;
+    --mui-palette-grey-600: #3A4D59;
+    --mui-palette-grey-700: #2C3A43;
+    --mui-palette-grey-800: #1E272E;
+    --mui-palette-grey-900: #12171B;
+
+    /* ===== Text ===== */
+    --mui-palette-text-primary: #F2F7FA;
+    --mui-palette-text-secondary: #C9D6DE;
+    --mui-palette-text-disabled: #94A8B6;
+
+    /* ===== Divider ===== */
+    --mui-palette-divider: #2E4A5A;
+
+    /* ===== Status Colors ===== */
+    --mui-palette-success-main: #4CAF50;
+    --mui-palette-success-light: #7EDC7E;
+    --mui-palette-success-dark: #2E7D32;
+    --mui-palette-success-contrastText: #FFFFFF;
+
+    --mui-palette-warning-main: #FFC107;
+    --mui-palette-warning-light: #FFD95B;
+    --mui-palette-warning-dark: #C79100;
+    --mui-palette-warning-contrastText: #1A1F21;
+
+    --mui-palette-error-main: #E53935;
+    --mui-palette-error-light: #EF6C6A;
+    --mui-palette-error-dark: #AB000D;
+    --mui-palette-error-contrastText: #FFFFFF;
+
+    /* ===== Info ===== */
+    --mui-palette-info-main: #5FA8D3;
+    --mui-palette-info-light: #7FC2E8;
+    --mui-palette-info-dark: #3C7FA3;
+    --mui-palette-info-contrastText: #F2F7FA;
+
+    /* ===== Action ===== */
+    --mui-palette-action-active: #F2F7FA;
+    --mui-palette-action-hover: rgba(255, 255, 255, 0.08);
+    --mui-palette-action-selected: rgba(255, 255, 255, 0.16);
+    --mui-palette-action-disabled: rgba(255, 255, 255, 0.3);
+    --mui-palette-action-disabledBackground: rgba(255, 255, 255, 0.12);
+    --mui-palette-action-focus: rgba(255, 255, 255, 0.12);
+    /* Core theme */
+     --color-bg: #477592;
+    /*--color-bg: var(--sh-floor);*/
+    --color-bg-widget: var(--color-bg);
+    --mui-palette-primary-main-hover: #7FC2E8;
+    --color-secondary: #5FA8D3;
+    --color-third: #C9E6FF;
+
+    /* Text */
+    --color-text-light: #F2F7FA;
+    --color-text-dark: #1A1F21;
+
+    /* Neutral */
+    --color-border: #2E4A5A;
+    --color-shadow: rgba(0, 0, 0, 0.25);
+
+    /* Status */
+    --color-success: #4CAF50;
+    --color-warning: #FFC107;
+    --color-error: #E53935;
+
+    --button-size: 40px;
+    --windows-size: 35px;
+    --light-on: rgba(232,224,184,1);
+    --light-off: var(--mui-palette-grey-400); 
+}
+.vis-view {
+    background-color: var(--color-bg);
+
+}
+
+
+.vis-limit-screen2 {
+        transform: translate(0, 0)
+            scale(
+                calc(
+                    min(
+                        100vw / (var(--design-width) * 1px),
+                        100vh / (var(--design-height) * 1px)
+                    )
+                )
+            );
+}
+.shaddow {
+
+    box-shadow: 0 4px 10px var(--color-shadow);
+
+}
+
+
+.mywindow {
+    position: relative;
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.mybulb {
+    position: relative;
+    width: var(--button-size) !important;
+    height: var(--button-size) !important;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--color-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px var(--color-shadow);
+    cursor: pointer;
+    overflow: visible;
+}
+
+
+.mybulb {
+    position: relative;
+    width: var(--button-size) !important;
+    height: var(--button-size) !important;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--color-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px var(--color-shadow);
+    cursor: pointer;
+    overflow: visible;
+}
+
+/* Glow when active (optional, but recommended) */
+.mybulb.active {
+    background: var(--mui-palette-primary-main-hover);
+    box-shadow: 0 0 12px var(--color-border);
+}
+
+.mybulb.click{
+    background: var(--mui-palette-primary-main-hover);
+    box-shadow: 0 0 12px var(--color-border);
+
+}
+/* Image inside the bulb widget */
+.mybulb img {
+    margin-left: 3px;
+    width: 90%;
+    height: auto;
+    filter: drop-shadow(0 2px 3px var(--color-shadow));
+}
+
+.thermostat-compact-button {
+    border-radius: 999px;
+    padding: 0 2px;
+    white-space: nowrap;
+}
+
+.thermostat-compact-button--with-humidity {
+    line-height: 1.1;
+    padding: 4px 1px;
+}
+
+.thermostat-compact-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

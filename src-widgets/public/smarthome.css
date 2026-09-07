@@ -1,30 +1,6 @@
-/* Opt-in foundation. No body, :root, or global MUI overrides. Also served as
-   widgets/vis-2-widgets-nils-fork/smarthome.css for vis project layouts. */
-.sh-theme,
-.sh-app,
-.sh-colors {
-    --sh-bg: #16324a;
-    --sh-surface: #1d3c57;
-    --sh-surface-2: #244b68;
-    --sh-floor: #3b5b73;
-    --sh-wall: #94a3b8;
-    --sh-primary: #3b82f6;
-    --sh-secondary: #60a5fa;
-    --sh-info: #22d3ee;
-    --sh-success: #10b981;
-    --sh-warning: #f59e0b;
-    --sh-error: #ef4444;
-    --sh-text: #f8fafc;
-    --sh-text-secondary: #c3d0de;
-    --sh-divider: rgba(148, 163, 184, 0.28);
-    --sh-control-off: #6f879b;
-    --sh-control-on: #f6c453;
-    --sh-radius-card: 22px;
-    --sh-radius-control: 14px;
-    --sh-radius-chip: 16px;
-    --sh-shadow-control: 0 4px 12px rgba(0, 0, 0, 0.14);
-    --sh-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.16);
-}
+/* Shared styles consume the generated theme. Only namespaced variable defaults
+   are global; importing this file does not override the editor or MUI palette. */
+@import url('./smarthome-tokens.css');
 
 .sh-theme,
 .sh-app {
@@ -121,12 +97,13 @@
 }
 
 .sh-app .sh-quick-action[aria-pressed='true'] {
+    color: var(--sh-primary-contrast);
     border-color: var(--sh-secondary);
     background: var(--sh-primary);
 }
 
 .sh-theme .sh-focusable:focus-visible,
 .sh-app .sh-quick-action:focus-visible {
-    outline: 2px solid var(--sh-secondary);
+    outline: 2px solid var(--sh-focus);
     outline-offset: 3px;
 }

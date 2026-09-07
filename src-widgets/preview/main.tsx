@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
+import { createSmartHomeTheme } from '../src/theme/createSmartHomeTheme';
+import '../public/smarthome.css';
 import './preview.css';
 import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
 
@@ -74,11 +76,11 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
             </div>;
         }
         const samples: Record<string, { eyebrow: string; title: string; value: string; color: string }> = {
-            climate: { eyebrow: 'Living room', title: 'Climate', value: '21.5 °C', color: '#5b8cff' },
-            energy: { eyebrow: 'Today', title: 'Solar energy', value: '8.4 kWh', color: '#f5b942' },
-            security: { eyebrow: 'Home', title: 'Security', value: 'All secure', color: '#49c67a' },
+            climate: { eyebrow: 'Living room', title: 'Climate', value: '21.5 °C', color: 'var(--sh-info)' },
+            energy: { eyebrow: 'Today', title: 'Solar energy', value: '8.4 kWh', color: 'var(--sh-warning)' },
+            security: { eyebrow: 'Home', title: 'Security', value: 'All secure', color: 'var(--sh-success)' },
         };
-        const sample = samples[view] || { eyebrow: 'View', title: view, value: '', color: '#5b8cff' };
+        const sample = samples[view] || { eyebrow: 'View', title: view, value: '', color: 'var(--sh-secondary)' };
         return <div className="mock-view" style={options?.style}>
             <span style={{ color: sample.color }}>{sample.eyebrow}</span>
             <strong>{sample.title}</strong>
@@ -140,7 +142,7 @@ function App(): React.JSX.Element {
         },
         setValue: (id: string, value: unknown) => setValues(old => ({ ...old, [`${id}.val`]: value })),
         systemConfig: { common: { dateFormat: 'DD.MM.YYYY', isFloatComma: false } },
-        themeType: 'dark', views: {
+        theme, themeType: 'dark', views: {
             preview: { settings: {}, widgets: {} },
             'horizontal-demo': { settings: { sizex: 760, sizey: 190 }, widgets: {} },
         },
@@ -158,8 +160,15 @@ function App(): React.JSX.Element {
         ['Read only', 'preview.readonly', 'power-settings-new-rounded', 'power', '#fbbf24', true],
     ] as const;
 
-    return <main>
+    return <main className="sh-app">
         <header><span className="eyebrow">Local source preview</span><h1>Material widgets</h1><p>Edit <code>src-widgets/src</code> and this page refreshes immediately. These controls use local mock ioBroker states.</p></header>
+        <section className="theme-preview" aria-label="Ocean theme palette">
+            <div className="section-heading"><div><h2>Ocean · #477592</h2><p>Slate blue surfaces, clear sky accents and warm light.</p></div></div>
+            <div className="theme-swatches">{[
+                ['App', '--sh-bg'], ['Surface', '--sh-surface'], ['Control', '--sh-surface-2'],
+                ['Active', '--sh-secondary'], ['Light on', '--sh-control-on'], ['Healthy', '--sh-success'],
+            ].map(([label, token]) => <div key={token}><span style={{ background: `var(${token})` }} /><b>{label}</b></div>)}</div>
+        </section>
         <section>
             <div className="section-heading"><div><h2>Switch buttons</h2><p>Click a button to toggle it. Long-press the light control to open its sliders.</p></div><button className="reset" onClick={() => setValues(initialValues)}>Reset states</button></div>
             <div className="button-grid">{buttons.map(([title, oid, iconOn, iconOff, colorOn, readOnly], index) =>
@@ -282,5 +291,5 @@ function App(): React.JSX.Element {
     </main>;
 }
 
-const theme = createTheme({ palette: { mode: 'dark', primary: { main: '#5b8cff' }, background: { default: '#0a0d14', paper: '#141923' } } });
+const theme = createSmartHomeTheme();
 createRoot(document.getElementById('root')!).render(<ThemeProvider theme={theme}><CssBaseline /><App /></ThemeProvider>);

@@ -41,34 +41,31 @@ The SmartHome UI is a calm, spatial control surface built around a clean floor p
 
 ## 3. Color tokens
 
-The palette is optimized for dark-mode smart-home dashboards.
+The Ocean palette is built around the `#477592` app background. Its maintained
+values live in [ocean.json](../src-widgets/public/themes/ocean.json), which supplies
+both MUI and the [generated CSS tokens](../src-widgets/public/smarthome-tokens.css).
+The design image is a composition reference, not a separate color specification.
 
-| Token | Value | Use |
-|---|---:|---|
-| `--sh-bg` | `#16324A` | App background |
-| `--sh-surface` | `#1D3C57` | Main cards / navigation |
-| `--sh-surface-2` | `#244B68` | Raised controls / secondary surfaces |
-| `--sh-floor` | `#3B5B73` | Floor-plan base |
-| `--sh-wall` | `#94A3B8` | Floor-plan walls |
-| `--sh-primary` | `#3B82F6` | Selected navigation / primary actions |
-| `--sh-secondary` | `#60A5FA` | Secondary accent |
-| `--sh-info` | `#22D3EE` | Sensor / environmental data |
-| `--sh-success` | `#10B981` | Healthy / positive status |
-| `--sh-warning` | `#F59E0B` | Active warm-light state |
-| `--sh-error` | `#EF4444` | Fault / offline / critical status |
-| `--sh-text` | `#F8FAFC` | Primary text |
-| `--sh-text-secondary` | `#C3D0DE` | Secondary text |
-| `--sh-divider` | `rgba(148, 163, 184, 0.28)` | Dividers / subtle strokes |
-| `--sh-control-off` | `#6F879B` | Inactive device controls |
-| `--sh-control-on` | `#F6C453` | Active light icon |
+| Token | Use |
+|---|---|
+| `--sh-bg`, `--sh-floor` | App and floor-plan background |
+| `--sh-surface`, `--sh-surface-2` | Cards and raised controls |
+| `--sh-wall` | Floor-plan walls |
+| `--sh-primary`, `--sh-primary-contrast` | Primary actions and text on filled actions |
+| `--sh-secondary` | Active controls / secondary accent |
+| `--sh-info` | Sensor / environmental data |
+| `--sh-success`, `--sh-warning`, `--sh-error` | Semantic status colors |
+| `--sh-text`, `--sh-text-secondary` | Primary and secondary text |
+| `--sh-divider`, `--sh-focus` | Dividers and keyboard focus |
+| `--sh-control-off`, `--sh-control-on` | Inactive indicators and active lights |
 
 ### State usage
 
-- **Primary blue:** selection, navigation, action emphasis
+- **Pale blue:** selection, navigation, action emphasis
 - **Amber:** switched-on lighting only
 - **Cyan:** temperature, humidity, weather detail
 - **Green:** success / healthy system states
-- **Red:** error, disconnected, unavailable
+- **Soft coral:** error / critical status; use muted indicators for unavailable data
 
 Do not use color as the only state cue. Pair it with icon fill, outline, label, or badge.
 
@@ -306,7 +303,7 @@ Suggested items:
 - Szenen
 - Einstellungen
 
-Use both icon and label. Selected state uses primary blue plus an indicator, not color alone.
+Use both icon and label. Selected state uses the primary accent plus an indicator, not color alone.
 
 ---
 
@@ -336,24 +333,10 @@ Prefer theme-level `components` overrides for repeated styles. Use `sx` only for
 
 ## 15. Suggested semantic theme tokens
 
-In addition to standard MUI palette values, consider exposing semantic tokens in your application theme:
-
-```ts
-device: {
-  lightOn: '#F6C453',
-  lightOff: '#6F879B',
-  offline: '#EF4444',
-},
-sensor: {
-  background: '#1D3C57',
-  accent: '#22D3EE',
-},
-floorplan: {
-  background: '#3B5B73',
-  wall: '#94A3B8',
-  selectedRoom: 'rgba(59, 130, 246, 0.10)',
-}
-```
+The theme factory exposes the standard MUI palette and typed `theme.smartHome`
+tokens for raised surfaces, walls, light-on indicators, radii and shadows.
+Use `createSmartHomeTheme()` from `src/theme/createSmartHomeTheme.ts`; add new
+domain roles to the preset and generator rather than a widget-local palette.
 
 ---
 
@@ -371,23 +354,12 @@ floorplan: {
 
 ## 17. CSS integration
 
-The accompanying `smarthome-mui.css` file provides:
+The production foundation is `src-widgets/public/smarthome.css`. It imports
+generated namespaced defaults and applies styles only through SmartHome classes.
+The old documentation CSS now forwards to that file instead of maintaining a
+second palette or global MUI overrides.
 
-- CSS variables matching this palette
-- global body/background rules
-- MUI surface overrides
-- weather-card styling
-- floor-plan styling
-- device control states
-- sensor-chip styling
-- compact Schnellzugriff styling
-- navigation states
-- accessibility and reduced-motion rules
-
-Import the CSS after your MUI baseline/theme styles:
-
-```ts
-import './smarthome-mui.css';
-```
-
-For best results, pair it with a matching MUI `createTheme()` configuration so the CSS and theme palette stay in sync.
+For the existing vis project, follow [smarthome-integration.md](smarthome-integration.md)
+and use the prepared [EG project stylesheet](EG-project.css). The optional generated
+project bridge also supplies MUI CSS values and matching channels; full host-wide
+JavaScript theming requires installing the shared factory in the host.

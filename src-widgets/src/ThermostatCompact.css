@@ -20,7 +20,7 @@
 }
 
 .thermostat-compact-button .thermostat-compact-low-battery {
-    color: #f44336;
+    color: var(--sh-error);
     font-size: 18px;
     flex-shrink: 0;
     margin-right: 2px;

@@ -1,0 +1,28 @@
+/* Generated from themes/ocean.json by npm run theme:generate. Do not edit. */
+/* Defaults live only at the document root. Widget classes inherit them. */
+:where(:root) {
+    --sh-bg: #477592;
+    --sh-surface: #2D4E63;
+    --sh-surface-2: #365B73;
+    --sh-floor: #477592;
+    --sh-wall: #BCD0DD;
+    --sh-primary: #A8D9EF;
+    --sh-primary-contrast: #172F40;
+    --sh-secondary: #ABDCE3;
+    --sh-info: #ABDCE3;
+    --sh-success: #ACDBC1;
+    --sh-warning: #F1CC8D;
+    --sh-error: #F5BCB7;
+    --sh-text: #F7FAFC;
+    --sh-text-secondary: #EFF5F8;
+    --sh-divider: #698CA2;
+    --sh-control-off: #ACC0CE;
+    --sh-control-on: #F1CC8D;
+    --sh-focus: #D6EFF1;
+    --sh-radius-card: 22px;
+    --sh-radius-control: 14px;
+    --sh-radius-chip: 16px;
+    --sh-shadow-control: 0 4px 12px rgba(23, 47, 64, 0.18);
+    --sh-shadow-card: 0 8px 24px rgba(23, 47, 64, 0.20);
+    --sh-shadow-badge: 0 1px 3px rgba(23, 47, 64, 0.30);
+}

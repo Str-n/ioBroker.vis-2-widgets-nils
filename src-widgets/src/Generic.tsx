@@ -1,5 +1,8 @@
+import React from 'react';
 import type { VisRxWidgetState } from '@iobroker/types-vis-2';
 import type VisRxWidget from '@iobroker/types-vis-2/visRxWidget';
+
+import SmartHomeThemeProvider from './theme/SmartHomeThemeProvider';
 
 export const HISTORY_ADAPTER_NAMES = ['history', 'sql', 'influxdb'];
 
@@ -7,6 +10,15 @@ export default class Generic<
     RxData extends Record<string, any>,
     State extends Partial<VisRxWidgetState> = VisRxWidgetState,
 > extends (window.visRxWidget as typeof VisRxWidget)<RxData, State> {
+    static smartHomeTheme = false;
+
+    render(): React.JSX.Element | null {
+        const content = super.render();
+        return content && (this.constructor as typeof Generic).smartHomeTheme
+            ? React.createElement(SmartHomeThemeProvider, null, content)
+            : content;
+    }
+
     getPropertyValue = (stateName: string): any => this.state.values[`${(this.state.rxData as any)[stateName]}.val`];
 
     static getI18nPrefix(): string {

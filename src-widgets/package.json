@@ -32,6 +32,7 @@
         "@mui/icons-material": "^9.4.0",
         "@mui/material": "^9.4.0",
         "@mui/system": "^9.4.0",
+        "@mui/utils": "^9.4.0",
         "@swc/core": "1.15.30",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.5",
@@ -43,6 +44,7 @@
         "vite-plugin-top-level-await": "^1.6.0"
     },
     "scripts": {
+        "prebuild": "node ../scripts/generate-smarthome-theme.cjs",
         "start": "vite --host 0.0.0.0 --port 4174",
         "test:dashboard": "vite --host 0.0.0.0 --port 4174",
         "build": "tsc && vite build",

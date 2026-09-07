@@ -1,0 +1,98 @@
+/* Ocean theme for the existing EG project. Replace the project CSS as a whole;
+   keep a backup of the previous CSS. Install the matching widget build first. */
+@import url('/vis-2/widgets/vis-2-widgets-nils-fork/smarthome-project.css');
+
+/* Project geometry belongs here. Colors live in public/themes/ocean.json. */
+:root {
+    --design-width: 390;
+    --design-height: 700;
+    --button-size: 40px;
+    --windows-size: 35px;
+}
+
+.vis-view {
+    background-color: var(--sh-bg);
+    color: var(--sh-text);
+}
+
+/* Override host-assigned view backgrounds so the carousel owns its surface. */
+.sh-carousel .vis-view {
+    background-color: transparent !important;
+}
+
+/* The runtime navigation uses a literal host color. Target its container only. */
+#root > div > .MuiBox-root:has(> .MuiTabs-root) {
+    background-color: var(--sh-surface) !important;
+    color: var(--sh-text);
+}
+
+#root > div > .MuiBox-root > .MuiTabs-root .MuiTab-root {
+    color: var(--sh-text-secondary);
+}
+
+#root > div > .MuiBox-root > .MuiTabs-root .MuiTab-root.Mui-selected {
+    color: var(--sh-primary);
+}
+
+.vis-limit-screen2 {
+    transform: translate(0, 0) scale(
+        calc(min(100vw / (var(--design-width) * 1px), 100vh / (var(--design-height) * 1px)))
+    );
+}
+
+.shaddow {
+    box-shadow: var(--sh-shadow-control);
+}
+
+.mywindow {
+    position: relative;
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.mybulb {
+    position: relative;
+    width: var(--button-size) !important;
+    height: var(--button-size) !important;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--sh-surface-2);
+    color: var(--sh-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--sh-shadow-control);
+    cursor: pointer;
+    overflow: visible;
+}
+
+.mybulb.active,
+.mybulb.click {
+    color: var(--sh-control-on);
+    background: var(--sh-surface);
+    box-shadow: var(--sh-shadow-control);
+}
+
+.mybulb img {
+    margin-left: 3px;
+    width: 90%;
+    height: auto;
+    filter: drop-shadow(0 2px 3px var(--color-shadow));
+}
+
+.thermostat-compact-button {
+    border-radius: 999px;
+    padding: 0 2px;
+    white-space: nowrap;
+}
+
+.thermostat-compact-button--with-humidity {
+    line-height: 1.1;
+    padding: 4px 1px;
+}
+
+.thermostat-compact-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

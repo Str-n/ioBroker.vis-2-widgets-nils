@@ -1,0 +1,47 @@
+{
+    "defaultColorScheme": "dark",
+    "colorSchemes": {
+        "light": false,
+        "dark": {
+            "palette": {
+                "primary": { "main": "#A8D9EF", "light": "#D3EAF5", "dark": "#79B5D0", "contrastText": "#172F40" },
+                "secondary": { "main": "#ABDCE3", "light": "#D6EFF1", "dark": "#7EB9C3", "contrastText": "#172F40" },
+                "background": { "default": "#477592", "paper": "#2D4E63" },
+                "text": { "primary": "#F7FAFC", "secondary": "#EFF5F8", "disabled": "#ACC0CE" },
+                "divider": "#698CA2",
+                "info": { "main": "#ABDCE3", "contrastText": "#172F40" },
+                "success": { "main": "#ACDBC1", "contrastText": "#172F40" },
+                "warning": { "main": "#F1CC8D", "contrastText": "#172F40" },
+                "error": { "main": "#F5BCB7", "contrastText": "#172F40" },
+                "grey": {
+                    "50": "#F7FAFC", "100": "#EFF5F8", "200": "#D3E2EB", "300": "#BCD0DD",
+                    "400": "#ACC0CE", "500": "#698CA2", "600": "#477592", "700": "#365B73",
+                    "800": "#2D4E63", "900": "#172F40"
+                },
+                "action": {
+                    "active": "#EFF5F8",
+                    "hover": "rgba(168, 217, 239, 0.08)",
+                    "selected": "rgba(168, 217, 239, 0.16)",
+                    "focus": "rgba(168, 217, 239, 0.20)",
+                    "disabled": "#ACC0CE",
+                    "disabledBackground": "rgba(172, 192, 206, 0.12)"
+                }
+            }
+        }
+    },
+    "smartHome": {
+        "surfaceRaised": "#365B73",
+        "wall": "#BCD0DD",
+        "lightOn": "#F1CC8D",
+        "radiusCard": "22px",
+        "radiusControl": "14px",
+        "radiusChip": "16px",
+        "shadowControl": "0 4px 12px rgba(23, 47, 64, 0.18)",
+        "shadowCard": "0 8px 24px rgba(23, 47, 64, 0.20)",
+        "shadowBadge": "0 1px 3px rgba(23, 47, 64, 0.30)",
+        "legacyShadowColor": "rgba(23, 47, 64, 0.25)"
+    },
+    "components": {
+        "MuiPaper": { "styleOverrides": { "root": { "backgroundImage": "none" } } }
+    }
+}

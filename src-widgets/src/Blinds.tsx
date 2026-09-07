@@ -90,6 +90,8 @@ interface BlindsRxData extends BlindsBaseRxData {
 }
 
 export default class Blinds extends BlindsBase<BlindsRxData, BlindsBaseState> {
+    static smartHomeTheme = true;
+
     private lastRxData: string | undefined;
     private updateTimeout: ReturnType<typeof setTimeout> | undefined;
 

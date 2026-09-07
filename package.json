@@ -36,6 +36,8 @@
     "widgets/"
   ],
   "scripts": {
+    "theme:generate": "node scripts/generate-smarthome-theme.cjs",
+    "theme:check": "node scripts/generate-smarthome-theme.cjs --check",
     "prepublishOnly": "npm run build",
     "lint": "eslint -c eslint.config.mjs",
     "test:integration": "mocha test/widgets.test --exit",

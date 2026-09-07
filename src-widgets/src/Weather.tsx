@@ -77,6 +77,8 @@ function WeatherIcon({ src, label, size }: { src?: string; label?: string; size:
 }
 
 export default class Weather extends Generic<WeatherRxData, WeatherState> {
+    static smartHomeTheme = true;
+
     static getWidgetInfo(): RxWidgetInfo {
         const defaults = createOpenWeatherMapBindings();
         const advancedFields: RxWidgetInfoAttributesField[] = Object.entries(defaults).map(([name, value]) => ({

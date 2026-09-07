@@ -93,6 +93,8 @@ function getIconFromName(iconName?: string): React.ElementType | null {
 }
 
 export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButtonState> {
+    static smartHomeTheme = true;
+
     static getWidgetInfo(): RxWidgetInfo {
         return {
             id: 'tplNils2SwitchButton',
@@ -608,7 +610,7 @@ export default class SwitchButton extends Generic<SwitchButtonRxData, SwitchButt
                                 borderRadius: '50%',
                                 color: 'var(--sh-text)',
                                 backgroundColor: 'var(--sh-bg)',
-                                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.35)',
+                                boxShadow: 'var(--sh-shadow-badge)',
                                 pointerEvents: 'none',
                             }}
                         >

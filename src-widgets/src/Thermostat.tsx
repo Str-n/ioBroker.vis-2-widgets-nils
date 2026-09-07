@@ -145,6 +145,8 @@ interface ThermostatState extends VisRxWidgetState {
 }
 
 export default class Thermostat extends Generic<ThermostatRxData, ThermostatState> {
+    static smartHomeTheme = true;
+
     private lastRxData = '';
     private customStyle: React.CSSProperties = {};
     private updateTimeout: ReturnType<typeof setTimeout> | null = null;
