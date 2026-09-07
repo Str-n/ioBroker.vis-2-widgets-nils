@@ -90,7 +90,9 @@ Use `sh-theme sh-surface` for a new standalone container, or `sh-surface` inside
 `sh-app`. Use `sh-content` only on a flow-layout container: applying a grid to
 the existing positioned floor-plan view would disturb its device placement.
 The foundation also provides opt-in floor-plan and quick-access classes.
-It does not redraw the floor-plan asset or change navigation.
+The old EG, OG and DG background images now have theme-aware SVG replacements;
+see [floor-plan migration](floorplan-migration.md) for the source files, placement
+and editor instructions. Applying them is a separate view edit.
 
 Do not import `documentation/smarthome-mui.css` into the editor unchanged. Its
 global selectors would also affect the editor and the widgets excluded from

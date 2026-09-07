@@ -199,13 +199,18 @@ The floor plan is the main interaction surface.
 
 ### Recommended rendering
 
-- Outer wall: `2px`, slightly brighter
-- Inner wall: `2px`, slightly lower contrast
-- Room fill: transparent or 2–4% lighter than base
+- Outer wall: `2.5px`, shared wall color
+- Inner wall: `1.5px`, shared wall color at 80% opacity
+- Room fill: raised surface color at 18% opacity; use 0 for transparent rooms
 - Selected room: subtle `primary` tint
 - No wall shadows
 
 Room labels should be small and quiet, typically `caption` or `body2` with `text.secondary`.
+
+The EG, OG and DG backdrops are maintained as theme-aware inline SVGs. See
+[floor-plan migration](floorplan-migration.md) for editor placement, theme tokens
+and the interactive preview. The source images contain no room labels; labels
+and device controls stay in the view.
 
 ---
 
