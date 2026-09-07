@@ -96,6 +96,7 @@ interface ThermostatRxData {
     'oid-temp-set': string;
     'oid-temp-actual': string;
     'oid-humidity': string;
+    'oid-low-bat'?: string;
     unit: string;
     'oid-power': string;
     'oid-mode': string;

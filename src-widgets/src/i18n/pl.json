@@ -377,6 +377,8 @@
   "temperature": "Temperatura",
   "temperature_oid": "Ustaw ID temperatury",
   "humidity_oid": "ID wilgotności",
+  "low_battery_oid": "ID niskiego poziomu baterii",
+  "low_battery": "Niski poziom baterii",
   "theme": "Motyw",
   "theme_attribution": "Atrybucja motywu",
   "theme_name": "Nazwa motywu",

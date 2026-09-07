@@ -377,6 +377,8 @@
   "temperature": "Temperatuur",
   "temperature_oid": "Temperatuur-ID instellen",
   "humidity_oid": "Vochtigheids-ID",
+  "low_battery_oid": "ID voor lage batterijspanning",
+  "low_battery": "Batterij bijna leeg",
   "theme": "Thema",
   "theme_attribution": "Thema toeschrijving",
   "theme_name": "Thema naam",

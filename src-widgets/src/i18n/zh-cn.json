@@ -377,6 +377,8 @@
   "temperature": "温度",
   "temperature_oid": "设定温度ID",
   "humidity_oid": "湿度ID",
+  "low_battery_oid": "电池电量低ID",
+  "low_battery": "电池电量低",
   "theme": "主题",
   "theme_attribution": "主题归属",
   "theme_name": "主题名称",

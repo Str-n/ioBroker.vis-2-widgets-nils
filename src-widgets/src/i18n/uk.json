@@ -377,6 +377,8 @@
   "temperature": "температура",
   "temperature_oid": "Ідентифікатор встановленої температури",
   "humidity_oid": "Ідентифікатор вологості",
+  "low_battery_oid": "ID низького заряду батареї",
+  "low_battery": "Низький заряд батареї",
   "theme": "Тема",
   "theme_attribution": "Атрибуція теми",
   "theme_name": "Назва теми",

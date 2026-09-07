@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Button, Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
-import { Close as IconClose } from '@mui/icons-material';
+import { Battery0Bar, Close as IconClose } from '@mui/icons-material';
 
 import type { RxRenderWidgetProps, RxWidgetInfo } from '@iobroker/types-vis-2';
 
@@ -12,8 +12,24 @@ import './ThermostatCompact.css';
 
 export default class ThermostatCompact extends Thermostat {
     static getWidgetInfo(): RxWidgetInfo {
+        const widgetInfo = Thermostat.getWidgetInfo();
         return {
-            ...Thermostat.getWidgetInfo(),
+            ...widgetInfo,
+            visAttrs: widgetInfo.visAttrs.map(group =>
+                group.name === 'common'
+                    ? {
+                          ...group,
+                          fields: [
+                              ...group.fields,
+                              {
+                                  name: 'oid-low-bat',
+                                  type: 'id',
+                                  label: 'low_battery_oid',
+                              },
+                          ],
+                      }
+                    : group,
+            ),
             // Keep the original template ID: it is persisted in existing vis-2 projects.
             id: 'tplNils2ThermostatCompact',
             visName: 'Thermostat Compact',
@@ -49,6 +65,7 @@ export default class ThermostatCompact extends Thermostat {
         const humidity = this.state.values[`${this.state.rxData['oid-humidity']}.val`];
         const humidityLabel =
             humidity === null || humidity === undefined ? Generic.t('humidity') : `${this.formatValue(humidity)}%`;
+        const lowBattery = this.state.values[`${this.state.rxData['oid-low-bat']}.val`];
 
         const fullContent = super.renderWidgetBody({
             ...props,
@@ -71,6 +88,14 @@ export default class ThermostatCompact extends Thermostat {
                             : ''
                     }`}
                 >
+                    {this.state.rxData['oid-low-bat'] &&
+                    this.state.rxData['oid-low-bat'] !== 'nothing_selected' &&
+                    lowBattery === true ? (
+                        <Battery0Bar
+                            className="thermostat-compact-low-battery"
+                            titleAccess={Generic.t('low_battery')}
+                        />
+                    ) : null}
                     <span className="thermostat-compact-label">
                         <span>{label}</span>
                         {this.state.rxData['oid-humidity'] &&

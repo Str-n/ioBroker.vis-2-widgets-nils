@@ -18,3 +18,10 @@
 .sh-colors .thermostat-compact-humidity {
     color: var(--sh-info);
 }
+
+.thermostat-compact-button .thermostat-compact-low-battery {
+    color: #f44336;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-right: 2px;
+}

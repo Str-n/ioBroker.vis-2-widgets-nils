@@ -377,6 +377,8 @@
   "temperature": "La temperatura",
   "temperature_oid": "Establecer ID de temperatura",
   "humidity_oid": "ID de humedad",
+  "low_battery_oid": "ID de batería baja",
+  "low_battery": "Batería baja",
   "theme": "Tema",
   "theme_attribution": "Atribución del tema",
   "theme_name": "Nombre del tema",
