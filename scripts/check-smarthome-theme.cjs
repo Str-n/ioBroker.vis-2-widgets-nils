@@ -56,7 +56,22 @@ async function main() {
             page.$eval(selector, (element, key) => getComputedStyle(element)[key], property);
         assert.equal(await color('body', 'backgroundColor'), rgb(palette.background.default));
         assert.equal(await color('[data-preview="default-light"] .sh-control', 'color'), rgb(preset.smartHome.lightOn));
-        assert.equal(await color('[data-preview="default-switch"] .sh-control', 'color'), rgb(palette.secondary.main));
+        assert.equal(
+            await color('[data-preview="default-switch"] .sh-control', 'color'),
+            rgb(preset.smartHome.switchOn),
+        );
+        await page.click('[data-preview="default-switch"] .sh-control');
+        assert.equal(
+            await color('[data-preview="default-switch"] .sh-control', 'color'),
+            rgb(preset.smartHome.switchOff),
+        );
+        await page.click('[data-preview="default-switch"] .sh-control');
+        await page.click('[data-preview="default-light"] .sh-control');
+        assert.equal(
+            await color('[data-preview="default-light"] .sh-control', 'color'),
+            rgb(preset.smartHome.switchOff),
+        );
+        await page.click('[data-preview="default-light"] .sh-control');
         assert.equal(await color('.button-grid .preview-card:first-child .sh-control', 'color'), rgb('#66df8b'));
 
         // A parent override must reach widgets even through nested sh-theme classes.

@@ -30,6 +30,8 @@ const tokens = {
     divider: p.divider,
     'control-off': p.text.disabled,
     'control-on': s.lightOn,
+    'switch-on': s.switchOn,
+    'switch-off': s.switchOff,
     focus: p.secondary.light,
     'radius-card': s.radiusCard,
     'radius-control': s.radiusControl,

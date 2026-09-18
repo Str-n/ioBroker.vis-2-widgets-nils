@@ -24,6 +24,15 @@
     --sh-control-state-color: var(--sh-secondary);
 }
 
+.sh-control[data-sh-device='switch'][data-sh-active='true'] {
+    --sh-control-state-color: var(--sh-switch-on);
+}
+
+.sh-control[data-sh-device='switch'][data-sh-active='false'],
+.sh-control[data-sh-device='light'][data-sh-active='false'] {
+    --sh-control-state-color: var(--sh-switch-off);
+}
+
 .sh-control[data-sh-device='light'][data-sh-active='true'] {
     --sh-control-state-color: var(--sh-control-on);
 }

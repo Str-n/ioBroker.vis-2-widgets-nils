@@ -40,6 +40,8 @@
             "shadow": "none"
         },
         "lightOn": "#F1CC8D",
+        "switchOn": "#55D9FF",
+        "switchOff": "#9BABB8",
         "radiusCard": "22px",
         "radiusControl": "14px",
         "radiusChip": "16px",
