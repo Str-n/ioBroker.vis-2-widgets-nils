@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Ocean floor plans</title>
+        <link rel="stylesheet" href="./smarthome.css" />
+        <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; padding: 32px; background: var(--sh-bg); color: var(--sh-text); font: 14px/1.5 system-ui, sans-serif; }
+            main { max-width: 1200px; margin: auto; }
+            h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            p { color: var(--sh-text-secondary); }
+            .settings { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin: 24px 0 32px; padding: 16px; border-radius: var(--sh-radius-control); background: var(--sh-surface); }
+            label { display: flex; align-items: center; gap: 10px; }
+            input { accent-color: var(--sh-primary); }
+            button, a { color: var(--sh-primary); }
+            button { background: var(--sh-surface-2); border: 1px solid var(--sh-divider); padding: 8px 12px; border-radius: 8px; font: inherit; cursor: pointer; }
+            :focus-visible { outline: 2px solid var(--sh-focus); outline-offset: 3px; }
+            .plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+            article { min-width: 0; }
+            h2 { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; font-weight: 500; }
+            h2 a { font-size: 13px; font-weight: 400; }
+            .drawing { min-height: 430px; }
+            .drawing--portrait { width: 77%; margin-inline: auto; }
+            small { color: var(--sh-text-secondary); }
+            @media (max-width: 760px) { body { padding: 20px; } .plans { grid-template-columns: 1fr; } .drawing { min-height: 0; } article { max-width: 390px; width: 100%; margin-inline: auto; } }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Ocean · floor plans</h1>
+            <p>Three floors, one theme. Change the wall color, room tint or shadow to explore the design.</p>
+            <form class="settings" onsubmit="return false">
+                <label>Walls <input id="wall" type="color" /></label>
+                <label>Room tint <input id="fill" type="range" min="0" max="0.5" step="0.01" /></label>
+                <label><input id="shadow" type="checkbox" /> Soft wall shadow</label>
+                <button id="reset" type="button">Reset to Ocean</button>
+            </form>
+            <div class="plans">
+                <article><h2>EG <a href="./floorplans/eg.svg" download>SVG source</a></h2><div class="drawing" data-plan="eg"></div><small>Ground floor · 756 × 699 coordinate space</small></article>
+                <article><h2>OG <a href="./floorplans/og.svg" download>SVG source</a></h2><div class="drawing drawing--portrait" data-plan="og"></div><small>Upper floor · 581 × 704 coordinate space</small></article>
+                <article><h2>DG <a href="./floorplans/dg.svg" download>SVG source</a></h2><div class="drawing drawing--portrait" data-plan="dg"></div><small>Attic · 577 × 700 coordinate space</small></article>
+            </div>
+            <p>Paste the SVG source into an HTML template with the shared stylesheet loaded. These controls affect this preview only.</p>
+            <p id="error" role="alert" hidden></p>
+        </main>
+        <script type="module">
+            const root = document.documentElement;
+            const wall = document.querySelector('#wall');
+            const fill = document.querySelector('#fill');
+            const shadow = document.querySelector('#shadow');
+            function reset() {
+                for (const token of ['--sh-wall', '--sh-floorplan-fill-opacity', '--sh-floorplan-shadow']) root.style.removeProperty(token);
+                const theme = getComputedStyle(root);
+                wall.value = theme.getPropertyValue('--sh-wall').trim();
+                fill.value = theme.getPropertyValue('--sh-floorplan-fill-opacity').trim();
+                shadow.checked = false;
+            }
+            wall.addEventListener('input', () => root.style.setProperty('--sh-wall', wall.value));
+            fill.addEventListener('input', () => root.style.setProperty('--sh-floorplan-fill-opacity', fill.value));
+            shadow.addEventListener('change', () => root.style.setProperty('--sh-floorplan-shadow', shadow.checked ? 'drop-shadow(0 2px 3px var(--sh-surface))' : 'none'));
+            document.querySelector('#reset').addEventListener('click', reset);
+            reset();
+            try {
+                await Promise.all([...document.querySelectorAll('[data-plan]')].map(async container => {
+                    const response = await fetch(`./floorplans/${container.dataset.plan}.svg`);
+                    if (!response.ok) throw new Error(`Could not load ${container.dataset.plan.toUpperCase()}.`);
+                    // Only the three local, maintained SVG assets are inserted here.
+                    container.innerHTML = await response.text();
+                }));
+            } catch (error) {
+                document.querySelector('#error').hidden = false;
+                document.querySelector('#error').textContent = error.message;
+            }
+        </script>
+    </body>
+</html>

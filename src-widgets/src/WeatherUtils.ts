@@ -1,4 +1,4 @@
-const DAY_COUNT = 2;
+const DAY_COUNT = 3;
 
 export type OpenWeatherMapBindings = Record<string, string>;
 
@@ -17,7 +17,7 @@ export function createOpenWeatherMapBindings(instance = 'openweathermap.0'): Ope
     };
 
     for (let day = 1; day <= DAY_COUNT; day++) {
-        const dayRoot = `${root}.day${day - 1}`;
+        const dayRoot = `${root}.day${day}`;
         bindings[`oidDay${day}Date`] = `${dayRoot}.date`;
         bindings[`oidDay${day}Icon`] = `${dayRoot}.icon`;
         bindings[`oidDay${day}Description`] = `${dayRoot}.state`;

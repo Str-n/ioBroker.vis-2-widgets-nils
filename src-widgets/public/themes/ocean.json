@@ -32,6 +32,13 @@
     "smartHome": {
         "surfaceRaised": "#365B73",
         "wall": "#BCD0DD",
+        "floorplan": {
+            "fillOpacity": 0.18,
+            "innerWallOpacity": 0.8,
+            "outerWallWidth": "2.5px",
+            "innerWallWidth": "1.5px",
+            "shadow": "none"
+        },
         "lightOn": "#F1CC8D",
         "radiusCard": "22px",
         "radiusControl": "14px",

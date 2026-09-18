@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="sh-floorplan-svg" viewBox="0 0 581 704" width="581" height="704" preserveAspectRatio="xMinYMin meet" aria-hidden="true" focusable="false">
+    <!-- Geometry follows vis-2.0_main_ogleer.png; the slightly skewed roof line is straightened. -->
+    <path class="sh-floorplan-fill" d="M7.5 9.5H573.5V696.5H7.5Z" />
+    <g class="sh-floorplan-walls">
+        <path class="sh-floorplan-outline" d="M7.5 9.5H573.5V696.5H7.5Z" />
+        <path class="sh-floorplan-partitions" d="M281.5 9.5V696.5 M7.5 295.5H281.5 M7.5 531.5H281.5 M281.5 366.5H573.5" />
+    </g>
+</svg>

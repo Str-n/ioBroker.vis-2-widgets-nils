@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="sh-floorplan-svg" viewBox="0 0 577 700" width="577" height="700" preserveAspectRatio="xMinYMin meet" aria-hidden="true" focusable="false">
+    <!-- Geometry follows vis-2.0_main_dgok.png. Open ends of the central wall are intentional. -->
+    <path class="sh-floorplan-fill" d="M5.5 7.5H572.5V694.5H5.5Z" />
+    <g class="sh-floorplan-walls">
+        <path class="sh-floorplan-outline" d="M5.5 7.5H572.5V694.5H5.5Z" />
+        <path class="sh-floorplan-partitions" d="M283.5 189.5V525.5 M283.5 189.5H572.5 M283.5 525.5H572.5 M5.5 236.5H283.5 M5.5 463.5H283.5" />
+    </g>
+</svg>

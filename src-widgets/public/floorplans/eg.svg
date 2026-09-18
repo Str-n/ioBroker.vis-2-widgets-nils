@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="sh-floorplan-svg" viewBox="0 0 756 699" width="756" height="699" preserveAspectRatio="xMinYMin meet" aria-hidden="true" focusable="false">
+    <!-- Geometry follows vis-2.0_main_egleer3.png; the left wall junction is aligned to its outer wall. -->
+    <path class="sh-floorplan-fill" d="M7.5 7.5H748.5V691.5H181.5V295.5H7.5Z" />
+    <g class="sh-floorplan-walls">
+        <path class="sh-floorplan-outline" d="M7.5 7.5H748.5V691.5H181.5V295.5H7.5Z" />
+        <path class="sh-floorplan-partitions" d="M455.5 184V691.5 M181.5 295.5H455.5 M455.5 408.5H748.5 M181.5 526.5H353.5 M271.5 526.5V691.5" />
+    </g>
+</svg>

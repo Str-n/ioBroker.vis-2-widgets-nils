@@ -72,6 +72,46 @@
     fill: none;
 }
 
+/* Inline SVG backdrops inherit the same tokens as the controls. Natural height
+   matches the legacy image widget even when its saved container is taller. */
+.sh-floorplan-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    pointer-events: none;
+    user-select: none;
+}
+
+.sh-floorplan-svg .sh-floorplan-fill {
+    fill: var(--sh-floorplan-fill, var(--sh-surface-2));
+    fill-opacity: var(--sh-floorplan-fill-opacity);
+    stroke: none;
+}
+
+.sh-floorplan-svg .sh-floorplan-walls {
+    filter: var(--sh-floorplan-shadow);
+}
+
+.sh-floorplan-svg .sh-floorplan-outline,
+.sh-floorplan-svg .sh-floorplan-partitions {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.sh-floorplan-svg .sh-floorplan-outline {
+    stroke: var(--sh-floorplan-wall-outer, var(--sh-wall));
+    stroke-width: var(--sh-floorplan-outer-width);
+}
+
+.sh-floorplan-svg .sh-floorplan-partitions {
+    stroke: var(--sh-floorplan-wall-inner, var(--sh-wall));
+    stroke-width: var(--sh-floorplan-inner-width);
+    stroke-opacity: var(--sh-floorplan-inner-opacity);
+}
+
 .sh-app .sh-room-label {
     fill: var(--sh-text-secondary);
     color: var(--sh-text-secondary);
