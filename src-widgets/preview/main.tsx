@@ -240,7 +240,19 @@ function App(): React.JSX.Element {
                         onChange={event => context.setValue(`${base}.daysLeft`, event.target.value)} style={{ width: 60 }} /></label>
                     <output>{String(values[`${base}.completed.val`])}</output>
                 </article>;
-            })}</div>
+            })}
+                <article className="preview-card" data-preview="trash-combined">
+                    <Trash {...commonProps as any} id="trash-combined" customSettings={{ values, style: { width: 56, height: 56 }, rxData: {
+                        binCount: 4,
+                        ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => {
+                            const suffix = index === 0 ? '' : String(index + 1);
+                            return [[`oidDaysLeft${suffix}`, `trashschedule.0.type.${color}.daysLeft`],
+                                [`oidCompleted${suffix}`, `trashschedule.0.type.${color}.completed`], [`binColor${suffix}`, color]];
+                        })),
+                    } }} />
+                    <strong>Next collection</strong><span>Uses the four bins shown here</span>
+                </article>
+            </div>
         </section>
         <section>
             <div className="section-heading"><div><h2>Thermostat</h2><p>Setpoint capped at 25°C. Auto writes 0; Manual writes 1.</p></div></div>

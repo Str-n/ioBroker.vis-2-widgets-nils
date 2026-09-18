@@ -248,7 +248,14 @@ value is strictly below the configured threshold (default: **7**). Select
 `trashschedule.0.type.<type>.daysLeft`; the editor automatically fills in the
 sibling `.completed` state. Both state bindings remain editable.
 
-Choose green, brown, black, or blue for the bin. Clicking toggles `.completed`:
+Set **Number of bins** from 1 (default) to 4 to combine collections in one
+button. Each bin has its own color, days-left state, and completed state. The
+button displays the bin with the smallest days-left value below the threshold
+and writes only that bin's completed state. Completed bins remain selected until
+the schedule changes. If no bin qualifies, the button is hidden. Equal day counts
+use the first configured bin.
+
+Choose green, brown, black, or blue for each bin. Clicking toggles `.completed`:
 true shows a gray bin with a check mark, and clicking again undoes it. Missing
 days-left data hides the widget at runtime; missing completion data disables
 clicking. The widget remains visible in the editor for configuration.
