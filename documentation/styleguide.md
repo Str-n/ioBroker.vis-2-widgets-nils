@@ -368,3 +368,16 @@ For the existing vis project, follow [smarthome-integration.md](smarthome-integr
 and use the prepared [EG project stylesheet](EG-project.css). The optional generated
 project bridge also supplies MUI CSS values and matching channels; full host-wide
 JavaScript theming requires installing the shared factory in the host.
+
+## Theme presets
+
+Ocean is the default. Daytime offers bright neutral surfaces; Happy Mode uses
+sunny yellow, pink, lavender, and playful colored shadows. Midnight, Plum, and
+Graphite offer dark indigo, purple, and neutral gray palettes respectively. The Theme
+selector changes the shared tokens and nested widget MUI themes together, while
+keeping geometry, typography, and device semantics consistent. Active lights
+remain amber; switches use each preset's distinct bright-on and muted-off colors.
+
+Use `--sh-switch-on` and `--sh-switch-off` for switch state colors. Presets live
+beside Ocean in `src-widgets/public/themes`; generated CSS must not be edited by
+hand. Selection is local to the browser and site, not a global ioBroker setting.

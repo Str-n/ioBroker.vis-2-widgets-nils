@@ -1,7 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider, useTheme } from '@mui/material';
 import { createSmartHomeTheme } from '../src/theme/createSmartHomeTheme';
+import { useSelectedTheme } from '../src/theme/themeSelection';
+import { themeNames } from '../src/theme/presets';
 import '../public/smarthome.css';
 import './preview.css';
 import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
@@ -14,6 +16,7 @@ type PreviewProps = { id: string; view: string; context: Record<string, any>; cu
 class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>> {
     static t(key: string): string {
         const translations: Record<string, string> = {
+            theme_selector: 'Theme',
             trash_day: 'day',
             trash_days: 'days',
             thermostat_auto: 'Auto',
@@ -99,8 +102,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: Trash }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/Trash'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -113,6 +116,8 @@ const objects: Record<string, Record<string, any>> = {
 };
 
 function App(): React.JSX.Element {
+    const theme = useTheme();
+    const themeId = useSelectedTheme();
     const weatherBindings = createOpenWeatherMapBindings('openweathermap.0');
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
@@ -144,11 +149,11 @@ function App(): React.JSX.Element {
         },
         setValue: (id: string, value: unknown) => setValues(old => ({ ...old, [`${id}.val`]: value })),
         systemConfig: { common: { dateFormat: 'DD.MM.YYYY', isFloatComma: false } },
-        theme, themeType: 'dark', views: {
+        theme, themeType: theme.palette.mode, views: {
             preview: { settings: {}, widgets: {} },
             'horizontal-demo': { settings: { sizex: 760, sizey: 190 }, widgets: {} },
         },
-    }), []);
+    }), [theme]);
     const commonProps = {
         view: 'preview', context, editMode: false, runtime: true, isRelative: true, selectedWidgets: [],
         relativeWidgetOrder: [], moveAllowed: false, selectedGroup: null, tpl: '', viewsActiveFilter: null,
@@ -164,8 +169,9 @@ function App(): React.JSX.Element {
 
     return <main className="sh-app">
         <header><span className="eyebrow">Local source preview</span><h1>Material widgets</h1><p>Edit <code>src-widgets/src</code> and this page refreshes immediately. These controls use local mock ioBroker states.</p></header>
-        <section className="theme-preview" aria-label="Ocean theme palette">
-            <div className="section-heading"><div><h2>Ocean · #477592</h2><p>Slate blue surfaces, clear sky accents and warm light.</p></div></div>
+        <section className="theme-preview" aria-label="Theme palette">
+            <div className="section-heading"><div><h2>{themeNames[themeId]}</h2><p>Choose a theme. Your choice is remembered in this browser.</p></div></div>
+            <ThemeSelector {...commonProps as any} id="theme-selector" customSettings={{ values, style: { width: 220, height: 76 }, rxData: {} }} />
             <div className="theme-swatches">{[
                 ['App', '--sh-bg'], ['Surface', '--sh-surface'], ['Control', '--sh-surface-2'],
                 ['Active', '--sh-secondary'], ['Light on', '--sh-control-on'], ['Healthy', '--sh-success'],
@@ -256,7 +262,7 @@ function App(): React.JSX.Element {
         </section>
         <section>
             <div className="section-heading"><div><h2>Thermostat</h2><p>Setpoint capped at 25°C. Auto writes 0; Manual writes 1.</p></div></div>
-            <article className="thermostat-card" data-preview="thermostat" style={{ padding: 16, gridTemplateColumns: 'minmax(0, 1fr)', background: '#1D3C57' }}>
+            <article className="thermostat-card" data-preview="thermostat" style={{ padding: 16, gridTemplateColumns: 'minmax(0, 1fr)', background: 'var(--sh-surface-2)' }}>
                 <Thermostat {...commonProps as any} id="thermostat" customSettings={{ values, style: { width: 560, maxWidth: '100%', height: 260 }, rxData: {
                     noCard: true, 'oid-temp-set': 'preview.temperature.set', 'oid-temp-actual': 'preview.temperature.actual',
                     'oid-humidity': 'preview.humidity', 'oid-set-point-mode': 'preview.SET_POINT_MODE', step: '0.5', unit: '°C',
@@ -320,5 +326,9 @@ function App(): React.JSX.Element {
     </main>;
 }
 
-const theme = createSmartHomeTheme();
-createRoot(document.getElementById('root')!).render(<ThemeProvider theme={theme}><CssBaseline /><App /></ThemeProvider>);
+function PreviewTheme(): React.JSX.Element {
+    const themeId = useSelectedTheme();
+    const theme = React.useMemo(() => createSmartHomeTheme({}, themeId), [themeId]);
+    return <ThemeProvider theme={theme}><CssBaseline /><App /></ThemeProvider>;
+}
+createRoot(document.getElementById('root')!).render(<PreviewTheme />);

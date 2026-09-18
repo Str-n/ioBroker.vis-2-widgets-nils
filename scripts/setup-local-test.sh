@@ -18,6 +18,8 @@ HORIZONTAL_SCROLL_VIEW_WIDGET_ID="tplNils2HorizontalScrollView"
 HORIZONTAL_SCROLL_VIEW_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/HorizontalScrollView.tsx"
 TRASH_WIDGET_ID="tplNils2Trash"
 TRASH_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/Trash.tsx"
+THEME_SELECTOR_WIDGET_ID="tplNils2ThemeSelector"
+THEME_SELECTOR_WIDGET_SOURCE="${ROOT_DIR}/src-widgets/src/ThemeSelector.tsx"
 PREVIEW_SOURCE="${ROOT_DIR}/src-widgets/preview/main.tsx"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -25,7 +27,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo ""
     echo "Usage: ./scripts/setup-local-test.sh"
     echo ""
-    echo "This script validates and previews SwitchButton, LabeledSwitchButton, ThermostatCompact, Blinds, EnergyGame, StackCardCarousel, HorizontalScrollView, and Trash with local mock states."
+    echo "This script validates and previews SwitchButton, LabeledSwitchButton, ThermostatCompact, Blinds, EnergyGame, StackCardCarousel, HorizontalScrollView, Trash, and ThemeSelector with local mock states."
     echo "Open: http://localhost:4174/test-dashboard.html"
     exit 0
 fi
@@ -128,6 +130,12 @@ if ! grep -Fq "id: '${TRASH_WIDGET_ID}'" "${TRASH_WIDGET_SOURCE}" ||
     exit 1
 fi
 
+if ! grep -Fq "id: '${THEME_SELECTOR_WIDGET_ID}'" "${THEME_SELECTOR_WIDGET_SOURCE}" ||
+   ! grep -Fq "import('../src/ThemeSelector')" "${PREVIEW_SOURCE}"; then
+    echo "ThemeSelector is missing from the local test dashboard or has an unexpected widget ID." >&2
+    exit 1
+fi
+
 if [[ ! -d "${ROOT_DIR}/node_modules" ]]; then
     echo "Installing root dependencies..."
     (cd "${ROOT_DIR}" && npm install)
@@ -145,7 +153,7 @@ Local widget test environment
 ========================================
 Project root: ${ROOT_DIR}
 Dashboard URL: http://localhost:4174/test-dashboard.html
-Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including separate status, fixed actions, and brightness/temperature controls), LabeledSwitchButton (${LABELED_SWITCH_WIDGET_ID}), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID}), StackCardCarousel (${STACK_CARD_CAROUSEL_WIDGET_ID}), HorizontalScrollView (${HORIZONTAL_SCROLL_VIEW_WIDGET_ID}), Trash (${TRASH_WIDGET_ID})
+Widgets: SwitchButton (${SWITCH_WIDGET_ID}, including separate status, fixed actions, and brightness/temperature controls), LabeledSwitchButton (${LABELED_SWITCH_WIDGET_ID}), ThermostatCompact (${COMPACT_WIDGET_ID}), Blinds (${BLINDS_WIDGET_ID}), EnergyGame (${ENERGY_GAME_WIDGET_ID}), StackCardCarousel (${STACK_CARD_CAROUSEL_WIDGET_ID}), HorizontalScrollView (${HORIZONTAL_SCROLL_VIEW_WIDGET_ID}), Trash (${TRASH_WIDGET_ID}), ThemeSelector (${THEME_SELECTOR_WIDGET_ID})
 
 This environment starts the Vite dev server for quick widget checks before deployment to the Raspberry Pi.
 Press Ctrl+C to stop the server.

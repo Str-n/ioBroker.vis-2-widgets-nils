@@ -201,6 +201,7 @@
           "Navigate",
           "Html",
           "ThemeSwitcher",
+          "ThemeSelector",
           "HomeScreenFullscreen",
           "Vacuum",
           "WasherDryer",

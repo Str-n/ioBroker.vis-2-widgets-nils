@@ -30,7 +30,7 @@
     --trash-color: #20262c;
 }
 .sh-trash__button[data-color='blue'] {
-    --trash-color: var(--sh-secondary);
+    --trash-color: #5597f5;
 }
 .sh-trash__button[data-color='black'] > svg:first-child {
     stroke: var(--sh-text-secondary);
@@ -73,5 +73,9 @@
 }
 
 .sh-trash__button[data-color='black']:not([data-completed='true']):not(:disabled) .sh-trash__days {
-    color: var(--sh-text);
+    color: #ffffff;
+}
+
+.sh-trash__button[data-color='blue']:not([data-completed='true']):not(:disabled) .sh-trash__days {
+    color: #172f40;
 }

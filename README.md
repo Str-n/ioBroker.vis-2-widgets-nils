@@ -263,3 +263,24 @@ clicking. The widget remains visible in the editor for configuration.
 Run `npm run setup:local-test` to preview all four colors, toggle completion,
 and change days-left values. With the preview running, use
 `node scripts/check-trash-preview.cjs` for browser interaction checks.
+
+### Theme selector
+
+Add the **Theme selector** widget (`tplNils2ThemeSelector`) to a view to choose
+between **Ocean**, **Daytime**, **Midnight**, **Plum**, **Happy Mode**, and **Graphite**.
+Ocean remains the default. Daytime is bright and airy; Happy Mode pairs sunny yellow, pink, and lavender with vivid accents. The other four presets are dark.
+
+Selection updates theme-aware widgets, their dialogs, and layouts using the
+shared theme tokens immediately. Explicit widget colors still take precedence.
+The choice is saved in localStorage for this browser and site, restored on reload
+(even on views without the selector), and synchronized between open tabs. Other
+devices retain their own selection. If storage is unavailable, the theme still
+changes for the current page session. Selecting Ocean restores the default. Saved Forest or Ember selections fall back
+to Ocean.
+
+The existing light/dark **Theme switcher** remains a separate widget for the host
+application. The new selector controls the SmartHome color presets.
+
+Use `npm run setup:local-test` to preview the selector. Run
+`node scripts/check-theme-selector-preview.cjs` with the preview server running
+to check the six palettes, live updates, persistence, and storage fallbacks.

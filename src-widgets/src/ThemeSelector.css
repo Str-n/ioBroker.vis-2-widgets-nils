@@ -1,0 +1,37 @@
+.sh-theme-selector {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.sh-theme-selector > span {
+    color: var(--sh-text-secondary);
+    font-size: 12px;
+}
+
+.sh-theme-selector select {
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: 1px solid var(--sh-divider);
+    border-radius: var(--sh-radius-control);
+    color: var(--sh-text);
+    background: var(--sh-surface-2);
+    font: inherit;
+    color-scheme: var(--sh-color-scheme, dark);
+    cursor: pointer;
+}
+
+.sh-theme-selector select:focus-visible {
+    outline: 2px solid var(--sh-focus);
+    outline-offset: 2px;
+}
+
+.sh-theme-selector select:disabled {
+    color: var(--sh-control-off);
+    cursor: default;
+}

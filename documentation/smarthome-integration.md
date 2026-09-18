@@ -20,8 +20,8 @@ geometry, and elevation are preserved. One central rule in `public/smarthome.css
 controls their foreground/background colors, including hover and disabled states.
 
 - Lights recognized by the built-in bulb icons or configured brightness/color
-  temperature controls use amber when on. Other switches use secondary blue.
-  Inactive icons use the primary text color on a neutral secondary surface.
+  temperature controls use amber when on. Other switches use the preset’s bright switch-on color.
+  Inactive icons use the muted switch-off color on a neutral secondary surface.
 - The thermostat uses the main surface and text colors, with cyan humidity.
 - Blinds use the neutral surface, pale slats, and the shared success color for
   the existing open-window cue. Position rendering and state labels are unchanged.
@@ -114,3 +114,30 @@ Run `node scripts/check-carousel-preview.cjs http://127.0.0.1:4174/test-dashboar
 against the running preview for desktop and mobile regression checks. The checks
 use real Chromium touch gestures over Weather, including stopped bubbling events,
 vertical/short drags, indicator taps, and transparent pressed/hover states.
+
+## Device-local theme selection
+
+`ThemeSelector` offers Ocean, Daytime, Midnight, Plum, Happy Mode, and Graphite. Each
+preset is maintained in `src-widgets/public/themes/<id>.json`. Run
+`npm run theme:generate` after editing a preset; `npm run theme:check` verifies
+that both generated CSS files match all six presets.
+
+The selected ID is stored under `vis-2-widgets-nils-fork.theme` in localStorage,
+scoped to this browser profile and origin (scheme, host, and port). Clearing site
+data resets the preference. Invalid saved IDs fall back to Ocean; denied storage
+allows an in-memory selection for the page lifetime. No ioBroker state is written.
+
+The shared widget code restores `data-sh-theme` on the document root before its
+first render. Generated CSS changes only `--sh-*` tokens by default; it does not
+replace the host editor's palette. Theme-aware React widgets subscribe to the
+same selection and rebuild their nested MUI theme, including portaled dialogs.
+Existing project rules with hard-coded colors must use the shared tokens to
+participate. Parent token overrides and explicit widget colors remain supported.
+
+The optional `smarthome-project.css` compatibility sheet also contains selectors
+for all six palettes, including the corresponding MUI color channels and legacy
+aliases. As before, import it only when project-wide MUI styling is intended.
+
+Custom React hosts can call `createSmartHomeTheme(overrides, themeId)` and use
+`useSelectedTheme()` from `theme/themeSelection` to update their theme boundary.
+The original one-argument theme factory still defaults to Ocean.

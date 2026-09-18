@@ -1,0 +1,106 @@
+{
+    "defaultColorScheme": "light",
+    "colorSchemes": {
+        "light": {
+            "palette": {
+                "primary": {
+                    "main": "#6B36CE",
+                    "light": "#9D72F0",
+                    "dark": "#4B209C",
+                    "contrastText": "#FFFFFF"
+                },
+                "secondary": {
+                    "main": "#C5196C",
+                    "light": "#DD5B99",
+                    "dark": "#97104F",
+                    "contrastText": "#FFFFFF"
+                },
+                "background": {
+                    "default": "#FFF4C7",
+                    "paper": "#FFF0F7"
+                },
+                "text": {
+                    "primary": "#37224F",
+                    "secondary": "#62466F",
+                    "disabled": "#85788E"
+                },
+                "divider": "#BBA2D0",
+                "info": {
+                    "main": "#007B88",
+                    "light": "#309BA5",
+                    "dark": "#005B65",
+                    "contrastText": "#FFFFFF"
+                },
+                "success": {
+                    "main": "#197F4B",
+                    "light": "#419B6A",
+                    "dark": "#105C35",
+                    "contrastText": "#FFFFFF"
+                },
+                "warning": {
+                    "main": "#9B6500",
+                    "light": "#B08232",
+                    "dark": "#714900",
+                    "contrastText": "#FFFFFF"
+                },
+                "error": {
+                    "main": "#BD2942",
+                    "light": "#D3556A",
+                    "dark": "#8F1B30",
+                    "contrastText": "#FFFFFF"
+                },
+                "grey": {
+                    "50": "#FAFBFC",
+                    "100": "#F0F3F6",
+                    "200": "#E2E8EE",
+                    "300": "#C8D2DC",
+                    "400": "#A2AFBD",
+                    "500": "#78899B",
+                    "600": "#586D80",
+                    "700": "#405366",
+                    "800": "#293D4E",
+                    "900": "#182B3A"
+                },
+                "action": {
+                    "active": "#62466F",
+                    "hover": "rgba(107, 54, 206, 0.06)",
+                    "selected": "rgba(107, 54, 206, 0.12)",
+                    "focus": "rgba(107, 54, 206, 0.18)",
+                    "disabled": "#85788E",
+                    "disabledBackground": "rgba(107, 54, 206, 0.08)"
+                }
+            }
+        },
+        "dark": false
+    },
+    "smartHome": {
+        "surfaceRaised": "#EDE5FF",
+        "wall": "#8665A5",
+        "floorplan": {
+            "fillOpacity": 0.18,
+            "innerWallOpacity": 0.8,
+            "outerWallWidth": "2.5px",
+            "innerWallWidth": "1.5px",
+            "shadow": "none"
+        },
+        "lightOn": "#9B6500",
+        "switchOn": "#A91B82",
+        "switchOff": "#7A6F89",
+        "radiusCard": "28px",
+        "radiusControl": "18px",
+        "radiusChip": "20px",
+        "shadowControl": "0 4px 0 rgba(197, 25, 108, 0.20)",
+        "shadowCard": "0 6px 0 rgba(107, 54, 206, 0.18)",
+        "shadowBadge": "0 1px 3px rgba(24, 43, 58, 0.20)",
+        "legacyShadowColor": "rgba(107, 54, 206, 0.18)"
+    },
+    "components": {
+        "MuiPaper": {
+            "styleOverrides": {
+                "root": {
+                    "backgroundImage": "none"
+                }
+            }
+        }
+    }
+}

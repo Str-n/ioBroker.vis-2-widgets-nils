@@ -3,9 +3,10 @@ import { ThemeProvider, useTheme, type Theme } from '@mui/material/styles';
 import { deepmerge } from '@mui/utils';
 
 import { createSmartHomeTheme } from './createSmartHomeTheme';
+import { useSelectedTheme } from './themeSelection';
+import type { SmartHomeThemeId } from './presets';
 
-const ocean = createSmartHomeTheme({ cssVariables: false });
-const themes = new WeakMap<Theme, Theme>();
+const themes = new WeakMap<Theme, Map<SmartHomeThemeId, Theme>>();
 
 /**
  * Adapt opted-in widgets to the host without injecting a second global MUI sheet.
@@ -14,22 +15,29 @@ const themes = new WeakMap<Theme, Theme>();
  */
 export default function SmartHomeThemeProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
     const host = useTheme();
+    const themeId = useSelectedTheme();
     const theme = useMemo(() => {
-        let resolved = themes.get(host);
+        let hostThemes = themes.get(host);
+        if (!hostThemes) {
+            hostThemes = new Map();
+            themes.set(host, hostThemes);
+        }
+        let resolved = hostThemes.get(themeId);
         if (!resolved) {
+            const preset = createSmartHomeTheme({ cssVariables: false }, themeId);
             const hostTheme = { ...host };
             delete hostTheme.vars;
             delete (hostTheme as Theme & { colorSchemes?: unknown }).colorSchemes;
             resolved = {
                 ...hostTheme,
-                ...ocean,
-                palette: { ...host.palette, ...ocean.palette },
-                components: deepmerge(host.components || {}, ocean.components || {}),
+                ...preset,
+                palette: { ...host.palette, ...preset.palette },
+                components: deepmerge(host.components || {}, preset.components || {}),
             };
-            themes.set(host, resolved);
+            hostThemes.set(themeId, resolved);
         }
         return resolved;
-    }, [host]);
+    }, [host, themeId]);
 
     return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 }
