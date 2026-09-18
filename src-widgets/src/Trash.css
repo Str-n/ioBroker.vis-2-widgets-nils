@@ -1,0 +1,77 @@
+.sh-trash {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.sh-trash__button {
+    --trash-color: var(--sh-success);
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid var(--sh-divider);
+    border-radius: var(--sh-radius-control);
+    background: var(--sh-surface-2);
+    color: var(--trash-color);
+    cursor: pointer;
+}
+
+.sh-trash__button[data-color='brown'] {
+    --trash-color: #bc8d67;
+}
+.sh-trash__button[data-color='black'] {
+    --trash-color: #20262c;
+}
+.sh-trash__button[data-color='blue'] {
+    --trash-color: var(--sh-secondary);
+}
+.sh-trash__button[data-color='black'] > svg:first-child {
+    stroke: var(--sh-text-secondary);
+    stroke-width: 0.7px;
+}
+
+.sh-trash__button[data-completed='true'],
+.sh-trash__button:disabled {
+    color: var(--sh-control-off);
+}
+
+.sh-trash__button:disabled {
+    cursor: default;
+}
+.sh-trash__button:hover:not(:disabled) {
+    background: var(--sh-surface);
+}
+.sh-trash__button:focus-visible {
+    outline: 2px solid var(--sh-focus);
+    outline-offset: 2px;
+}
+.sh-trash__check {
+    position: absolute;
+    right: 1px;
+    top: 1px;
+}
+
+.sh-trash__days {
+    position: absolute;
+    top: calc(50% + 3px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--sh-surface-2);
+    font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 16px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.sh-trash__button[data-color='black']:not([data-completed='true']):not(:disabled) .sh-trash__days {
+    color: var(--sh-text);
+}

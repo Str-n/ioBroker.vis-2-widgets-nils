@@ -240,3 +240,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+### Trash widget
+
+The **Trash** widget (`tplNils2Trash`) displays a compact bin when its days-left
+value is strictly below the configured threshold (default: **7**). Select
+`trashschedule.0.type.<type>.daysLeft`; the editor automatically fills in the
+sibling `.completed` state. Both state bindings remain editable.
+
+Choose green, brown, black, or blue for the bin. Clicking toggles `.completed`:
+true shows a gray bin with a check mark, and clicking again undoes it. Missing
+days-left data hides the widget at runtime; missing completion data disables
+clicking. The widget remains visible in the editor for configuration.
+
+Run `npm run setup:local-test` to preview all four colors, toggle completion,
+and change days-left values. With the preview running, use
+`node scripts/check-trash-preview.cjs` for browser interaction checks.

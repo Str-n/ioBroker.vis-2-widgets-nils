@@ -503,5 +503,18 @@
   "thermostat_manual": "Manuell",
   "thermostat_decrease": "Temperatur senken",
   "thermostat_increase": "Temperatur erhöhen",
-  "thermostat_history": "Verlauf"
+  "thermostat_history": "Verlauf",
+  "trash_day": "Tag",
+  "trash_days": "Tage",
+  "trash_widget": "Mülltonne",
+  "trash_days_left": "Datenpunkt verbleibende Tage",
+  "trash_completed": "Datenpunkt herausgestellt",
+  "trash_threshold": "Anzeigen bei weniger verbleibenden Tagen als",
+  "trash_color": "Tonnenfarbe",
+  "trash_green": "Grün",
+  "trash_brown": "Braun",
+  "trash_black": "Schwarz",
+  "trash_blue": "Blau",
+  "trash_move_out": "Tonne als herausgestellt markieren",
+  "trash_moved_out": "Tonne herausgestellt — zum Zurücksetzen klicken"
 }

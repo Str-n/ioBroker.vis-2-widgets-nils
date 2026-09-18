@@ -14,6 +14,8 @@ type PreviewProps = { id: string; view: string; context: Record<string, any>; cu
 class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>> {
     static t(key: string): string {
         const translations: Record<string, string> = {
+            trash_day: 'day',
+            trash_days: 'days',
             thermostat_auto: 'Auto',
             thermostat_manual: 'Manual',
             thermostat_increase: 'Increase temperature',
@@ -97,8 +99,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: Trash }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/Trash'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -133,7 +135,7 @@ function App(): React.JSX.Element {
             ];
         })),
     };
-    const initialValues = { 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues };
+    const initialValues = { 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -224,6 +226,21 @@ function App(): React.JSX.Element {
                     <code>{String(values['preview.light.val'])}</code>
                 </article>
             </div>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Trash collection</h2><p>Visible below 7 days. Click a bin to toggle “moved out”; gray with a check means completed.</p></div></div>
+            <div className="button-grid">{['green', 'brown', 'black', 'blue'].map(color => {
+                const base = `trashschedule.0.type.${color}`;
+                return <article className="preview-card" key={color} data-preview={`trash-${color}`}>
+                    <Trash {...commonProps as any} id={`trash-${color}`} customSettings={{ values, style: { width: 56, height: 56 }, rxData: {
+                        oidDaysLeft: `${base}.daysLeft`, oidCompleted: `${base}.completed`, binColor: color,
+                    } }} />
+                    <strong>{color}</strong>
+                    <label>Days left <input aria-label={`${color} days left`} type="number" value={values[`${base}.daysLeft.val`]}
+                        onChange={event => context.setValue(`${base}.daysLeft`, event.target.value)} style={{ width: 60 }} /></label>
+                    <output>{String(values[`${base}.completed.val`])}</output>
+                </article>;
+            })}</div>
         </section>
         <section>
             <div className="section-heading"><div><h2>Thermostat</h2><p>Setpoint capped at 25°C. Auto writes 0; Manual writes 1.</p></div></div>

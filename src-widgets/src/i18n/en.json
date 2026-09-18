@@ -503,5 +503,18 @@
   "thermostat_manual": "Manual",
   "thermostat_decrease": "Decrease temperature",
   "thermostat_increase": "Increase temperature",
-  "thermostat_history": "History"
+  "thermostat_history": "History",
+  "trash_day": "day",
+  "trash_days": "days",
+  "trash_widget": "Trash",
+  "trash_days_left": "Days left state",
+  "trash_completed": "Completed state",
+  "trash_threshold": "Show when days left is below",
+  "trash_color": "Bin color",
+  "trash_green": "Green",
+  "trash_brown": "Brown",
+  "trash_black": "Black",
+  "trash_blue": "Blue",
+  "trash_move_out": "Mark bin as moved out",
+  "trash_moved_out": "Bin moved out — click to undo"
 }
