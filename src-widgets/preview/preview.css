@@ -19,6 +19,12 @@ section { margin-top: 26px; padding: 24px; background: var(--sh-surface); border
 .preview-card code { font-size: 11px; }
 .widget-surface { position: relative; display: inline-block; overflow: visible; }
 .thermostat-card { min-height: 110px; display: grid; place-items: center; background: var(--sh-surface-2); border: 1px solid var(--sh-divider); border-radius: var(--sh-radius-control); }
+.sunlight-preview-card { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
+.sunlight-preview-card .widget-surface { width: 100%; }
+.sunlight-preview-controls { width: min(700px, 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.sunlight-preview-controls label { display: grid; gap: 6px; color: var(--sh-text-secondary); font-size: 12px; }
+.sunlight-preview-controls output { color: var(--sh-text); font-size: 14px; font-weight: 600; }
+.sunlight-preview-controls input { width: 100%; accent-color: var(--sh-primary); }
 .carousel-preview { min-height: 370px; overflow: auto; }
 .horizontal-scroll-preview { min-height: 250px; overflow: hidden; }
 .weather-examples { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px; padding: 24px; border-radius: 22px; }

@@ -1,14 +1,16 @@
+/// <reference types="vite/client" />
+
+declare module '*?raw' {
+    const content: string;
+    export default content;
+}
+
 declare global {
     interface Window {
         CryptoJS: any;
         _localStorage?: Storage;
         _sessionStorage?: Storage;
     }
-
-    declare module '*.svg';
-    declare module '*.png';
-    declare module '*.jpg';
-    declare module '*.css';
 
     declare module '@mui/material/Button' {
         interface ButtonPropsColorOverrides {

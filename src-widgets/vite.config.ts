@@ -45,6 +45,7 @@ const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
                           './Navigate': './src/Navigate',
                           './EnergyGame': './src/EnergyGame',
                           './Weather': './src/Weather',
+                          './SunlightFloorplan': './src/SunlightFloorplan',
                           './Trash': './src/Trash',
                           './translations': './src/translations.js',
                       },

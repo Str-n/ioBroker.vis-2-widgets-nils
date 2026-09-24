@@ -29,6 +29,12 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
             low_short: 'L',
             precipitation: 'Precipitation',
             wind_speed: 'Wind speed',
+            daylight_factor: 'Sunlight factor',
+            sun_data_missing: 'Choose sun azimuth and elevation states',
+            sun_below_horizon: 'The sun is below the horizon',
+            configure_sunlight_windows: 'Configure windows and room polygons',
+            weather_unavailable: 'Weather unavailable',
+            sun_position: 'Sun position',
         };
         return translations[key] || key.replaceAll('_', ' ');
     }
@@ -102,8 +108,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/Trash'), import('../src/ThemeSelector'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: SunlightFloorplan }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
 const objects: Record<string, Record<string, any>> = {
@@ -119,6 +125,13 @@ function App(): React.JSX.Element {
     const theme = useTheme();
     const themeId = useSelectedTheme();
     const weatherBindings = createOpenWeatherMapBindings('openweathermap.0');
+    const sunlightData = {
+        'preview.sun.azimuth.val': 73,
+        'preview.sun.elevation.val': 25,
+        'preview.weather.cloudiness.val': 25,
+        'preview.weather.condition.val': 'Partly cloudy',
+        'preview.weather.temperature.val': 18.4,
+    };
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
         [`${weatherBindings.oidCurrentTemperatureMin}.val`]: 12,
@@ -140,7 +153,7 @@ function App(): React.JSX.Element {
             ];
         })),
     };
-    const initialValues = { 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
+    const initialValues = { 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...sunlightData, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -306,6 +319,32 @@ function App(): React.JSX.Element {
                 oid: 'preview.blinds.position', oid_stop: '', showValue: true, min: '0', max: '100', invert: false,
                 externalDialog: false, timeout: 0, slideSensor_oid1: '', slideRatio1: 1, slidePos_oid1: '', slideHandle_oid1: '', slideType1: '',
             } }} /></article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Sunlight floor plan</h2><p>Live sun direction and elevation, weather attenuation, a blind state, and a room-clipped beam.</p></div><button className="reset" onClick={() => setValues(old => ({ ...old, ...sunlightData }))}>Reset sunlight</button></div>
+            <article className="thermostat-card sunlight-preview-card">
+                <SunlightFloorplan {...commonProps as any} id="sunlight-floorplan-preview" customSettings={{
+                    values,
+                    style: { width: 700, maxWidth: '100%', height: 620 },
+                    rxData: {
+                        floorplan: 'eg', floorTopAzimuth: 163, widgetTitle: 'Ground floor',
+                        sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
+                        weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
+                        weatherTemperatureOid: 'preview.weather.temperature', cloudinessScale: 'percent',
+                        projectionHeight: 120, maximumProjection: 650, windowCount: 1,
+                        windowStartX1: 8, windowStartY1: 80,
+                        windowEndX1: 8, windowEndY1: 160, windowAzimuth1: 73,
+                        roomPolygon1: '10,10 180,10 180,290 10,290',
+                        blindOid1: 'preview.blinds.position', blindMin1: 0, blindMax1: 100, blindInvert1: false,
+                    },
+                }} />
+                <div className="sunlight-preview-controls">
+                    <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => context.setValue('preview.sun.azimuth', Number(event.target.value))} /></label>
+                    <label>Sun elevation <output>{values['preview.sun.elevation.val']}°</output><input type="range" min="-5" max="80" value={values['preview.sun.elevation.val']} onChange={event => context.setValue('preview.sun.elevation', Number(event.target.value))} /></label>
+                    <label>Cloudiness <output>{values['preview.weather.cloudiness.val']}%</output><input type="range" min="0" max="100" value={values['preview.weather.cloudiness.val']} onChange={event => context.setValue('preview.weather.cloudiness', Number(event.target.value))} /></label>
+                    <label>Blind open <output>{values['preview.blinds.position.val']}%</output><input type="range" min="0" max="100" value={values['preview.blinds.position.val']} onChange={event => context.setValue('preview.blinds.position', Number(event.target.value))} /></label>
+                </div>
+            </article>
         </section>
         <section>
             <div className="section-heading"><div><h2>Energy game</h2><p>Exercise the score states, event animations, record celebration, and reduced-motion mode.</p></div></div>
