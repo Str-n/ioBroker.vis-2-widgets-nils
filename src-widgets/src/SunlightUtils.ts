@@ -20,6 +20,10 @@ export interface SunlightBeam {
     clipPoints: Array<[number, number]>;
     strength: number;
     softness: number;
+    wallReflection?: {
+        point: [number, number];
+        fraction: number;
+    };
 }
 
 export interface SunlightFactors {
@@ -220,6 +224,127 @@ export function splitWindowIntoSashes(window: SunlightWindow, sashCount: number,
     });
 }
 
+function crossProduct(aX: number, aY: number, bX: number, bY: number): number {
+    return aX * bY - aY * bX;
+}
+
+function isPointInPolygon(point: [number, number], polygon: Array<[number, number]>): boolean {
+    const [x, y] = point;
+    let inside = false;
+    for (let index = 0, previousIndex = polygon.length - 1; index < polygon.length; previousIndex = index++) {
+        const [startX, startY] = polygon[previousIndex];
+        const [endX, endY] = polygon[index];
+        const edgeX = endX - startX;
+        const edgeY = endY - startY;
+        const pointX = x - startX;
+        const pointY = y - startY;
+        const cross = crossProduct(edgeX, edgeY, pointX, pointY);
+        if (
+            Math.abs(cross) < 0.001 &&
+            x >= Math.min(startX, endX) - 0.001 &&
+            x <= Math.max(startX, endX) + 0.001 &&
+            y >= Math.min(startY, endY) - 0.001 &&
+            y <= Math.max(startY, endY) + 0.001
+        ) {
+            return true;
+        }
+
+        if ((startY > y) !== (endY > y) && x < ((endX - startX) * (y - startY)) / (endY - startY) + startX) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+function firstRoomBoundaryHit(
+    start: [number, number],
+    end: [number, number],
+    polygon: Array<[number, number]>,
+): { point: [number, number]; distanceFraction: number } | undefined {
+    const directionX = end[0] - start[0];
+    const directionY = end[1] - start[1];
+    let closestFraction = Infinity;
+
+    for (let index = 0; index < polygon.length; index++) {
+        const edgeStart = polygon[index];
+        const edgeEnd = polygon[(index + 1) % polygon.length];
+        const edgeX = edgeEnd[0] - edgeStart[0];
+        const edgeY = edgeEnd[1] - edgeStart[1];
+        const denominator = crossProduct(directionX, directionY, edgeX, edgeY);
+        if (Math.abs(denominator) < 0.000001) {
+            continue;
+        }
+
+        const offsetX = edgeStart[0] - start[0];
+        const offsetY = edgeStart[1] - start[1];
+        const rayFraction = crossProduct(offsetX, offsetY, edgeX, edgeY) / denominator;
+        const edgeFraction = crossProduct(offsetX, offsetY, directionX, directionY) / denominator;
+        if (
+            rayFraction > 0.0001 &&
+            rayFraction <= 1 &&
+            edgeFraction >= -0.0001 &&
+            edgeFraction <= 1.0001 &&
+            rayFraction < closestFraction
+        ) {
+            closestFraction = rayFraction;
+        }
+    }
+
+    if (!Number.isFinite(closestFraction)) {
+        return undefined;
+    }
+    return {
+        point: [start[0] + directionX * closestFraction, start[1] + directionY * closestFraction],
+        distanceFraction: closestFraction,
+    };
+}
+
+function estimateWallReflection(
+    points: Array<[number, number]>,
+    roomPolygon: Array<[number, number]>,
+): SunlightBeam['wallReflection'] {
+    const raySamples = 9;
+    let validRays = 0;
+    let reflectedFractionTotal = 0;
+    let weightedHitX = 0;
+    let weightedHitY = 0;
+
+    for (let index = 0; index < raySamples; index++) {
+        const across = (index + 0.5) / raySamples;
+        const start: [number, number] = [
+            points[0][0] + (points[1][0] - points[0][0]) * across,
+            points[0][1] + (points[1][1] - points[0][1]) * across,
+        ];
+        const end: [number, number] = [
+            points[3][0] + (points[2][0] - points[3][0]) * across,
+            points[3][1] + (points[2][1] - points[3][1]) * across,
+        ];
+        if (!isPointInPolygon(start, roomPolygon)) {
+            continue;
+        }
+        validRays++;
+
+        const hit = firstRoomBoundaryHit(start, end, roomPolygon);
+        if (!hit) {
+            continue;
+        }
+
+        const reflectedFraction = 1 - hit.distanceFraction;
+        reflectedFractionTotal += reflectedFraction;
+        weightedHitX += hit.point[0] * reflectedFraction;
+        weightedHitY += hit.point[1] * reflectedFraction;
+    }
+
+    const fraction = validRays ? reflectedFractionTotal / validRays : 0;
+    if (fraction < 0.015 || reflectedFractionTotal <= 0) {
+        return undefined;
+    }
+    return {
+        point: [weightedHitX / reflectedFractionTotal, weightedHitY / reflectedFractionTotal],
+        fraction: clamp(fraction, 0, 1),
+    };
+}
+
 export function calculateSunlightBeam(
     window: SunlightWindow,
     sunAzimuth: number,
@@ -282,16 +407,19 @@ export function calculateSunlightBeam(
     const farDx = rayX * farDistance;
     const farDy = rayY * farDistance;
 
+    const points: Array<[number, number]> = [
+        [window.startX + nearDx, window.startY + nearDy],
+        [window.endX + nearDx, window.endY + nearDy],
+        [window.endX + farDx, window.endY + farDy],
+        [window.startX + farDx, window.startY + farDy],
+    ];
+
     return {
-        points: [
-            [window.startX + nearDx, window.startY + nearDy],
-            [window.endX + nearDx, window.endY + nearDy],
-            [window.endX + farDx, window.endY + farDy],
-            [window.startX + farDx, window.startY + farDy],
-        ],
+        points,
         clipPoints: window.roomPolygon,
         strength,
-        softness: 0.35 + (1 - clamp(skyClarity, 0, 1)) * 5,
+        softness: 13 + (1 - clamp(skyClarity, 0, 1)) * 9,
+        wallReflection: estimateWallReflection(points, window.roomPolygon),
     };
 }
 

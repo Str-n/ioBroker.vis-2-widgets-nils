@@ -78,8 +78,23 @@ interface RenderedAmbient {
     opacity: number;
 }
 
-function renderFloorplan(svg: string, beams: RenderedBeam[], ambient: RenderedAmbient[], id: string, color: string): string {
-    if (!beams.length && !ambient.length) {
+interface RenderedReflection {
+    clipPoints: Array<[number, number]>;
+    point: [number, number];
+    radius: number;
+    opacity: number;
+    color: string;
+}
+
+function renderFloorplan(
+    svg: string,
+    beams: RenderedBeam[],
+    ambient: RenderedAmbient[],
+    reflections: RenderedReflection[],
+    id: string,
+    color: string,
+): string {
+    if (!beams.length && !ambient.length && !reflections.length) {
         return svg;
     }
 
@@ -90,13 +105,26 @@ function renderFloorplan(svg: string, beams: RenderedBeam[], ambient: RenderedAm
                 `<clipPath id="${safeId}-sun-room-ambient-${index}" clipPathUnits="userSpaceOnUse"><polygon points="${pointsAttribute(room.clipPoints)}" /></clipPath><radialGradient id="${safeId}-sun-diffuse-${index}" cx="45%" cy="42%" r="85%"><stop offset="0" stop-color="#e5f4ff" stop-opacity="0.9" /><stop offset="1" stop-color="#93caff" stop-opacity="0.34" /></radialGradient>`,
         )
         .join('');
+    const reflectionDefinitions = reflections
+        .map(
+            (reflection, index) =>
+                `<clipPath id="${safeId}-sun-reflection-room-${index}" clipPathUnits="userSpaceOnUse"><polygon points="${pointsAttribute(reflection.clipPoints)}" /></clipPath><radialGradient id="${safeId}-sun-reflection-${index}" gradientUnits="userSpaceOnUse" cx="${reflection.point[0].toFixed(2)}" cy="${reflection.point[1].toFixed(2)}" r="${reflection.radius.toFixed(2)}"><stop offset="0" stop-color="${reflection.color}" stop-opacity="0.76" /><stop offset="0.38" stop-color="${reflection.color}" stop-opacity="0.34" /><stop offset="1" stop-color="${reflection.color}" stop-opacity="0" /></radialGradient>`,
+        )
+        .join('');
     const beamDefinitions = beams
         .map((beam, index) => {
             const nearX = (beam.points[0][0] + beam.points[1][0]) / 2;
             const nearY = (beam.points[0][1] + beam.points[1][1]) / 2;
             const farX = (beam.points[2][0] + beam.points[3][0]) / 2;
             const farY = (beam.points[2][1] + beam.points[3][1]) / 2;
-            return `<clipPath id="${safeId}-sun-room-${index}" clipPathUnits="userSpaceOnUse"><polygon points="${pointsAttribute(beam.clipPoints)}" /></clipPath><linearGradient id="${safeId}-sun-direct-${index}" gradientUnits="userSpaceOnUse" x1="${nearX.toFixed(2)}" y1="${nearY.toFixed(2)}" x2="${farX.toFixed(2)}" y2="${farY.toFixed(2)}"><stop offset="0" stop-color="${color}" stop-opacity="0.96" /><stop offset="1" stop-color="${color}" stop-opacity="0.42" /></linearGradient><filter id="${safeId}-sun-soft-${index}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${beam.softness.toFixed(2)}" /></filter>`;
+            const coreSoftness = Math.max(2, beam.softness * 0.32);
+            const minX = Math.min(...beam.points.map(point => point[0]));
+            const minY = Math.min(...beam.points.map(point => point[1]));
+            const width = Math.max(...beam.points.map(point => point[0])) - minX;
+            const height = Math.max(...beam.points.map(point => point[1])) - minY;
+            const glowPadding = beam.softness * 3;
+            const corePadding = coreSoftness * 3;
+            return `<clipPath id="${safeId}-sun-room-${index}" clipPathUnits="userSpaceOnUse"><polygon points="${pointsAttribute(beam.clipPoints)}" /></clipPath><linearGradient id="${safeId}-sun-direct-${index}" gradientUnits="userSpaceOnUse" x1="${nearX.toFixed(2)}" y1="${nearY.toFixed(2)}" x2="${farX.toFixed(2)}" y2="${farY.toFixed(2)}"><stop offset="0" stop-color="${color}" stop-opacity="0.96" /><stop offset="1" stop-color="${color}" stop-opacity="0.5" /></linearGradient><filter id="${safeId}-sun-soft-${index}" filterUnits="userSpaceOnUse" x="${(minX - glowPadding).toFixed(2)}" y="${(minY - glowPadding).toFixed(2)}" width="${(width + glowPadding * 2).toFixed(2)}" height="${(height + glowPadding * 2).toFixed(2)}"><feGaussianBlur stdDeviation="${beam.softness.toFixed(2)}" /></filter><filter id="${safeId}-sun-core-${index}" filterUnits="userSpaceOnUse" x="${(minX - corePadding).toFixed(2)}" y="${(minY - corePadding).toFixed(2)}" width="${(width + corePadding * 2).toFixed(2)}" height="${(height + corePadding * 2).toFixed(2)}"><feGaussianBlur stdDeviation="${coreSoftness.toFixed(2)}" /></filter>`;
         })
         .join('');
     const ambientOverlays = ambient
@@ -105,23 +133,33 @@ function renderFloorplan(svg: string, beams: RenderedBeam[], ambient: RenderedAm
                 `<polygon class="sh-sunlight-floorplan__ambient" points="${pointsAttribute(room.clipPoints)}" clip-path="url(#${safeId}-sun-room-ambient-${index})" fill="url(#${safeId}-sun-diffuse-${index})" opacity="${room.opacity.toFixed(3)}" />`,
         )
         .join('');
+    const reflectedOverlays = reflections
+        .map(
+            (reflection, index) =>
+                `<polygon class="sh-sunlight-floorplan__reflection" points="${pointsAttribute(reflection.clipPoints)}" clip-path="url(#${safeId}-sun-reflection-room-${index})" fill="url(#${safeId}-sun-reflection-${index})" opacity="${reflection.opacity.toFixed(3)}" />`,
+        )
+        .join('');
     const beamOverlays = beams
         .map(
             (beam, index) => {
                 const points = pointsAttribute(beam.points);
+                const opacity = Math.min(0.96, Math.sqrt(beam.strength) * 1.18);
                 const animation =
                     beam.previousPoints && pointsAttribute(beam.previousPoints) !== points
                         ? `<animate attributeName="points" from="${pointsAttribute(beam.previousPoints)}" to="${points}" dur="450ms" fill="freeze" />`
                         : '';
-                return `<polygon class="sh-sunlight-floorplan__beam" points="${points}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-soft-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${Math.min(0.96, Math.sqrt(beam.strength) * 1.18).toFixed(3)}">${animation}</polygon>`;
+                return `<polygon class="sh-sunlight-floorplan__beam-glow" points="${points}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-soft-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${(opacity * 0.52).toFixed(3)}">${animation}</polygon><polygon class="sh-sunlight-floorplan__beam" points="${points}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-core-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${opacity.toFixed(3)}">${animation}</polygon>`;
             },
         )
         .join('');
 
-    const withDefinitions = svg.replace(/(<svg\b[^>]*>)/, `$1<defs>${ambientDefinitions}${beamDefinitions}</defs>`);
+    const withDefinitions = svg.replace(
+        /(<svg\b[^>]*>)/,
+        `$1<defs>${ambientDefinitions}${reflectionDefinitions}${beamDefinitions}</defs>`,
+    );
     return withDefinitions.replace(
         '<g class="sh-floorplan-walls">',
-        `${ambientOverlays}${beamOverlays}<g class="sh-floorplan-walls">`,
+        `${ambientOverlays}${reflectedOverlays}${beamOverlays}<g class="sh-floorplan-walls">`,
     );
 }
 
@@ -140,6 +178,7 @@ function SunlightFloorplanContent(props: {
     svg: string;
     beams: RenderedBeam[];
     ambient: RenderedAmbient[];
+    reflections: RenderedReflection[];
     id: string;
     title: string;
     floorName: string;
@@ -206,6 +245,7 @@ function SunlightFloorplanContent(props: {
                             props.svg,
                             props.beams,
                             props.ambient,
+                            props.reflections,
                             props.id,
                             sunlightColor(props.sunElevation ?? 40),
                         ),
@@ -482,6 +522,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         const floorTopAzimuth = Number(data.floorTopAzimuth ?? 163);
         const beams: RenderedBeam[] = [];
         const ambientByRoom = new Map<string, RenderedAmbient>();
+        const reflections: RenderedReflection[] = [];
         let configuredWindowCount = 0;
         const solarAmbientFactor =
             sunElevation === undefined ? 1 : Math.max(0, Math.min(1, (sunElevation + 0.5) / 2.5));
@@ -523,7 +564,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
             const roomKey = roomPolygon.map(point => `${point[0]},${point[1]}`).join(' ');
             const roomDiffuse = Math.min(
                 0.38,
-                (factors.diffuse * 1.1 + factors.direct * 0.05) * (0.1 + 0.9 * openFraction) * solarAmbientFactor,
+                (factors.diffuse * 0.8 + factors.direct * 0.04) * (0.1 + 0.9 * openFraction) * solarAmbientFactor,
             );
             if (roomDiffuse > 0.005) {
                 const previous = ambientByRoom.get(roomKey);
@@ -535,6 +576,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
 
             if (sunAzimuth !== undefined && sunElevation !== undefined) {
                 const sashCount = Math.max(1, Math.min(3, Number(data[`windowSashCount${index}`]) || 1));
+                const wholeWindowLength = Math.hypot(window.endX - window.startX, window.endY - window.startY);
                 splitWindowIntoSashes(window, sashCount, Math.max(1, svgUnitsPerMeter * 0.025)).forEach((sash, sashIndex) => {
                     const sashKey = `${index}:${sashIndex}`;
                     const beam = calculateSunlightBeam(
@@ -551,6 +593,31 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                         beams.push({ ...beam, previousPoints: this.previousBeamPoints.get(sashKey) });
                         this.previousBeamPoints.set(sashKey, beam.points);
                         activeSashKeys.add(sashKey);
+
+                        if (beam.wallReflection && wholeWindowLength > 0) {
+                            const sashFraction = Math.hypot(sash.endX - sash.startX, sash.endY - sash.startY) / wholeWindowLength;
+                            const reflectedEnergy =
+                                beam.strength * beam.wallReflection.fraction * openFraction * sashFraction;
+                            if (reflectedEnergy > 0.005) {
+                                reflections.push({
+                                    clipPoints: roomPolygon,
+                                    point: beam.wallReflection.point,
+                                    radius: svgUnitsPerMeter * (1.65 + beam.wallReflection.fraction * 0.6),
+                                    opacity: Math.min(0.62, reflectedEnergy * 3),
+                                    color: sunlightColor(sunElevation),
+                                });
+
+                                const reflectedAmbient = Math.min(0.16, reflectedEnergy * 0.48);
+                                const previousAmbient = ambientByRoom.get(roomKey);
+                                ambientByRoom.set(roomKey, {
+                                    clipPoints: roomPolygon,
+                                    opacity:
+                                        1 -
+                                        (1 - (previousAmbient?.opacity || 0)) *
+                                            (1 - reflectedAmbient),
+                                });
+                            }
+                        }
                     }
                 });
             }
@@ -568,6 +635,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 svg={floor.svg}
                 beams={beams}
                 ambient={ambient}
+                reflections={reflections}
                 id={props.id}
                 title={String(data.widgetTitle || this.translated('sunlight_floorplan'))}
                 floorName={floor.label}

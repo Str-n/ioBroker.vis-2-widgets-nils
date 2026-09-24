@@ -134,10 +134,20 @@
     max-height: 100%;
 }
 
-.sh-sunlight-floorplan__beam {
+.sh-sunlight-floorplan__beam,
+.sh-sunlight-floorplan__beam-glow,
+.sh-sunlight-floorplan__reflection {
     pointer-events: none;
     mix-blend-mode: screen;
+}
+
+.sh-sunlight-floorplan__beam,
+.sh-sunlight-floorplan__beam-glow {
     transition: fill 450ms ease, opacity 450ms ease;
+}
+
+.sh-sunlight-floorplan__reflection {
+    transition: opacity 650ms ease;
 }
 
 .sh-sunlight-floorplan__ambient {
@@ -167,6 +177,8 @@
 
 @media (prefers-reduced-motion: reduce) {
     .sh-sunlight-floorplan__beam,
+    .sh-sunlight-floorplan__beam-glow,
+    .sh-sunlight-floorplan__reflection,
     .sh-sunlight-floorplan__ambient {
         transition: none;
     }
