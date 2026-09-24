@@ -107,6 +107,37 @@ It uses the `openweathermap` adapter by default and automatically binds its `for
 the API temperature, select its state under **Current temperature override**; all other values continue to come from
 OpenWeatherMap. Individual API state IDs can be changed under **Advanced weather bindings**.
 
+### Sunlight floor plan
+
+The Sunlight floor plan widget adds directional sun patches and a separate diffuse daylight wash to the bundled EG, OG,
+DG, or basement SVG. It uses the current sun azimuth and elevation from `followthesun.0.current`; select the matching
+azimuth and elevation child states in the widget editor. The floor plan orientation defaults to top 163°, right 253°,
+bottom 343°, and left 73°.
+
+Measured solar radiation is the default and primary brightness input. Its default state is
+`0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2`, configurable in the widget settings. Set the clear-sky reference
+to the expected peak value for the sensor, normally 1000 W/m². When the sensor has no current value, cloudiness and
+weather condition below `openweathermap.0.forecast.current` provide the fallback. You can instead select cloudiness as
+the primary input. Optional weather child IDs can also provide the condition and outdoor temperature shown in the
+widget header.
+
+The model separates measured daylight into directional and diffuse components. Direct light is restricted by the
+current sun direction and each window's outward azimuth. It forms a room-clipped patch that becomes softer as cloud
+cover increases and warmer as the sun gets lower. Diffuse light brightens the whole configured room polygon without a
+directional patch. At night the solar overlay fades away.
+
+Add a row for each exterior window. Window endpoints and the room polygon use the selected SVG's `viewBox` coordinates.
+The room polygon is a space-separated list of `x,y` pairs and clips both light layers to that room. Set the window's
+outward azimuth using 0° = north and clockwise bearings. Blind positions are treated as exposed percentages: 100 means
+fully open, 50 leaves the bottom half of the glass exposed, 10 leaves only the bottom tenth exposed, and 0 blocks direct
+sunlight. The exposed lower window band determines the near and far rays and therefore the floor patch length. Diffuse
+daylight also weakens with smaller exposed areas.
+
+Default physical geometry is 2.5 m room height, 1.35 m window height, and 0.9 m sill height. These can be set per
+window or room. SVG scale defaults to 50 units per meter, with a 650-unit projection cap. Adjust the scale to match the
+bundled floorplan drawings. The bundled coordinate spaces are EG 756 × 699, OG 581 × 704, DG 577 × 700, and basement
+756 × 699. The widget shows one live floor at a time.
+
 ### Actual value with chart
 
 ![Actual value](img/material-actual-value-1.png)

@@ -35,6 +35,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
             configure_sunlight_windows: 'Configure windows and room polygons',
             weather_unavailable: 'Weather unavailable',
             sun_position: 'Sun position',
+            direct_light: 'Direct',
+            diffuse_light: 'Diffuse',
         };
         return translations[key] || key.replaceAll('_', ' ');
     }
@@ -126,11 +128,13 @@ function App(): React.JSX.Element {
     const themeId = useSelectedTheme();
     const weatherBindings = createOpenWeatherMapBindings('openweathermap.0');
     const sunlightData = {
-        'preview.sun.azimuth.val': 73,
+        'preview.sun.azimuth.val': 108,
         'preview.sun.elevation.val': 25,
         'preview.weather.cloudiness.val': 25,
+        'preview.weather.radiation.val': 720,
         'preview.weather.condition.val': 'Partly cloudy',
         'preview.weather.temperature.val': 18.4,
+        'preview.sunlight.blindPosition.val': 50,
     };
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
@@ -321,7 +325,7 @@ function App(): React.JSX.Element {
             } }} /></article>
         </section>
         <section>
-            <div className="section-heading"><div><h2>Sunlight floor plan</h2><p>Live sun direction and elevation, weather attenuation, a blind state, and a room-clipped beam.</p></div><button className="reset" onClick={() => setValues(old => ({ ...old, ...sunlightData }))}>Reset sunlight</button></div>
+            <div className="section-heading"><div><h2>Sunlight floor plan</h2><p>Measured solar radiation drives diffuse room light and sun patches. Blinds change the exposed window band and shadow length.</p></div><button className="reset" onClick={() => setValues(old => ({ ...old, ...sunlightData }))}>Reset sunlight</button></div>
             <article className="thermostat-card sunlight-preview-card">
                 <SunlightFloorplan {...commonProps as any} id="sunlight-floorplan-preview" customSettings={{
                     values,
@@ -330,19 +334,27 @@ function App(): React.JSX.Element {
                         floorplan: 'eg', floorTopAzimuth: 163, widgetTitle: 'Ground floor',
                         sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
                         weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
-                        weatherTemperatureOid: 'preview.weather.temperature', cloudinessScale: 'percent',
-                        projectionHeight: 120, maximumProjection: 650, windowCount: 1,
+                        weatherTemperatureOid: 'preview.weather.temperature', weatherRadiationOid: 'preview.weather.radiation',
+                        sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent',
+                        svgUnitsPerMeter: 50, roomHeightMeters: 2.5, maximumProjection: 650, windowCount: 2,
                         windowStartX1: 8, windowStartY1: 80,
                         windowEndX1: 8, windowEndY1: 160, windowAzimuth1: 73,
-                        roomPolygon1: '10,10 180,10 180,290 10,290',
-                        blindOid1: 'preview.blinds.position', blindMin1: 0, blindMax1: 100, blindInvert1: false,
+                        windowHeightMeters1: 1.35, windowSillHeightMeters1: 0.9,
+                        windowStartX2: 20, windowStartY2: 8,
+                        windowEndX2: 160, windowEndY2: 8, windowAzimuth2: 163,
+                        windowHeightMeters2: 1.35, windowSillHeightMeters2: 0.9,
+                        roomPolygon1: '10,10 781,10 781,290 10,290',
+                        roomPolygon2: '10,10 781,10 781,290 10,290',
+                        blindOid1: 'preview.sunlight.blindPosition', blindMin1: 0, blindMax1: 100, blindInvert1: false,
+                        blindOid2: 'preview.sunlight.blindPosition', blindMin2: 0, blindMax2: 100, blindInvert2: false,
                     },
                 }} />
                 <div className="sunlight-preview-controls">
                     <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => context.setValue('preview.sun.azimuth', Number(event.target.value))} /></label>
                     <label>Sun elevation <output>{values['preview.sun.elevation.val']}°</output><input type="range" min="-5" max="80" value={values['preview.sun.elevation.val']} onChange={event => context.setValue('preview.sun.elevation', Number(event.target.value))} /></label>
                     <label>Cloudiness <output>{values['preview.weather.cloudiness.val']}%</output><input type="range" min="0" max="100" value={values['preview.weather.cloudiness.val']} onChange={event => context.setValue('preview.weather.cloudiness', Number(event.target.value))} /></label>
-                    <label>Blind open <output>{values['preview.blinds.position.val']}%</output><input type="range" min="0" max="100" value={values['preview.blinds.position.val']} onChange={event => context.setValue('preview.blinds.position', Number(event.target.value))} /></label>
+                    <label>Solar radiation <output>{values['preview.weather.radiation.val']} W/m²</output><input type="range" min="0" max="1000" step="10" value={values['preview.weather.radiation.val']} onChange={event => context.setValue('preview.weather.radiation', Number(event.target.value))} /></label>
+                    <label>Blind open <output>{values['preview.sunlight.blindPosition.val']}%</output><input type="range" min="0" max="100" value={values['preview.sunlight.blindPosition.val']} onChange={event => context.setValue('preview.sunlight.blindPosition', Number(event.target.value))} /></label>
                 </div>
             </article>
         </section>

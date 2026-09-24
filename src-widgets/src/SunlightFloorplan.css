@@ -136,7 +136,14 @@
 
 .sh-sunlight-floorplan__beam {
     pointer-events: none;
-    transition: fill 300ms ease;
+    mix-blend-mode: screen;
+    transition: fill 450ms ease, opacity 450ms ease;
+}
+
+.sh-sunlight-floorplan__ambient {
+    pointer-events: none;
+    mix-blend-mode: screen;
+    transition: opacity 600ms ease;
 }
 
 @media (max-width: 520px) {
@@ -155,5 +162,12 @@
         grid-column: 2 / -1;
         align-items: flex-start;
         text-align: left;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sh-sunlight-floorplan__beam,
+    .sh-sunlight-floorplan__ambient {
+        transition: none;
     }
 }

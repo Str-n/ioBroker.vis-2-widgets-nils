@@ -5,3 +5,4 @@ Batteriezustand erweitern
 Datenpunkt-widget
 Wetterwidget erweitern
 Sonnenstand - App
+Stopptaste für die Rolloblinds
