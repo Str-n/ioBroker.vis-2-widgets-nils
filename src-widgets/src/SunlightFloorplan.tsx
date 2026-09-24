@@ -9,6 +9,7 @@ import {
     normalizeBlindOpenFactorForWindow,
     parseRoomPolygon,
     pointsAttribute,
+    splitWindowIntoSashes,
     sunlightColor,
 } from './SunlightUtils';
 import egSvg from '../public/floorplans/eg.svg?raw';
@@ -37,6 +38,7 @@ interface SunlightRxData extends Record<string, any> {
     maximumProjection: number | string;
     roomHeightMeters: number | string;
     windowCount: number | string;
+    roomPolygonCount: number | string;
     [key: `windowStartX${number}`]: number | string;
     [key: `windowStartY${number}`]: number | string;
     [key: `windowEndX${number}`]: number | string;
@@ -47,6 +49,9 @@ interface SunlightRxData extends Record<string, any> {
     [key: `blindMax${number}`]: number | string;
     [key: `blindInvert${number}`]: boolean | 'true';
     [key: `roomPolygon${number}`]: string;
+    [key: `roomBoundary${number}`]: string;
+    [key: `roomIndex${number}`]: number | string;
+    [key: `windowSashCount${number}`]: number | string;
     [key: `windowHeightMeters${number}`]: number | string;
     [key: `windowSillHeightMeters${number}`]: number | string;
 }
@@ -214,7 +219,7 @@ function SunlightFloorplanContent(props: {
 export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightState> {
     static smartHomeTheme = true;
 
-    private previousBeamPoints = new Map<number, Array<[number, number]>>();
+    private previousBeamPoints = new Map<string, Array<[number, number]>>();
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
@@ -267,6 +272,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                             default: 2.5,
                         },
                         { name: 'windowCount', label: 'windows_count', type: 'slider', min: 0, max: 16, step: 1, default: 0 },
+                        { name: 'roomPolygonCount', label: 'room_polygon_count', type: 'slider', min: 1, max: 16, step: 1, default: 1 },
                     ],
                 },
                 {
@@ -351,6 +357,20 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                     ],
                 },
                 {
+                    name: 'room_polygons',
+                    label: 'room_polygons',
+                    indexFrom: 1,
+                    indexTo: 'roomPolygonCount',
+                    fields: [
+                        {
+                            name: 'roomBoundary',
+                            label: 'room_polygon',
+                            type: 'text',
+                            tooltip: 'window_room_polygon_help',
+                        },
+                    ],
+                },
+                {
                     name: 'windows',
                     label: 'sunlight_windows',
                     indexFrom: 1,
@@ -364,10 +384,19 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                         { name: 'windowHeightMeters', label: 'window_height_meters', type: 'number', min: 0.1, step: 0.05, default: 1.35 },
                         { name: 'windowSillHeightMeters', label: 'window_sill_height_meters', type: 'number', min: 0, step: 0.05, default: 0.9 },
                         {
-                            name: 'roomPolygon',
-                            label: 'window_room_polygon',
-                            type: 'text',
-                            tooltip: 'window_room_polygon_help',
+                            name: 'roomIndex',
+                            label: 'window_room_polygon_index',
+                            type: 'select',
+                            options: Array.from({ length: 16 }, (_, index) => ({ value: String(index + 1), label: `Room ${index + 1}` })),
+                            default: '1',
+                        },
+                        {
+                            name: 'windowSashCount',
+                            label: 'window_sash_count',
+                            type: 'select',
+                            options: [1, 2, 3].map(value => ({ value: String(value), label: String(value) })),
+                            default: '1',
+                            tooltip: 'window_sash_count_help',
                         },
                         {
                             name: 'blindOid',
@@ -457,14 +486,17 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         const solarAmbientFactor =
             sunElevation === undefined ? 1 : Math.max(0, Math.min(1, (sunElevation + 0.5) / 2.5));
 
-        const activeWindowIndices = new Set<number>();
+        const activeSashKeys = new Set<string>();
         for (let index = 1; index <= windowCount; index++) {
             const startX = Number(data[`windowStartX${index}`]);
             const startY = Number(data[`windowStartY${index}`]);
             const endX = Number(data[`windowEndX${index}`]);
             const endY = Number(data[`windowEndY${index}`]);
             const windowAzimuth = Number(data[`windowAzimuth${index}`]);
-            const roomPolygon = parseRoomPolygon(data[`roomPolygon${index}`]);
+            const roomIndex = Math.max(1, Math.min(16, Number(data[`roomIndex${index}`]) || 1));
+            const configuredRoomPolygon = data[`roomBoundary${roomIndex}`];
+            // Keep supporting widgets saved before room polygons became shared room settings.
+            const roomPolygon = parseRoomPolygon(configuredRoomPolygon || data[`roomPolygon${index}`]);
             const blindOid = data[`blindOid${index}`];
             if (![startX, startY, endX, endY, windowAzimuth].every(Number.isFinite) || roomPolygon.length < 3) {
                 continue;
@@ -502,26 +534,30 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
             }
 
             if (sunAzimuth !== undefined && sunElevation !== undefined) {
-                const beam = calculateSunlightBeam(
-                    window,
-                    sunAzimuth,
-                    sunElevation,
-                    floorTopAzimuth,
-                    factors.direct,
-                    factors.skyClarity,
-                    svgUnitsPerMeter,
-                    maximumProjection,
-                );
-                if (beam) {
-                    beams.push({ ...beam, previousPoints: this.previousBeamPoints.get(index) });
-                    this.previousBeamPoints.set(index, beam.points);
-                    activeWindowIndices.add(index);
-                }
+                const sashCount = Math.max(1, Math.min(3, Number(data[`windowSashCount${index}`]) || 1));
+                splitWindowIntoSashes(window, sashCount, Math.max(1, svgUnitsPerMeter * 0.025)).forEach((sash, sashIndex) => {
+                    const sashKey = `${index}:${sashIndex}`;
+                    const beam = calculateSunlightBeam(
+                        sash,
+                        sunAzimuth,
+                        sunElevation,
+                        floorTopAzimuth,
+                        factors.direct,
+                        factors.skyClarity,
+                        svgUnitsPerMeter,
+                        maximumProjection,
+                    );
+                    if (beam) {
+                        beams.push({ ...beam, previousPoints: this.previousBeamPoints.get(sashKey) });
+                        this.previousBeamPoints.set(sashKey, beam.points);
+                        activeSashKeys.add(sashKey);
+                    }
+                });
             }
         }
-        for (const index of this.previousBeamPoints.keys()) {
-            if (!activeWindowIndices.has(index)) {
-                this.previousBeamPoints.delete(index);
+        for (const sashKey of this.previousBeamPoints.keys()) {
+            if (!activeSashKeys.has(sashKey)) {
+                this.previousBeamPoints.delete(sashKey);
             }
         }
 

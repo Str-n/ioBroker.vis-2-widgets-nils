@@ -572,5 +572,11 @@
   "direct_light": "Direkt",
   "diffuse_light": "Diffus",
   "blind_invert": "Rollladenwert umkehren",
-  "blinds_position_help": "Der Prozentwert gibt den offenen Fensteranteil an: 100 ist ganz offen, 50 lässt die untere Hälfte frei, 10 die unteren 10 %, und 0 ist geschlossen."
+  "blinds_position_help": "Der Prozentwert gibt den offenen Fensteranteil an: 100 ist ganz offen, 50 lässt die untere Hälfte frei, 10 die unteren 10 %, und 0 ist geschlossen.",
+  "room_polygon_count": "Anzahl der Raumgrundrisse",
+  "room_polygons": "Raumgrundrisse",
+  "room_polygon": "Raumgrenze (SVG-Punkte)",
+  "window_room_polygon_index": "Raumgrundriss",
+  "window_sash_count": "Fensterflügel",
+  "window_sash_count_help": "Teilt die Fensteröffnung in 1–3 gleich große Abschnitte mit schmalen Rahmenabständen. Jeder Abschnitt erzeugt einen eigenen Sonnenstrahl."
 }

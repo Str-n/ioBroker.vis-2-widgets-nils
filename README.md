@@ -126,12 +126,15 @@ current sun direction and each window's outward azimuth. It forms a room-clipped
 cover increases and warmer as the sun gets lower. Diffuse light brightens the whole configured room polygon without a
 directional patch. At night the solar overlay fades away.
 
-Add a row for each exterior window. Window endpoints and the room polygon use the selected SVG's `viewBox` coordinates.
-The room polygon is a space-separated list of `x,y` pairs and clips both light layers to that room. Set the window's
-outward azimuth using 0° = north and clockwise bearings. Blind positions are treated as exposed percentages: 100 means
-fully open, 50 leaves the bottom half of the glass exposed, 10 leaves only the bottom tenth exposed, and 0 blocks direct
-sunlight. The exposed lower window band determines the near and far rays and therefore the floor patch length. Diffuse
-daylight also weakens with smaller exposed areas.
+Add each room boundary once under **Room polygons**, then select the matching polygon for every exterior window in that
+room. Window endpoints and room polygons use the selected SVG's `viewBox` coordinates. A room polygon is a
+space-separated list of `x,y` pairs and clips both light layers to that room. Set each window's outward azimuth using
+0° = north and clockwise bearings. Set its sash count to 1, 2, or 3; the opening is divided into equal sections with
+narrow frame gaps, and each section creates its own light patch.
+
+Blind positions are treated as exposed percentages: 100 means fully open, 50 leaves the bottom half of the glass
+exposed, 10 leaves only the bottom tenth exposed, and 0 blocks direct sunlight. The exposed lower window band determines
+the near and far rays and therefore the floor patch length. Diffuse daylight also weakens with smaller exposed areas.
 
 Default physical geometry is 2.5 m room height, 1.35 m window height, and 0.9 m sill height. These can be set per
 window or room. SVG scale defaults to 50 units per meter, with a 650-unit projection cap. Adjust the scale to match the

@@ -196,6 +196,30 @@ export function normalizeBlindOpenFactorForWindow(window: SunlightWindow): numbe
     return normalizeBlindOpenFactor(window.blindValue, window.blindMin, window.blindMax, window.blindInvert);
 }
 
+export function splitWindowIntoSashes(window: SunlightWindow, sashCount: number, frameGapSvg = 2): SunlightWindow[] {
+    const count = Math.round(clamp(sashCount, 1, 3));
+    const deltaX = window.endX - window.startX;
+    const deltaY = window.endY - window.startY;
+    const length = Math.hypot(deltaX, deltaY);
+    if (count === 1 || length <= 0) {
+        return [window];
+    }
+
+    const sashWidth = length / count;
+    const gap = Math.min(Math.max(0, frameGapSvg), sashWidth * 0.4);
+    return Array.from({ length: count }, (_, index) => {
+        const startDistance = (length * index) / count + (index > 0 ? gap / 2 : 0);
+        const endDistance = (length * (index + 1)) / count - (index < count - 1 ? gap / 2 : 0);
+        return {
+            ...window,
+            startX: window.startX + (deltaX * startDistance) / length,
+            startY: window.startY + (deltaY * startDistance) / length,
+            endX: window.startX + (deltaX * endDistance) / length,
+            endY: window.startY + (deltaY * endDistance) / length,
+        };
+    });
+}
+
 export function calculateSunlightBeam(
     window: SunlightWindow,
     sunAzimuth: number,
