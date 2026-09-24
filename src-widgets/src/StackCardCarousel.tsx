@@ -22,6 +22,7 @@ const SWIPE_THRESHOLD = 45;
 
 class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarouselState> {
     private readonly refContainer: React.RefObject<HTMLDivElement | null> = React.createRef();
+    private selectionStorageKey: string | null = null;
     private pointerStartX: number | null = null;
     private pointerStartY = 0;
     private swipePointerId: number | null = null;
@@ -85,6 +86,7 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
 
     componentDidMount(): void {
         super.componentDidMount();
+        this.restoreSelectedCard();
         this.refContainer.current?.addEventListener('touchstart', this.stopParentSwipe);
         this.refContainer.current?.addEventListener('mousedown', this.stopParentSwipe);
     }
@@ -97,10 +99,50 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
 
     componentDidUpdate(prevProps: VisRxWidgetProps, prevState: typeof this.state): void {
         super.componentDidUpdate(prevProps, prevState);
+        if (this.restoreSelectedCard()) {
+            return;
+        }
         const count = this.getCardCount();
         if (this.state.activeCard >= count) {
             this.setState({ activeCard: Math.max(0, count - 1) });
         }
+    }
+
+    private getSelectionStorageKey(): string | null {
+        const { context, view, id } = this.props;
+        if (this.state.editMode || !context.user) {
+            return null;
+        }
+        return `vis-2-widgets-nils-fork.carousel:${JSON.stringify([
+            context.user,
+            context.adapterName,
+            context.instance,
+            context.projectName,
+            view,
+            id,
+        ])}`;
+    }
+
+    private restoreSelectedCard(): boolean {
+        const key = this.getSelectionStorageKey();
+        if (key === this.selectionStorageKey) {
+            return false;
+        }
+        this.selectionStorageKey = key;
+        let activeCard = 0;
+        if (key) {
+            try {
+                const stored = window.localStorage.getItem(key);
+                const index = stored === null ? 0 : Number(stored);
+                if (Number.isInteger(index) && index >= 0) {
+                    activeCard = Math.min(index, this.getCardCount() - 1);
+                }
+            } catch {
+                // The carousel remains usable when browser storage is unavailable.
+            }
+        }
+        this.setState({ activeCard });
+        return true;
     }
 
     private getCardCount(): number {
@@ -110,7 +152,16 @@ class StackCardCarousel extends Generic<StackCardCarouselRxData, StackCardCarous
 
     private showCard(index: number): void {
         const count = this.getCardCount();
-        this.setState({ activeCard: (index + count) % count });
+        const activeCard = (index + count) % count;
+        this.setState({ activeCard });
+        const key = this.getSelectionStorageKey();
+        if (key) {
+            try {
+                window.localStorage.setItem(key, String(activeCard));
+            } catch {
+                // A blocked or full storage must not prevent navigation.
+            }
+        }
     }
 
     private stopParentSwipe = (event: Event): void => {

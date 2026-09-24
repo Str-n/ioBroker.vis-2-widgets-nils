@@ -1,9 +1,10 @@
 import React from 'react';
+import { useTheme } from '@mui/material/styles';
 
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
-import EnergyGameView, { ensureEnergyGameStyles, type EnergyGamePalette } from './EnergyGameView';
+import EnergyGameView, { ensureEnergyGameStyles, type EnergyGameViewProps } from './EnergyGameView';
 import {
     EVENT_DURATION_MS,
     EventSequenceTracker,
@@ -79,7 +80,30 @@ function tr(key: string, ...args: (string | number)[]): string {
     return Generic.t(key, ...args.map(String));
 }
 
+// Read the selected design inside Generic's SmartHomeThemeProvider, not the host props.
+function ThemedEnergyGameView({
+    accentColor,
+    ...props
+}: Omit<EnergyGameViewProps, 'palette'> & { accentColor?: string }): React.JSX.Element {
+    const theme = useTheme();
+    const dark = theme.palette.mode === 'dark';
+    return (
+        <EnergyGameView
+            {...props}
+            palette={{
+                mode: theme.palette.mode,
+                text: theme.palette.text.primary,
+                textSecondary: theme.palette.text.secondary,
+                accent: accentColor?.trim() ? accentColor : dark ? '#4fd6ff' : '#0369a1',
+                gold: dark ? '#ffc857' : '#b7791f',
+            }}
+        />
+    );
+}
+
 export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameState> {
+    static smartHomeTheme = true;
+
     private readonly instanceId = Symbol('EnergyGame');
     private readonly tracker = new EventSequenceTracker();
     private snapshotTimer: ReturnType<typeof setTimeout> | null = null;
@@ -461,21 +485,6 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
         }, EVENT_DURATION_MS[active.kind]);
     }
 
-    private buildPalette(): EnergyGamePalette {
-        const theme = (this.props as any).context?.theme;
-        const mode: 'light' | 'dark' =
-            theme?.palette?.mode || ((this.props as any).themeType === 'dark' ? 'dark' : 'light');
-        const dark = mode === 'dark';
-        const custom = this.state.rxData?.accent_color;
-        return {
-            mode,
-            text: theme?.palette?.text?.primary || (dark ? '#f5f7fa' : '#111827'),
-            textSecondary: theme?.palette?.text?.secondary || (dark ? 'rgba(245,247,250,.65)' : 'rgba(17,24,39,.6)'),
-            accent: typeof custom === 'string' && custom.trim() ? custom : dark ? '#4fd6ff' : '#0369a1',
-            gold: dark ? '#ffc857' : '#b7791f',
-        };
-    }
-
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element | React.JSX.Element[] | null {
         super.renderWidgetBody(props);
         const rx = this.state.rxData;
@@ -485,7 +494,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                 ref={this.rootRef}
                 style={{ width: '100%', height: '100%', position: 'relative' }}
             >
-                <EnergyGameView
+                <ThemedEnergyGameView
                     daily={parseScore(this.readValue('oid_daily'))}
                     overall={parseScore(this.readValue('oid_overall'))}
                     highScore={parseScore(this.readValue('oid_high_score'))}
@@ -505,7 +514,7 @@ export default class EnergyGame extends Generic<EnergyGameRxData, EnergyGameStat
                     showLightNames={rx.show_light_names !== false}
                     recordSparkles={rx.record_sparkles !== false}
                     compact={!!rx.compact}
-                    palette={this.buildPalette()}
+                    accentColor={rx.accent_color}
                     lang={String((this.props as any).context?.lang || Generic.getLanguage() || 'en')}
                     width={this.state.size.width}
                     height={this.state.size.height}
