@@ -133,6 +133,7 @@ function GeometryNumberField(props: {
     max?: number;
     step?: number;
     helperText?: string;
+    spanGrid?: boolean;
 }): React.JSX.Element {
     const [draft, setDraft] = React.useState(String(props.value));
     React.useEffect(() => setDraft(String(props.value)), [props.value]);
@@ -142,6 +143,7 @@ function GeometryNumberField(props: {
             type="number"
             label={props.label}
             value={draft}
+            sx={props.spanGrid ? { gridColumn: '1 / -1' } : undefined}
             slotProps={{ htmlInput: { min: props.min, max: props.max, step: props.step ?? 'any' } }}
             helperText={props.helperText}
             onChange={event => setDraft(event.target.value)}
@@ -641,6 +643,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                         roomIndex: selectedRoom + 1,
                         windowHeightMeters: 1.35,
                         windowSillHeightMeters: 0.9,
+                        directSunlightElevationCutoffDegrees: 10,
                         windowSashCount: 1,
                         blindOid: '',
                         blindMin: 0,
@@ -1302,6 +1305,19 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             value={selectedWindowGeometry.windowSillHeightMeters}
                                             min={0}
                                             onCommit={value => updateWindowField('windowSillHeightMeters', value)}
+                                        />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-directSunlightElevationCutoffDegrees`}
+                                            label={Generic.t('window_direct_sun_cutoff')}
+                                            value={selectedWindowGeometry.directSunlightElevationCutoffDegrees}
+                                            min={0}
+                                            max={90}
+                                            step={1}
+                                            spanGrid
+                                            helperText={Generic.t('window_direct_sun_cutoff_help')}
+                                            onCommit={value =>
+                                                updateWindowField('directSunlightElevationCutoffDegrees', value)
+                                            }
                                         />
                                     </Box>
                                     <FormControl

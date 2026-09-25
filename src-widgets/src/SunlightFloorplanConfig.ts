@@ -14,6 +14,7 @@ export interface FloorplanWindowGeometry {
     roomIndex: number;
     windowHeightMeters: number;
     windowSillHeightMeters: number;
+    directSunlightElevationCutoffDegrees: number;
     windowSashCount: number;
     blindOid: string;
     blindMin: number;
@@ -97,6 +98,10 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
                       roomIndex: roomIndices.get(Math.round(finiteNumber(value.roomIndex, 1))) ?? 0,
                       windowHeightMeters: Math.max(0.1, finiteNumber(value.windowHeightMeters, 1.35)),
                       windowSillHeightMeters: Math.max(0, finiteNumber(value.windowSillHeightMeters, 0.9)),
+                      directSunlightElevationCutoffDegrees: Math.max(
+                          0,
+                          Math.min(90, finiteNumber(value.directSunlightElevationCutoffDegrees, 10)),
+                      ),
                       windowSashCount: Math.max(1, Math.min(3, Math.round(finiteNumber(value.windowSashCount, 1)))),
                       blindOid: typeof value.blindOid === 'string' ? value.blindOid : '',
                       blindMin: finiteNumber(value.blindMin, 0),

@@ -56,7 +56,7 @@ const floorplans: Record<string, { label: string; svg: string }> = {
 
 interface RenderedBeam {
     points: Array<[number, number]>;
-    floorPoints: Array<[number, number]>;
+    floorPaths: Array<Array<[number, number]>>;
     clipPoints: Array<[number, number]>;
     strength: number;
     softness: number;
@@ -165,9 +165,12 @@ function renderFloorplan(
         .join('');
     const beamOverlays = beams
         .map((beam, index) => {
-            const points = pointsAttribute(beam.floorPoints);
+            const path = beam.floorPaths.map(points => `M${pointsAttribute(points).replace(/ /g, 'L')}Z`).join('');
             const opacity = Math.min(0.86, Math.sqrt(beam.strength) * 0.94);
-            return `<polygon class="sh-sunlight-floorplan__beam-glow" points="${points}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-soft-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${(opacity * 0.28).toFixed(3)}" /><polygon class="sh-sunlight-floorplan__beam" points="${points}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-core-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${opacity.toFixed(3)}" />`;
+            if (!path) {
+                return '';
+            }
+            return `<path class="sh-sunlight-floorplan__beam-glow" d="${path}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-soft-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${(opacity * 0.28).toFixed(3)}" /><path class="sh-sunlight-floorplan__beam" d="${path}" clip-path="url(#${safeId}-sun-room-${index})" filter="url(#${safeId}-sun-core-${index})" fill="url(#${safeId}-sun-direct-${index})" opacity="${opacity.toFixed(3)}" />`;
         })
         .join('');
 
@@ -194,19 +197,14 @@ function SunlightFloorplanContent(props: {
     configuredWindowCount: number;
     noCard: boolean;
     labels: {
-        sunDataMissing: string;
         configureWindows: string;
         floorplan: string;
     };
 }): React.JSX.Element {
-    const status =
-        props.sunElevation !== undefined && props.sunElevation <= 0
-            ? undefined
-            : props.sunAzimuth === undefined || props.sunElevation === undefined
-              ? props.labels.sunDataMissing
-              : props.windowCount === 0 || props.configuredWindowCount < props.windowCount
-                ? props.labels.configureWindows
-                : undefined;
+    const hasSunPosition = props.sunAzimuth !== undefined && props.sunElevation !== undefined;
+    const isNight = props.sunElevation !== undefined && props.sunElevation <= 0;
+    const hasUnconfiguredWindows = props.windowCount === 0 || props.configuredWindowCount < props.windowCount;
+    const status = !isNight && hasSunPosition && hasUnconfiguredWindows ? props.labels.configureWindows : undefined;
 
     return (
         <section className={`sh-sunlight-floorplan${props.noCard ? ' sh-sunlight-floorplan--bare' : ''}`}>
@@ -602,7 +600,11 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 sunAzimuth === undefined
                     ? 0
                     : Math.max(0, Math.cos((smallestAngularDifference(windowAzimuth, sunAzimuth) * Math.PI) / 180));
-            const diffuseEnergy = (factors.diffuse + factors.direct * facing * 0.08) * solarAmbientFactor;
+            const belowDirectSunlightCutoff =
+                sunElevation !== undefined && sunElevation < configuredWindow.directSunlightElevationCutoffDegrees;
+            const indirectSunlight =
+                factors.diffuse + factors.direct * (belowDirectSunlightCutoff ? 0.08 : facing * 0.08);
+            const diffuseEnergy = indirectSunlight * solarAmbientFactor;
             const roomDiffuse = 0.34 * (1 - Math.exp(-glazingRatio * 5 * diffuseEnergy));
             if (roomDiffuse > 0.001) {
                 const previous = ambientByRoom.get(roomKey);
@@ -611,10 +613,11 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                     opacity: 1 - (1 - (previous?.opacity || 0)) * (1 - roomDiffuse),
                 });
             }
-            const windowDaylight = glazingRatio * 9 * (factors.diffuse + factors.direct * facing) * solarAmbientFactor;
+            const directDaylight = belowDirectSunlightCutoff ? factors.direct * 0.08 : factors.direct * facing;
+            const windowDaylight = glazingRatio * 9 * (factors.diffuse + directDaylight) * solarAmbientFactor;
             daylightByRoom.set(roomKey, (daylightByRoom.get(roomKey) || 0) + windowDaylight);
 
-            if (sunAzimuth !== undefined && sunElevation !== undefined) {
+            if (!belowDirectSunlightCutoff && sunAzimuth !== undefined && sunElevation !== undefined) {
                 const sashCount = Math.max(1, Math.min(3, configuredWindow.windowSashCount));
                 const wholeWindowLength = Math.hypot(window.endX - window.startX, window.endY - window.startY);
                 splitWindowIntoSashes(window, sashCount, Math.max(1, svgUnitsPerMeter * 0.025)).forEach(sash => {
@@ -704,7 +707,6 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 configuredWindowCount={configuredWindowCount}
                 noCard={noCard}
                 labels={{
-                    sunDataMissing: this.translated('sun_data_missing'),
                     configureWindows: this.translated('configure_sunlight_windows'),
                     floorplan: `${this.translated('sunlight_floorplan')} · ${floor.label}`,
                 }}

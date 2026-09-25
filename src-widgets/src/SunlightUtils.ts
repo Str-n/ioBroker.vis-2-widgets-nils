@@ -18,7 +18,7 @@ export interface SunlightWindow {
 export interface SunlightBeam {
     points: Array<[number, number]>;
     /** Floor footprint stopped at the first wall, including concave room corners. */
-    floorPoints: Array<[number, number]>;
+    floorPaths: Array<Array<[number, number]>>;
     clipPoints: Array<[number, number]>;
     strength: number;
     softness: number;
@@ -611,10 +611,12 @@ export function calculateSunlightBeam(
     // The indoor ray points away from the sun's horizontal bearing.
     const rayX = -Math.sin(screenRelativeAzimuth);
     const rayY = Math.cos(screenRelativeAzimuth);
-    const nearDx = rayX * Math.min(nearDistance, maximumProjection);
-    const nearDy = rayY * Math.min(nearDistance, maximumProjection);
-    const farDx = rayX * Math.min(farDistance, maximumProjection);
-    const farDy = rayY * Math.min(farDistance, maximumProjection);
+    const nearFloorDistance = Math.min(nearDistance, maximumProjection);
+    const farFloorDistance = Math.min(farDistance, maximumProjection);
+    const nearDx = rayX * nearFloorDistance;
+    const nearDy = rayY * nearFloorDistance;
+    const farDx = rayX * farFloorDistance;
+    const farDy = rayY * farFloorDistance;
 
     const points: Array<[number, number]> = [
         [window.startX + nearDx, window.startY + nearDy],
@@ -625,30 +627,48 @@ export function calculateSunlightBeam(
 
     const windowDx = window.endX - window.startX;
     const windowDy = window.endY - window.startY;
-    const samples = new Set([0, 1]);
+    // A single outline folds over itself when neighboring rays meet different walls.
+    // Sample the aperture and render each visible floor strip as its own simple polygon.
+    const sampleCount = 64;
+    const samples = new Set(Array.from({ length: sampleCount + 1 }, (_, index) => index / sampleCount));
     const denominator = crossProduct(windowDx, windowDy, rayX, rayY);
     if (Math.abs(denominator) > 0.000001) {
         // Cast on either side of every corner so a beam cannot reappear beyond an intervening wall.
         window.roomPolygon.forEach(([x, y]) => {
             const across = crossProduct(x - window.startX, y - window.startY, rayX, rayY) / denominator;
             if (across > 0 && across < 1) {
-                samples.add(Math.max(0, across - 0.00001));
-                samples.add(Math.min(1, across + 0.00001));
+                samples.add(across);
             }
         });
     }
-    const nearPoints: Array<[number, number]> = [];
-    const farPoints: Array<[number, number]> = [];
-    [...samples]
-        .sort((a, b) => a - b)
-        .forEach(across => {
-            const start: [number, number] = [window.startX + windowDx * across, window.startY + windowDy * across];
-            const hit = firstRoomBoundaryHit(start, [start[0] + farDx, start[1] + farDy], window.roomPolygon);
-            const stop = (hit?.distanceFraction ?? 1) * Math.min(farDistance, maximumProjection);
-            const near = Math.min(nearDistance, stop);
-            nearPoints.push([start[0] + rayX * near, start[1] + rayY * near]);
-            farPoints.push([start[0] + rayX * stop, start[1] + rayY * stop]);
-        });
+    const sortedSamples = [...samples].sort((a, b) => a - b);
+    const rayStops = sortedSamples.map(across => {
+        const start: [number, number] = [window.startX + windowDx * across, window.startY + windowDy * across];
+        const hit = firstRoomBoundaryHit(start, [start[0] + farDx, start[1] + farDy], window.roomPolygon);
+        return {
+            across,
+            stop: (hit?.distanceFraction ?? 1) * farFloorDistance,
+            start,
+        };
+    });
+    const floorPaths: Array<Array<[number, number]>> = [];
+    for (let index = 0; index < rayStops.length - 1; index++) {
+        const left = rayStops[index];
+        const right = rayStops[index + 1];
+        // A ray that reaches a wall before hitting the floor produces wall bounce, not a floor patch.
+        if (left.stop - nearFloorDistance <= 0.25 || right.stop - nearFloorDistance <= 0.25) {
+            continue;
+        }
+        const polygon: Array<[number, number]> = [
+            [left.start[0] + rayX * nearFloorDistance, left.start[1] + rayY * nearFloorDistance],
+            [right.start[0] + rayX * nearFloorDistance, right.start[1] + rayY * nearFloorDistance],
+            [right.start[0] + rayX * right.stop, right.start[1] + rayY * right.stop],
+            [left.start[0] + rayX * left.stop, left.start[1] + rayY * left.stop],
+        ];
+        if (polygonArea(polygon) > 0.001) {
+            floorPaths.push(polygon);
+        }
+    }
     const actualPoints: Array<[number, number]> = [
         points[0],
         points[1],
@@ -657,7 +677,7 @@ export function calculateSunlightBeam(
     ];
     return {
         points,
-        floorPoints: [...nearPoints, ...farPoints.reverse()],
+        floorPaths,
         clipPoints: window.roomPolygon,
         strength,
         softness: svgUnitsPerMeter * (0.065 + (1 - clamp(skyClarity, 0, 1)) * 0.11),
