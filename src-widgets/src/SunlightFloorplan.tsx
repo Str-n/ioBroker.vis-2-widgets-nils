@@ -8,11 +8,12 @@ import {
     calculateSunlightFactors,
     inferWindowAzimuthFromRoomBoundary,
     normalizeBlindOpenFactorForWindow,
-    parseRoomPolygon,
     pointsAttribute,
     splitWindowIntoSashes,
     sunlightColor,
 } from './SunlightUtils';
+import SunlightFloorplanEditor from './SunlightFloorplanEditor';
+import { parseFloorplanGeometries } from './SunlightFloorplanConfig';
 import egSvg from '../public/floorplans/eg.svg?raw';
 import ogSvg from '../public/floorplans/og.svg?raw';
 import dgSvg from '../public/floorplans/dg.svg?raw';
@@ -38,22 +39,7 @@ interface SunlightRxData extends Record<string, any> {
     svgUnitsPerMeter: number | string;
     maximumProjection: number | string;
     roomHeightMeters: number | string;
-    windowCount: number | string;
-    roomPolygonCount: number | string;
-    [key: `windowCenterX${number}`]: number | string;
-    [key: `windowCenterY${number}`]: number | string;
-    [key: `windowWidthX${number}`]: number | string;
-    [key: `windowWidthY${number}`]: number | string;
-    [key: `blindOid${number}`]: string;
-    [key: `blindMin${number}`]: number | string;
-    [key: `blindMax${number}`]: number | string;
-    [key: `blindInvert${number}`]: boolean | 'true';
-    [key: `roomPolygon${number}`]: string;
-    [key: `roomBoundary${number}`]: string;
-    [key: `roomIndex${number}`]: number | string;
-    [key: `windowSashCount${number}`]: number | string;
-    [key: `windowHeightMeters${number}`]: number | string;
-    [key: `windowSillHeightMeters${number}`]: number | string;
+    floorConfigurations: string;
 }
 
 type SunlightState = VisRxWidgetState;
@@ -311,8 +297,19 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                             step: 0.05,
                             default: 2.5,
                         },
-                        { name: 'windowCount', label: 'windows_count', type: 'slider', min: 0, max: 16, step: 1, default: 0 },
-                        { name: 'roomPolygonCount', label: 'room_polygon_count', type: 'slider', min: 1, max: 16, step: 1, default: 1 },
+                        {
+                            name: 'floorConfigurations',
+                            label: 'floorplan_geometry_editor',
+                            type: 'custom',
+                            default: '{}',
+                            component: (_field, data, onDataChange) => (
+                                <SunlightFloorplanEditor
+                                    data={data}
+                                    onDataChange={onDataChange}
+                                    floors={floorplans}
+                                />
+                            ),
+                        },
                     ],
                 },
                 {
@@ -396,83 +393,6 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                         },
                     ],
                 },
-                {
-                    name: 'room_polygons',
-                    label: 'room_polygons',
-                    indexFrom: 1,
-                    indexTo: 'roomPolygonCount',
-                    fields: [
-                        {
-                            name: 'roomBoundary',
-                            label: 'room_polygon',
-                            type: 'text',
-                            tooltip: 'window_room_polygon_help',
-                        },
-                    ],
-                },
-                {
-                    name: 'windows',
-                    label: 'sunlight_windows',
-                    indexFrom: 1,
-                    indexTo: 'windowCount',
-                    fields: [
-                        { name: 'windowCenterX', label: 'window_center_x', type: 'number', default: 0 },
-                        { name: 'windowCenterY', label: 'window_center_y', type: 'number', default: 0 },
-                        {
-                            name: 'windowWidthX',
-                            label: 'window_width_x',
-                            type: 'number',
-                            default: 0,
-                            tooltip: 'window_geometry_help',
-                        },
-                        { name: 'windowWidthY', label: 'window_width_y', type: 'number', default: 0 },
-                        { name: 'windowHeightMeters', label: 'window_height_meters', type: 'number', min: 0.1, step: 0.05, default: 1.35 },
-                        { name: 'windowSillHeightMeters', label: 'window_sill_height_meters', type: 'number', min: 0, step: 0.05, default: 0.9 },
-                        {
-                            name: 'roomIndex',
-                            label: 'window_room_polygon_index',
-                            type: 'select',
-                            options: Array.from({ length: 16 }, (_, index) => ({ value: String(index + 1), label: `Room ${index + 1}` })),
-                            default: '1',
-                        },
-                        {
-                            name: 'windowSashCount',
-                            label: 'window_sash_count',
-                            type: 'select',
-                            options: [1, 2, 3].map(value => ({ value: String(value), label: String(value) })),
-                            default: '1',
-                            tooltip: 'window_sash_count_help',
-                        },
-                        {
-                            name: 'blindOid',
-                            label: 'blinds_position_oid',
-                            type: 'id',
-                            default: '',
-                            tooltip: 'blinds_position_help',
-                        },
-                        {
-                            name: 'blindMin',
-                            label: 'blind_minimum',
-                            type: 'number',
-                            default: 0,
-                            hidden: (data, index) => !data[`blindOid${index}`],
-                        },
-                        {
-                            name: 'blindMax',
-                            label: 'blind_maximum',
-                            type: 'number',
-                            default: 100,
-                            hidden: (data, index) => !data[`blindOid${index}`],
-                        },
-                        {
-                            name: 'blindInvert',
-                            label: 'blind_invert',
-                            type: 'checkbox',
-                            default: false,
-                            hidden: (data, index) => !data[`blindOid${index}`],
-                        },
-                    ],
-                },
             ],
             visDefaultStyle: { width: 700, height: 760, position: 'relative' },
             visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sunlight_floorplan.svg',
@@ -520,7 +440,11 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
             Number(data.radiationReference) || 1000,
             data.sunlightSource === 'cloudiness' ? 'cloudiness' : 'radiation',
         );
-        const windowCount = Math.min(16, Math.max(0, Number(data.windowCount) || 0));
+        const floorGeometry = parseFloorplanGeometries(data.floorConfigurations)[data.floorplan] || {
+            rooms: [],
+            windows: [],
+        };
+        const windowCount = Math.min(16, floorGeometry.windows.length);
         const svgUnitsPerMeter = Math.max(1, Number(data.svgUnitsPerMeter) || 50);
         const maximumProjection = Math.max(1, Number(data.maximumProjection) || 650);
         const roomHeightMeters = Math.max(1, Number(data.roomHeightMeters) || 2.5);
@@ -534,15 +458,13 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
 
         const activeSashKeys = new Set<string>();
         for (let index = 1; index <= windowCount; index++) {
-            const roomIndex = Math.max(1, Math.min(16, Number(data[`roomIndex${index}`]) || 1));
-            const configuredRoomPolygon = data[`roomBoundary${roomIndex}`];
-            // Keep supporting widgets saved before room polygons became shared room settings.
-            const roomPolygon = parseRoomPolygon(configuredRoomPolygon || data[`roomPolygon${index}`]);
-            const blindOid = data[`blindOid${index}`];
-            const centerX = Number(data[`windowCenterX${index}`]);
-            const centerY = Number(data[`windowCenterY${index}`]);
-            const widthX = Number(data[`windowWidthX${index}`]);
-            const widthY = Number(data[`windowWidthY${index}`]);
+            const configuredWindow = floorGeometry.windows[index - 1];
+            const roomIndex = Math.max(1, Math.min(floorGeometry.rooms.length, configuredWindow.roomIndex));
+            const roomPolygon = floorGeometry.rooms[roomIndex - 1]?.points || [];
+            const centerX = configuredWindow.centerX;
+            const centerY = configuredWindow.centerY;
+            const widthX = configuredWindow.widthX;
+            const widthY = configuredWindow.widthY;
             const hasNewGeometry =
                 [centerX, centerY, widthX, widthY].every(Number.isFinite) && Math.hypot(widthX, widthY) > 0;
             const startX = centerX - widthX / 2;
@@ -575,13 +497,13 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 endY,
                 azimuth: windowAzimuth,
                 roomPolygon,
-                blindValue: this.stateValue(blindOid),
-                blindStateConfigured: Boolean(blindOid),
-                blindMin: Number(data[`blindMin${index}`] ?? 0),
-                blindMax: Number(data[`blindMax${index}`] ?? 100),
-                blindInvert: data[`blindInvert${index}`] === true || data[`blindInvert${index}`] === 'true',
-                windowHeightMeters: Number(data[`windowHeightMeters${index}`] ?? 1.35),
-                windowSillHeightMeters: Number(data[`windowSillHeightMeters${index}`] ?? 0.9),
+                blindValue: this.stateValue(configuredWindow.blindOid),
+                blindStateConfigured: Boolean(configuredWindow.blindOid),
+                blindMin: configuredWindow.blindMin,
+                blindMax: configuredWindow.blindMax,
+                blindInvert: configuredWindow.blindInvert,
+                windowHeightMeters: configuredWindow.windowHeightMeters,
+                windowSillHeightMeters: configuredWindow.windowSillHeightMeters,
                 roomHeightMeters,
             };
             const openFraction = normalizeBlindOpenFactorForWindow(window);
@@ -599,7 +521,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
             }
 
             if (sunAzimuth !== undefined && sunElevation !== undefined) {
-                const sashCount = Math.max(1, Math.min(3, Number(data[`windowSashCount${index}`]) || 1));
+                const sashCount = Math.max(1, Math.min(3, configuredWindow.windowSashCount));
                 const wholeWindowLength = Math.hypot(window.endX - window.startX, window.endY - window.startY);
                 splitWindowIntoSashes(window, sashCount, Math.max(1, svgUnitsPerMeter * 0.025)).forEach((sash, sashIndex) => {
                     const sashKey = `${index}:${sashIndex}`;

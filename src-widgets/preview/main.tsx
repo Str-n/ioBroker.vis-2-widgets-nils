@@ -336,34 +336,25 @@ function App(): React.JSX.Element {
                         weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
                         weatherTemperatureOid: 'preview.weather.temperature', weatherRadiationOid: 'preview.weather.radiation',
                         sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent',
-                        svgUnitsPerMeter: 62, roomHeightMeters: 2.5, maximumProjection: 650, windowCount: 7, roomPolygonCount: 3,
-                        windowCenterX1: 8, windowCenterY1: 154, windowWidthX1: 0, windowWidthY1: 252,
-                        windowHeightMeters1: 1.35, windowSillHeightMeters1: 0.9,
-                        windowCenterX2: 90, windowCenterY2: 8, windowWidthX2: 140, windowWidthY2: 0,
-                        windowHeightMeters2: 1.35, windowSillHeightMeters2: 0.9,
-                        windowCenterX3: 370, windowCenterY3: 8, windowWidthX3: 140, windowWidthY3: 0,
-                        windowHeightMeters3: 1.35, windowSillHeightMeters3: 0.9,
-                        windowCenterX4: 630, windowCenterY4: 8, windowWidthX4: 140, windowWidthY4: 0,
-                        windowHeightMeters4: 1.35, windowSillHeightMeters4: 0.9,
-                        windowCenterX5: 748, windowCenterY5: 210, windowWidthX5: 0, windowWidthY5: 240,
-                        windowHeightMeters5: 1.35, windowSillHeightMeters5: 0.9,
-                        windowCenterX6: 748, windowCenterY6: 550, windowWidthX6: 0, windowWidthY6: 140,
-                        windowHeightMeters6: 1.35, windowSillHeightMeters6: 0.9,
-                        windowCenterX7: 181.5, windowCenterY7: 600.5, windowWidthX7: 0, windowWidthY7: 80,
-                        windowHeightMeters7: 1.35, windowSillHeightMeters7: 0.9,
-                        roomBoundary1: '7.7288049,6.7245844 748.51664,7.1971841 748.68714,409.96694 455.59287,409.80419 454.9311,295.80379 6.5534834,295.2866',
-                        roomBoundary2: '455.5,408.5 748.5,408.5 748.5,691.5 455.5,691.5',
-                        roomBoundary3: '181.5,526.5 271.5,526.5 271.5,691.5 181.5,691.5',
-                        roomIndex1: 1, roomIndex2: 1, roomIndex3: 1, roomIndex4: 1, roomIndex5: 1, roomIndex6: 2, roomIndex7: 3,
-                        windowSashCount1: 3, windowSashCount2: 2, windowSashCount3: 2, windowSashCount4: 2, windowSashCount5: 3,
-                        windowSashCount6: 2, windowSashCount7: 1,
-                        blindOid1: 'preview.sunlight.blindPosition', blindMin1: 0, blindMax1: 100, blindInvert1: false,
-                        blindOid2: 'preview.sunlight.blindPosition', blindMin2: 0, blindMax2: 100, blindInvert2: false,
-                        blindOid3: 'preview.sunlight.blindPosition', blindMin3: 0, blindMax3: 100, blindInvert3: false,
-                        blindOid4: 'preview.sunlight.blindPosition', blindMin4: 0, blindMax4: 100, blindInvert4: false,
-                        blindOid5: 'preview.sunlight.blindPosition', blindMin5: 0, blindMax5: 100, blindInvert5: false,
-                        blindOid6: 'preview.sunlight.blindPosition', blindMin6: 0, blindMax6: 100, blindInvert6: false,
-                        blindOid7: 'preview.sunlight.blindPosition', blindMin7: 0, blindMax7: 100, blindInvert7: false,}
+                        svgUnitsPerMeter: 62, roomHeightMeters: 2.5, maximumProjection: 650,
+                        floorConfigurations: JSON.stringify({
+                            eg: {
+                                rooms: [
+                                    { points: [[7.7288049, 6.7245844], [748.51664, 7.1971841], [748.68714, 409.96694], [455.59287, 409.80419], [454.9311, 295.80379], [6.5534834, 295.2866]] },
+                                    { points: [[455.5, 408.5], [748.5, 408.5], [748.5, 691.5], [455.5, 691.5]] },
+                                    { points: [[181.5, 526.5], [271.5, 526.5], [271.5, 691.5], [181.5, 691.5]] },
+                                ],
+                                windows: [
+                                    { centerX: 8, centerY: 154, widthX: 0, widthY: 252, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                    { centerX: 90, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                    { centerX: 370, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                    { centerX: 630, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                    { centerX: 748, centerY: 210, widthX: 0, widthY: 240, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                    { centerX: 748, centerY: 550, widthX: 0, widthY: 140, roomIndex: 2, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                    { centerX: 181.5, centerY: 600.5, widthX: 0, widthY: 80, roomIndex: 3, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 1, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+                                ],
+                            },
+                        }),}
                 }} />
                 <div className="sunlight-preview-controls">
                     <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => context.setValue('preview.sun.azimuth', Number(event.target.value))} /></label>
