@@ -36,6 +36,26 @@ async function checkRenderer(browser) {
     const screenshot = async name =>
         (await page.$('.sh-sunlight-floorplan')).screenshot({ path: screenshotPath(name + '.png') });
     console.log('day', await inspect());
+    const patchBoundsArea = () =>
+        page.$eval('.sh-sunlight-floorplan', element =>
+            [...element.querySelectorAll('.sh-sunlight-floorplan__beam')].reduce((area, patch) => {
+                const bounds = patch.getBBox();
+                return area + bounds.width * bounds.height;
+            }, 0),
+        );
+    const grazingAngleAreas = [];
+    for (const azimuth of [83, 84, 85]) {
+        await set({ 0: azimuth });
+        const area = await patchBoundsArea();
+        assert(area > 0, `No sunlight was rendered at azimuth ${azimuth}°`);
+        grazingAngleAreas.push(area);
+        await screenshot(`azimuth-${azimuth}`);
+    }
+    assert(
+        Math.max(...grazingAngleAreas) / Math.min(...grazingAngleAreas) < 1.1,
+        `Rendered patch bounds changed abruptly at the grazing wall angle: ${grazingAngleAreas}`,
+    );
+    await set({ 0: 108 });
     await set({ 1: -5 });
     const night = await inspect();
     assert.equal(night.beams, 0);
@@ -54,21 +74,49 @@ async function checkRenderer(browser) {
     assert(cloudy.ambient > 0);
     await screenshot('cloudy');
     console.log('cloudy', cloudy);
-    await set({ 2: 0, 1: 1 });
+    await set({ 2: 0, 1: 10 });
+    const atCutoff = await inspect();
+    assert(atCutoff.beams > 0, 'Sun exactly at the cutoff should still cast direct patches');
+    await set({ 1: 9 });
     const low = await inspect();
-    assert(low.reflections > 0);
+    assert.equal(low.beams, 0);
+    assert.equal(low.reflections, 0);
+    assert(low.ambient > 0, 'Sun below the direct-light cutoff should still contribute indirect light');
     await screenshot('low');
     console.log('low', low);
+    await set({ 1: 11 });
+    const aboveCutoff = await inspect();
+    assert(aboveCutoff.beams > 0, 'Sun above the default 10° cutoff should cast direct patches');
     await set({ 1: 25, 4: 50, 2: 25 });
-    // Nested geometry OIDs are subscribed separately from the widget's ordinary fields.
-    // A deleted state must override any old value still present in the host's state cache.
     await page.evaluate(() => {
         const host = document.querySelector('.sh-sunlight-floorplan').closest('.widget-surface');
         let fiber = host[Object.keys(host).find(key => key.startsWith('__reactFiber$'))];
         while (fiber && typeof fiber.stateNode?.onConfiguredStateChange !== 'function') fiber = fiber.return;
         if (!fiber) throw new Error('Sunlight widget instance not found');
-        window.sunlightTestWidget = fiber.stateNode;
-        fiber.stateNode.onConfiguredStateChange('preview.sunlight.livingRoomLight', null);
+        const widget = fiber.stateNode;
+        window.sunlightTestWidget = widget;
+        const azimuthKey = `${widget.state.rxData.sunAzimuthOid}.val`;
+        window.sunlightTestAzimuthValue = widget.state.values[azimuthKey];
+        widget.state.values[azimuthKey] = undefined;
+        widget.forceUpdate();
+    });
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length === 0);
+    assert.equal(
+        await page.$eval('.sh-sunlight-floorplan__status', element => element.textContent).catch(() => null),
+        null,
+        'Missing sun states should not show a status banner at the top of the widget',
+    );
+    await page.evaluate(() => {
+        const widget = window.sunlightTestWidget;
+        const azimuthKey = `${widget.state.rxData.sunAzimuthOid}.val`;
+        widget.state.values[azimuthKey] = window.sunlightTestAzimuthValue;
+        widget.forceUpdate();
+    });
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > 0);
+    // Nested geometry OIDs are subscribed separately from the widget's ordinary fields.
+    // A deleted state must override any old value still present in the host's state cache.
+    await page.evaluate(() => {
+        window.sunlightTestWidget.onConfiguredStateChange('preview.sunlight.livingRoomLight', null);
     });
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 1);
     await page.evaluate(() =>
@@ -182,7 +230,6 @@ async function checkEditor(browser) {
     );
     await page.waitForSelector('[role=dialog]');
     await new Promise(r => setTimeout(r, 400));
-    await (await page.$('[role=dialog]')).screenshot({ path: screenshotPath('sunlight-editor.png') });
 
     const pause = () => new Promise(r => setTimeout(r, 80));
     const button = async (text, index = 0) => {
@@ -265,6 +312,10 @@ async function checkEditor(browser) {
     assert.equal(geometry.windows[0].roomIndex, 2);
     await number('Window height (m)', 1.75);
     assert.equal((await data()).eg.windows[0].windowHeightMeters, 1.75);
+    assert.equal((await data()).eg.windows[0].directSunlightElevationCutoffDegrees, 10);
+    await number('Direct sun cutoff elevation (°)', 17);
+    assert.equal((await data()).eg.windows[0].directSunlightElevationCutoffDegrees, 17);
+    await (await page.$('[role=dialog]')).screenshot({ path: screenshotPath('sunlight-editor.png') });
     await button('Add', 2);
     await click(560, 510);
     assert.equal((await data()).eg.lightBubbles.length, 1);

@@ -74,7 +74,7 @@ describe('SunlightFloorplan light model', () => {
         assert(result.wallReflection);
         assert.equal(result.wallReflection.fraction, 1);
         assert(Math.abs(result.wallReflection.point[1] - 200) < 1e-6);
-        assert.equal(utils.polygonArea(result.floorPoints), 0);
+        assert.equal(result.floorPaths.length, 0);
     });
     it('stops light at the first wall in a concave room', () => {
         const concave = [
@@ -88,8 +88,60 @@ describe('SunlightFloorplan light model', () => {
             [0, 80],
         ];
         const result = beam({ startX: 50, endX: 100, roomPolygon: concave, windowSillHeightMeters: 0 }, 0, 30);
-        assert(result.floorPoints.every(point => point[1] <= 80 + 1e-6));
+        assert(result.floorPaths.flat().every(point => point[1] <= 80.01));
         assert(result.wallReflection);
+    });
+    it('keeps the wall-adjacent patch continuous as the sun crosses 83°–85°', () => {
+        const room = [
+            [7.7288049, 6.7245844],
+            [748.51664, 7.1971841],
+            [748.68714, 409.96694],
+            [455.59287, 409.80419],
+            [454.9311, 295.80379],
+            [6.5534834, 295.2866],
+        ];
+        const configured = {
+            centerX: 8,
+            centerY: 154,
+            widthX: 0,
+            widthY: 252,
+            blindValue: 50,
+            blindStateConfigured: true,
+            blindMin: 0,
+            blindMax: 100,
+            blindInvert: false,
+            windowHeightMeters: 1.35,
+            windowSillHeightMeters: 0.9,
+            roomHeightMeters: 2.5,
+            roomPolygon: room,
+        };
+        const azimuth = utils.inferWindowAzimuthFromRoomBoundary(8, 154, 0, 252, room, 163);
+        assert(azimuth !== undefined);
+        const endpoints = [
+            utils.snapPointToRoomBoundary([8, 28], room, 20),
+            utils.snapPointToRoomBoundary([8, 280], room, 20),
+        ];
+        const window = {
+            ...configured,
+            startX: endpoints[0][0],
+            startY: endpoints[0][1],
+            endX: endpoints[1][0],
+            endY: endpoints[1][1],
+            azimuth,
+        };
+        const sashes = utils.splitWindowIntoSashes(window, 3, 1.55);
+        const areas = [83, 84, 85].map(angle => {
+            const paths = sashes.flatMap(
+                sash => utils.calculateSunlightBeam(sash, angle, 25, 163, 1, 0.75, 62, 650)?.floorPaths || [],
+            );
+            assert(paths.length > 0, `Sun angle ${angle}° should illuminate the room`);
+            for (const path of paths) {
+                assert.equal(path.length, 4, 'each visible strip must remain a simple quadrilateral');
+                assert(path.flat().every(Number.isFinite));
+            }
+            return paths.reduce((area, path) => area + utils.polygonArea(path), 0);
+        });
+        assert(Math.max(...areas) / Math.min(...areas) < 1.1, `Wall-adjacent area jumped at the threshold: ${areas}`);
     });
     it('keeps sash apertures disjoint and preserves their total glazed width', () => {
         const sashes = utils.splitWindowIntoSashes(window, 3, 2);
@@ -168,14 +220,35 @@ describe('SunlightFloorplan geometry and editor helpers', () => {
         const parsed = parseFloorplanGeometries({
             eg: {
                 rooms: [{ points: [] }, { points: room }],
-                windows: [{ roomIndex: 1 }, { roomIndex: 2 }, { roomIndex: 99 }],
+                windows: [
+                    { roomIndex: 1 },
+                    { roomIndex: 2, directSunlightElevationCutoffDegrees: 18 },
+                    { roomIndex: 99, directSunlightElevationCutoffDegrees: 30 },
+                ],
                 lightBubbles: [{ roomIndex: 2 }],
             },
         }).eg;
         assert.equal(parsed.rooms.length, 1);
         assert.equal(parsed.windows.length, 1);
         assert.equal(parsed.windows[0].roomIndex, 1);
+        assert.equal(parsed.windows[0].directSunlightElevationCutoffDegrees, 18);
         assert.equal(parsed.lightBubbles[0].roomIndex, 1);
+    });
+    it('defaults and bounds each window direct sunlight elevation cutoff', () => {
+        const parsed = parseFloorplanGeometries({
+            eg: {
+                rooms: [{ points: room }],
+                windows: [
+                    { roomIndex: 1 },
+                    { roomIndex: 1, directSunlightElevationCutoffDegrees: -5 },
+                    { roomIndex: 1, directSunlightElevationCutoffDegrees: 100 },
+                ],
+            },
+        }).eg;
+        assert.deepEqual(
+            parsed.windows.map(window => window.directSunlightElevationCutoffDegrees),
+            [10, 0, 90],
+        );
     });
     it('does not turn null coordinates into valid room corners', () => {
         const parsed = parseFloorplanGeometries({

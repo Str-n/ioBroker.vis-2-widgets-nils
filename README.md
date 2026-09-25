@@ -142,7 +142,9 @@ the near and far rays and therefore the floor patch length. Diffuse daylight als
 A configured blind with a missing or invalid value contributes no daylight until it reports a valid position.
 
 Default physical geometry is 2.5 m room height, 1.35 m window height, and 0.9 m sill height. These can be set per
-window, with room height shared by the widget. SVG scale defaults to 50 units per meter, with a 650-unit projection cap. Adjust the scale to match the
+window, with room height shared by the widget. Each window also has a direct sunlight elevation cutoff, defaulting to 10°;
+sun below that angle adds indirect room light but does not cast a direct floor patch or wall reflection, modeling an
+outside obstruction such as a neighboring building. SVG scale defaults to 50 units per meter, with a 650-unit projection cap. Adjust the scale to match the
 bundled floorplan drawings. The bundled coordinate spaces are EG 756 × 699, OG 581 × 704, DG 577 × 700, and basement
 756 × 699. The widget shows one live floor at a time.
 
