@@ -15,7 +15,7 @@
  */
 import React, { Component, type CSSProperties, type MouseEventHandler, type TouchEventHandler } from 'react';
 
-import { Dialog, DialogContent, DialogTitle, IconButton, Button, Fab } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, IconButton, Fab } from '@mui/material';
 
 import { darken } from '@mui/system';
 
@@ -28,95 +28,120 @@ import {
 } from '@mui/icons-material';
 
 import { I18n } from '@iobroker/gui-components';
-
-const WIDGET_IMAGE_BASE = 'widgets/vis-2-widgets-nils-fork/img';
+import { BlindSceneBackdrop, BlindSceneForeground } from './BlindsScene';
 
 const styles: Record<string, CSSProperties> = {
     dialog: {
-        maxWidth: '1000px',
-        width: 'calc(100vw - 32px)',
+        maxWidth: '520px',
+        width: 'calc(100vw - 28px)',
+        margin: 14,
+        maxHeight: 'calc(100% - 28px)',
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        borderRadius: 'var(--sh-radius-card, 22px)',
+        background: 'var(--sh-surface, #2D4E63)',
+        color: 'var(--sh-text, #F7FAFC)',
+        boxShadow: 'var(--sh-shadow-card, 0 8px 24px rgba(23, 47, 64, 0.2))',
     },
     dialogContent: {
         padding: 0,
-        background: '#b8d2dd',
-        overflow: 'hidden',
+        background: 'var(--sh-surface, #2D4E63)',
+        overflow: 'visible',
     },
     dialogTitle: {
-        textAlign: 'center',
-    },
-    wrapperSliderBlock: {
+        minHeight: 64,
+        boxSizing: 'border-box',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        width: '100%',
+        justifyContent: 'center',
         position: 'relative',
-        zIndex: 2,
+        padding: '8px 64px',
+        textAlign: 'center',
+        color: 'var(--sh-text, #F7FAFC)',
+        background: 'var(--sh-surface-2, #365B73)',
     },
     sceneStack: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '0.75em',
         width: '100%',
-    },
-    buttonStopStyle: {
-        float: 'left',
+        gap: 0,
+        background: 'var(--sh-surface, #2D4E63)',
     },
     sliderText: {
-        display: 'inline-block',
+        fontSize: '1.2rem',
+        fontWeight: 600,
+        lineHeight: 1.2,
     },
     sliderStyle: {
-        marginTop: '1em',
-        marginBottom: '1em',
         position: 'relative',
         zIndex: 11,
-        width: '10em',
-        // border: '1px solid #b5b5b5',
-        borderRadius: '2em',
+        width: '100%',
+        height: '100%',
+        borderRadius: 0,
         overflow: 'hidden',
         background: 'transparent',
         cursor: 'pointer',
         boxShadow: 'none',
-        height: '20em',
         boxSizing: 'border-box',
+        touchAction: 'none',
     },
     scene: {
         position: 'relative',
-        width: '100%',
-        maxWidth: '620px',
-        aspectRatio: '1024 / 1536',
-        backgroundColor: '#dfeaf2',
-        backgroundImage: `linear-gradient(180deg, rgba(13,20,31,0.12), rgba(13,20,31,0.12)), url("${WIDGET_IMAGE_BASE}/person-at-window.png")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center center',
-        backgroundSize: '100% 100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: '0 auto',
-    },
-    sceneWindow: {
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: `url("${WIDGET_IMAGE_BASE}/personatemptywindow.png")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center center',
-        backgroundSize: '100% 100%',
-        pointerEvents: 'none',
-        zIndex: 2,
+        flex: '0 0 auto',
+        width: 'min(100%, 47vh)',
+        maxWidth: '520px',
+        aspectRatio: '1024 / 1378',
+        overflow: 'hidden',
+        isolation: 'isolate',
+        background: 'var(--sh-blind-scene-background, #477592)',
     },
     blindWindow: {
         position: 'absolute',
-        left: '10%',
-        right: '10%',
-        top: '0%',
-        bottom: '23%',
+        // The glass spans x=156..862 and y=156..1089 in the cropped 1024 x 1378 scene.
+        left: '15.234375%',
+        right: '15.8203125%',
+        top: '11.3207547%',
+        bottom: '20.9724238%',
         zIndex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'transparent',
+        borderRadius: '14.73% / 11.15%',
         overflow: 'hidden',
+    },
+    sceneControls: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        width: '100%',
+        boxSizing: 'border-box',
+        padding: '14px 18px 18px',
+        background: 'var(--sh-surface, #2D4E63)',
+    },
+    controlButton: {
+        width: 64,
+        height: 60,
+        flex: '1 1 0',
+        maxWidth: 112,
+        minWidth: 56,
+        borderRadius: 'var(--sh-radius-control, 14px)',
+        color: 'var(--sh-text, #F7FAFC)',
+        background: 'var(--sh-surface-2, #365B73)',
+        boxShadow: 'var(--sh-shadow-control, 0 4px 12px rgba(23, 47, 64, 0.18))',
+    },
+    stopButton: {
+        width: 64,
+        height: 60,
+        flex: '1 1 0',
+        maxWidth: 112,
+        minWidth: 56,
+        borderRadius: 'var(--sh-radius-control, 14px)',
+        color: 'var(--sh-primary-contrast, #172F40)',
+        background: 'var(--sh-error, #F5BCB7)',
+        boxShadow: 'var(--sh-shadow-control, 0 4px 12px rgba(23, 47, 64, 0.18))',
     },
 };
 
@@ -220,14 +245,15 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
         e.preventDefault();
         e.stopPropagation();
 
-        if (!this.height) {
-            if (this.refSlider.current) {
-                this.height = this.refSlider.current.offsetHeight;
-                this.top = this.refSlider.current.getBoundingClientRect().top;
-            } else {
-                return;
-            }
+        if (!this.refSlider.current) {
+            return;
         }
+        const { top, height } = this.refSlider.current.getBoundingClientRect();
+        if (!height) {
+            return;
+        }
+        this.top = top;
+        this.height = height;
 
         DialogBlinds.mouseDown = true;
         this.eventToValue(e);
@@ -323,7 +349,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
     getTopButtonName(): React.ReactNode {
         switch (this.props.type) {
             case DialogBlinds.types.blinds:
-                return <IconUp style={{ width: 20, height: 20 }} />;
+                return <IconUp style={{ width: 26, height: 26 }} />;
 
             case DialogBlinds.types.dimmer:
                 return <IconLamp style={{ color: LAMP_ON_COLOR, width: 20, height: 20 }} />;
@@ -336,7 +362,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
     getBottomButtonName(): React.ReactNode {
         switch (this.props.type) {
             case DialogBlinds.types.blinds:
-                return <IconDown style={{ width: 20, height: 20 }} />;
+                return <IconDown style={{ width: 26, height: 26 }} />;
 
             case DialogBlinds.types.dimmer:
                 return <IconLamp style={{ width: 20, height: 20 }} />;
@@ -407,7 +433,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
             <Fab
                 onClick={this.props.onToggle}
                 className="dimmer-button"
-                style={styles.buttonToggleStyle}
+                style={styles.controlButton}
             >
                 <IconLamp />
             </Fab>
@@ -415,16 +441,14 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
     }
 
     getStopButton(): React.ReactNode {
-        if (!this.props.onStop) {
-            return null;
-        }
-
         return (
             <Fab
-                style={styles.buttonStopStyle}
-                size="small"
+                style={styles.stopButton}
+                size="large"
                 onClick={this.props.onStop}
-                color="secondary"
+                disabled={!this.props.onStop}
+                aria-label={I18n.t('stop')}
+                title={I18n.t('stop')}
             >
                 <IconStop />
             </Fab>
@@ -444,19 +468,19 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
 
         const handlerStyle: CSSProperties = {
             position: 'absolute',
-            width: '2em',
-            height: '0.3em',
-            left: 'calc(50% - 1em)',
-            background: 'white',
-            borderRadius: '0.4em',
+            width: '2.4em',
+            height: '0.25em',
+            left: 'calc(50% - 1.2em)',
+            background: 'var(--sh-text, #F7FAFC)',
+            borderRadius: '1em',
         };
 
         if (this.props.type === DialogBlinds.types.blinds) {
             sliderStyle.top = 0;
             handlerStyle.bottom = '0.4em';
             sliderStyle.backgroundImage =
-                'linear-gradient(0deg, #949494 4.55%, #c9c9c9 4.55%, #c9c9c9 50%, #949494 50%, #949494 54.55%, #c9c9c9 54.55%, #c9c9c9 100%)';
-            sliderStyle.backgroundSize = '100% 2.5em';
+                'repeating-linear-gradient(to bottom, var(--sh-blind-scene-slat-line, #888888) 0 2px, var(--sh-blind-scene-slat, #C9C9C9) 2px 20px)';
+            sliderStyle.backgroundSize = '100% 20px';
             sliderStyle.backgroundPosition = 'center bottom';
         } else {
             sliderStyle.bottom = 0;
@@ -466,9 +490,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
         const blindStyle: CSSProperties = {
             ...styles.sliderStyle,
             width: '100%',
-            height: '85%',
-            minHeight: '250px',
-            margin: 0,
+            height: '100%',
             background: 'transparent',
             boxShadow: 'none',
             borderRadius: 0,
@@ -476,15 +498,12 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
         };
 
         return (
-            <div className="vis-2-slider-wrapper" style={styles.sceneStack}>
-                <Button
-                    variant="outlined"
-                    onClick={e => this.onButtonDown(e, 'top')}
-                >
-                    {this.getTopButtonName()}
-                </Button>
+            <div
+                className="vis-2-slider-wrapper"
+                style={styles.sceneStack}
+            >
                 <div style={styles.scene}>
-                    <div style={styles.sceneWindow} />
+                    <BlindSceneBackdrop />
                     <div style={styles.blindWindow}>
                         <div
                             className="vis-2-slider-blind"
@@ -505,13 +524,29 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
                             </div>
                         </div>
                     </div>
+                    <BlindSceneForeground />
                 </div>
-                <Button
-                    variant="outlined"
-                    onClick={e => this.onButtonDown(e, 'bottom')}
-                >
-                    {this.getBottomButtonName()}
-                </Button>
+                <div style={styles.sceneControls}>
+                    <Fab
+                        style={styles.controlButton}
+                        size="large"
+                        onClick={e => this.onButtonDown(e, 'top')}
+                        aria-label="Open blinds"
+                        title="Open blinds"
+                    >
+                        {this.getTopButtonName()}
+                    </Fab>
+                    {this.getStopButton()}
+                    <Fab
+                        style={styles.controlButton}
+                        size="large"
+                        onClick={e => this.onButtonDown(e, 'bottom')}
+                        aria-label="Close blinds"
+                        title="Close blinds"
+                    >
+                        {this.getBottomButtonName()}
+                    </Fab>
+                </div>
                 {this.getToggleButton()}
             </div>
         );
@@ -525,11 +560,17 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
                 slotProps={{ paper: { style: styles.dialog } }}
             >
                 <DialogTitle style={styles.dialogTitle}>
-                    {this.getStopButton()}
                     <div style={styles.sliderText}>{this.getValueText()}</div>
                     <IconButton
                         onClick={() => this.props.onClose()}
-                        style={{ float: 'right' }}
+                        aria-label={I18n.t('close')}
+                        style={{
+                            position: 'absolute',
+                            right: 8,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: 'var(--sh-text, #F7FAFC)',
+                        }}
                     >
                         <CloseIcon />
                     </IconButton>

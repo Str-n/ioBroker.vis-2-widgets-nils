@@ -30,8 +30,11 @@ controls their foreground/background colors, including hover and disabled states
   defaults. Clear these editor attributes to adopt the central palette. Custom
   image icons retain their own image colors.
 
-This pass changes compact control colors only. Detail dialogs and the light
-popover retain their existing host theme and layouts.
+The Blinds position dialog also follows the selected device theme, including its
+vector scene, shutter slats, and movement controls. Other detail dialogs and the
+light popover retain their existing host theme and layouts. Each theme preset
+defines the Blinds scene palette under `smartHome.blindScene`; regenerate the
+shared CSS tokens after changing those values.
 
 ## Weather
 
