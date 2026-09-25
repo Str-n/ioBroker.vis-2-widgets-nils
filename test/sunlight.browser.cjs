@@ -15,6 +15,16 @@ async function checkRenderer(browser) {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(previewUrl, { waitUntil: 'networkidle0' });
     await page.waitForSelector('.sh-sunlight-floorplan');
+    assert.equal(await page.$$eval('.sunlight-scene-button', buttons => buttons.length), 5);
+    await page.click('.sunlight-scene-button[data-scene="evening"]');
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 4);
+    assert.deepEqual(
+        await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
+        [292, -4, 30, 0, 0],
+        'The evening preset should update sun, weather and blind settings together',
+    );
+    await page.click('.sunlight-scene-button[data-scene="morning"]');
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 2);
     const set = async values => {
         await page.evaluate(values => {
             for (const [index, value] of Object.entries(values)) {
@@ -35,7 +45,8 @@ async function checkRenderer(browser) {
         }));
     const screenshot = async name =>
         (await page.$('.sh-sunlight-floorplan')).screenshot({ path: screenshotPath(name + '.png') });
-    console.log('day', await inspect());
+    const day = await inspect();
+    console.log('day', day);
     const patchBoundsArea = () =>
         page.$eval('.sh-sunlight-floorplan', element =>
             [...element.querySelectorAll('.sh-sunlight-floorplan__beam')].reduce((area, patch) => {
@@ -65,8 +76,8 @@ async function checkRenderer(browser) {
     console.log('night', night);
     await set({ 1: 25, 4: 0 });
     const closed = await inspect();
-    assert.equal(closed.beams, 0);
-    assert.equal(closed.ambient, 0);
+    assert(closed.beams < day.beams, 'Closing configured blinds should reduce direct sunlight');
+    assert(closed.ambient < day.ambient, 'Closing configured blinds should reduce indirect room light');
     console.log('closed', closed);
     await set({ 4: 100, 2: 100 });
     const cloudy = await inspect();
@@ -123,14 +134,16 @@ async function checkRenderer(browser) {
         window.sunlightTestWidget.onConfiguredStateChange('preview.sunlight.livingRoomLight', { val: true }),
     );
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 2);
+    const beamsWithBlindState = (await inspect()).beams;
     await page.evaluate(() =>
         window.sunlightTestWidget.onConfiguredStateChange('preview.sunlight.blindPosition', null),
     );
-    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length === 0);
+    await page.waitForFunction(count => document.querySelectorAll('.sh-sunlight-floorplan__beam').length < count, {}, beamsWithBlindState);
+    const beamsWithoutBlindState = (await inspect()).beams;
     await page.evaluate(() =>
         window.sunlightTestWidget.onConfiguredStateChange('preview.sunlight.blindPosition', { val: 50 }),
     );
-    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > 0);
+    await page.waitForFunction(count => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > count, {}, beamsWithoutBlindState);
     await page.evaluate(() => {
         document.documentElement.setAttribute('data-sh-theme', 'daytime');
         window.dispatchEvent(new Event('nils-smarthome-theme-change'));

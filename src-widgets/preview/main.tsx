@@ -6,6 +6,7 @@ import { useSelectedTheme } from '../src/theme/themeSelection';
 import { themeNames } from '../src/theme/presets';
 import '../public/smarthome.css';
 import './preview.css';
+import sunlightPreviewGeometry from './sunlight-floorplan.json';
 import english from '../src/i18n/en.json';
 import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
 
@@ -116,29 +117,34 @@ const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: T
 ]);
 
 const { default: SunlightFloorplanEditor } = await import('../src/SunlightFloorplanEditor');
-const sunlightPreviewGeometry = {
-    eg: {
-        rooms: [
-            { points: [[7.7288049, 6.7245844], [748.51664, 7.1971841], [748.68714, 409.96694], [455.59287, 409.80419], [454.9311, 295.80379], [6.5534834, 295.2866]] },
-            { points: [[455.5, 408.5], [748.5, 408.5], [748.5, 691.5], [455.5, 691.5]] },
-            { points: [[181.5, 526.5], [271.5, 526.5], [271.5, 691.5], [181.5, 691.5]] },
-        ],
-        windows: [
-            { centerX: 8, centerY: 154, widthX: 0, widthY: 252, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-            { centerX: 90, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-            { centerX: 370, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-            { centerX: 630, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-            { centerX: 748, centerY: 210, widthX: 0, widthY: 240, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-            { centerX: 748, centerY: 550, widthX: 0, widthY: 140, roomIndex: 2, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-            { centerX: 181.5, centerY: 600.5, widthX: 0, widthY: 80, roomIndex: 3, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 1, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-        ],
-        lightBubbles: [
-            { x: 230, y: 140, roomIndex: 1, statusOid: 'preview.sunlight.livingRoomLight', brightnessLumens: 800 },
-            { x: 610, y: 535, roomIndex: 2, statusOid: 'preview.sunlight.bottomRightLight', brightnessLumens: 800 },
-            { x: 225, y: 605, roomIndex: 3, statusOid: 'preview.sunlight.smallRoomLight', brightnessLumens: 800 },
-        ],
+const sunlightPreviewConfiguration = { eg: sunlightPreviewGeometry };
+const sunlightScenes = [
+    {
+        id: 'morning', label: 'Morning', note: 'Soft east light',
+        values: { 'preview.sun.azimuth': 108, 'preview.sun.elevation': 25, 'preview.weather.cloudiness': 25, 'preview.weather.radiation': 720, 'preview.weather.condition': 'Partly cloudy', 'preview.sunlight.blindPosition': 50,
+            'preview.sunlight.bottomRightLight': false, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': false, 'preview.sunlight.livingRoomLight': true },
     },
-};
+    {
+        id: 'noon', label: 'Bright noon', note: 'Clear sky, shades down',
+        values: { 'preview.sun.azimuth': 163, 'preview.sun.elevation': 58, 'preview.weather.cloudiness': 5, 'preview.weather.radiation': 950, 'preview.weather.condition': 'Clear sky', 'preview.sunlight.blindPosition': 25,
+            'preview.sunlight.bottomRightLight': false, 'preview.sunlight.smallRoomLight': false, 'preview.sunlight.corridorLight': false, 'preview.sunlight.livingRoomLight': false },
+    },
+    {
+        id: 'overcast', label: 'Overcast', note: 'Diffuse daylight',
+        values: { 'preview.sun.azimuth': 190, 'preview.sun.elevation': 34, 'preview.weather.cloudiness': 90, 'preview.weather.radiation': 260, 'preview.weather.condition': 'Overcast', 'preview.sunlight.blindPosition': 100,
+            'preview.sunlight.bottomRightLight': true, 'preview.sunlight.smallRoomLight': false, 'preview.sunlight.corridorLight': true, 'preview.sunlight.livingRoomLight': false },
+    },
+    {
+        id: 'afternoon', label: 'Late afternoon', note: 'Warm low-angle sun',
+        values: { 'preview.sun.azimuth': 245, 'preview.sun.elevation': 17, 'preview.weather.cloudiness': 15, 'preview.weather.radiation': 540, 'preview.weather.condition': 'Mostly clear', 'preview.sunlight.blindPosition': 60,
+            'preview.sunlight.bottomRightLight': false, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': false, 'preview.sunlight.livingRoomLight': false },
+    },
+    {
+        id: 'evening', label: 'Evening', note: 'Sunset, lamps on',
+        values: { 'preview.sun.azimuth': 292, 'preview.sun.elevation': -4, 'preview.weather.cloudiness': 30, 'preview.weather.radiation': 0, 'preview.weather.condition': 'After sunset', 'preview.sunlight.blindPosition': 0,
+            'preview.sunlight.bottomRightLight': true, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': true, 'preview.sunlight.livingRoomLight': true },
+    },
+] as const;
 const sunlightPreviewFloors = Object.fromEntries(await Promise.all(
     Object.entries(import.meta.glob('../public/floorplans/*.svg', { query: '?raw', import: 'default' }))
         .map(async ([path, load]) => {
@@ -161,19 +167,21 @@ function App(): React.JSX.Element {
     const themeId = useSelectedTheme();
     const weatherBindings = createOpenWeatherMapBindings('openweathermap.0');
     const [sunlightConfiguration, setSunlightConfiguration] = React.useState({
-        floorplan: 'eg', floorConfigurations: JSON.stringify(sunlightPreviewGeometry),
+        floorplan: 'eg', floorConfigurations: JSON.stringify(sunlightPreviewConfiguration),
     });
+    const morningSceneValues = Object.fromEntries(Object.entries(sunlightScenes[0].values).map(([id, value]) => [`${id}.val`, value]));
     const sunlightData = {
-        'preview.sun.azimuth.val': 108,
-        'preview.sun.elevation.val': 25,
-        'preview.weather.cloudiness.val': 25,
-        'preview.weather.radiation.val': 720,
-        'preview.weather.condition.val': 'Partly cloudy',
         'preview.weather.temperature.val': 18.4,
-        'preview.sunlight.blindPosition.val': 50,
-        'preview.sunlight.livingRoomLight.val': true,
-        'preview.sunlight.bottomRightLight.val': false,
-        'preview.sunlight.smallRoomLight.val': true,
+        ...morningSceneValues,
+    };
+    const [selectedSunlightScene, setSelectedSunlightScene] = React.useState<string | null>('morning');
+    const setManualSunlightValue = (id: string, value: unknown): void => {
+        setSelectedSunlightScene(null);
+        context.setValue(id, value);
+    };
+    const applySunlightScene = (scene: typeof sunlightScenes[number]): void => {
+        setSelectedSunlightScene(scene.id);
+        setValues(old => ({ ...old, ...Object.fromEntries(Object.entries(scene.values).map(([id, value]) => [`${id}.val`, value])) }));
     };
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
@@ -236,7 +244,7 @@ function App(): React.JSX.Element {
             ].map(([label, token]) => <div key={token}><span style={{ background: `var(${token})` }} /><b>{label}</b></div>)}</div>
         </section>
         <section>
-            <div className="section-heading"><div><h2>Switch buttons</h2><p>Click a button to toggle it. Long-press the light control to open its sliders.</p></div><button className="reset" onClick={() => setValues(initialValues)}>Reset states</button></div>
+            <div className="section-heading"><div><h2>Switch buttons</h2><p>Click a button to toggle it. Long-press the light control to open its sliders.</p></div><button className="reset" onClick={() => { setValues(initialValues); setSelectedSunlightScene('morning'); }}>Reset states</button></div>
             <div className="button-grid">{buttons.map(([title, oid, iconOn, iconOff, colorOn, readOnly], index) =>
                 <article className="preview-card" key={oid}>
                     <SwitchButton {...commonProps as any} id={`switch-${index}`} customSettings={{ values, style: { width: 76, height: 76 }, rxData: {
@@ -366,7 +374,7 @@ function App(): React.JSX.Element {
             } }} /></article>
         </section>
         <section>
-            <div className="section-heading"><div><h2>Sunlight floor plan</h2><p>Measured solar radiation drives diffuse room light and sun patches. Blinds change the exposed window band and shadow length.</p></div><button className="reset" onClick={() => setValues(old => ({ ...old, ...sunlightData }))}>Reset sunlight</button></div>
+            <div className="section-heading"><div><h2>Sunlight floor plan</h2><p>Explore the real room layout with five typical daylight scenes. Each scene sets sun position, weather, shared blind position, and room lamps.</p></div></div>
             <article className="thermostat-card sunlight-preview-card">
                 <SunlightFloorplan {...commonProps as any} id="sunlight-floorplan-preview" customSettings={{
                     values,
@@ -385,15 +393,22 @@ function App(): React.JSX.Element {
                     onDataChange={data => setSunlightConfiguration({ floorplan: String(data.floorplan), floorConfigurations: String(data.floorConfigurations) })}
                     floors={sunlightPreviewFloors}
                 />
+                <div className="sunlight-scene-grid" role="group" aria-label="Sunlight scene presets">
+                    {sunlightScenes.map(scene => <button
+                        className={`sunlight-scene-button${selectedSunlightScene === scene.id ? ' sunlight-scene-button--selected' : ''}`}
+                        key={scene.id}
+                        type="button"
+                        data-scene={scene.id}
+                        aria-pressed={selectedSunlightScene === scene.id}
+                        onClick={() => applySunlightScene(scene)}
+                    ><strong>{scene.label}</strong><span>{scene.note}</span></button>)}
+                </div>
                 <div className="sunlight-preview-controls">
-                    <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => context.setValue('preview.sun.azimuth', Number(event.target.value))} /></label>
-                    <label>Sun elevation <output>{values['preview.sun.elevation.val']}°</output><input type="range" min="-5" max="80" value={values['preview.sun.elevation.val']} onChange={event => context.setValue('preview.sun.elevation', Number(event.target.value))} /></label>
-                    <label>Cloudiness <output>{values['preview.weather.cloudiness.val']}%</output><input type="range" min="0" max="100" value={values['preview.weather.cloudiness.val']} onChange={event => context.setValue('preview.weather.cloudiness', Number(event.target.value))} /></label>
-                    <label>Solar radiation <output>{values['preview.weather.radiation.val']} W/m²</output><input type="range" min="0" max="1000" step="10" value={values['preview.weather.radiation.val']} onChange={event => context.setValue('preview.weather.radiation', Number(event.target.value))} /></label>
-                    <label>Blind open <output>{values['preview.sunlight.blindPosition.val']}%</output><input type="range" min="0" max="100" value={values['preview.sunlight.blindPosition.val']} onChange={event => context.setValue('preview.sunlight.blindPosition', Number(event.target.value))} /></label>
-                    <label className="light-toggle"><input type="checkbox" checked={Boolean(values['preview.sunlight.livingRoomLight.val'])} onChange={event => context.setValue('preview.sunlight.livingRoomLight', event.target.checked)} />Living room light</label>
-                    <label className="light-toggle"><input type="checkbox" checked={Boolean(values['preview.sunlight.bottomRightLight.val'])} onChange={event => context.setValue('preview.sunlight.bottomRightLight', event.target.checked)} />Bottom right light</label>
-                    <label className="light-toggle"><input type="checkbox" checked={Boolean(values['preview.sunlight.smallRoomLight.val'])} onChange={event => context.setValue('preview.sunlight.smallRoomLight', event.target.checked)} />Small room light</label>
+                    <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => setManualSunlightValue('preview.sun.azimuth', Number(event.target.value))} /></label>
+                    <label>Sun elevation <output>{values['preview.sun.elevation.val']}°</output><input type="range" min="-5" max="80" value={values['preview.sun.elevation.val']} onChange={event => setManualSunlightValue('preview.sun.elevation', Number(event.target.value))} /></label>
+                    <label>Cloudiness <output>{values['preview.weather.cloudiness.val']}%</output><input type="range" min="0" max="100" value={values['preview.weather.cloudiness.val']} onChange={event => setManualSunlightValue('preview.weather.cloudiness', Number(event.target.value))} /></label>
+                    <label>Solar radiation <output>{values['preview.weather.radiation.val']} W/m²</output><input type="range" min="0" max="1000" step="10" value={values['preview.weather.radiation.val']} onChange={event => setManualSunlightValue('preview.weather.radiation', Number(event.target.value))} /></label>
+                    <label>Blind open <output>{values['preview.sunlight.blindPosition.val']}%</output><input type="range" min="0" max="100" value={values['preview.sunlight.blindPosition.val']} onChange={event => setManualSunlightValue('preview.sunlight.blindPosition', Number(event.target.value))} /></label>
                 </div>
             </article>
         </section>
