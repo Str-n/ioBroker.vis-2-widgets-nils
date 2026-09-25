@@ -23,6 +23,27 @@ async function checkRenderer(browser) {
         [292, -4, 30, 0, 0],
         'The evening preset should update sun, weather and blind settings together',
     );
+    await page.click('.sunlight-scene-button[data-scene="noon"]');
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > 0 &&
+        document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 0);
+    assert.deepEqual(
+        await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
+        [163, 58, 5, 950, 25],
+    );
+    await page.click('.sunlight-scene-button[data-scene="overcast"]');
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length === 0 &&
+        document.querySelectorAll('.sh-sunlight-floorplan__ambient').length > 0);
+    assert.deepEqual(
+        await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
+        [190, 34, 100, 220, 100],
+    );
+    await page.click('.sunlight-scene-button[data-scene="afternoon"]');
+    await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > 0 &&
+        document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 1);
+    assert.deepEqual(
+        await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
+        [245, 17, 15, 540, 60],
+    );
     await page.click('.sunlight-scene-button[data-scene="morning"]');
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 2);
     const set = async values => {
@@ -152,6 +173,14 @@ async function checkRenderer(browser) {
     await screenshot('daytime');
     await page.setViewport({ width: 390, height: 844 });
     await screenshot('mobile');
+    const sceneButtonsFit = await page.$eval('.sunlight-scene-grid', grid => {
+        const bounds = grid.getBoundingClientRect();
+        return [...grid.querySelectorAll('button')].every(button => {
+            const buttonBounds = button.getBoundingClientRect();
+            return buttonBounds.left >= bounds.left && buttonBounds.right <= bounds.right;
+        });
+    });
+    assert(sceneButtonsFit, 'Scene buttons should fit their grid at mobile width');
     const compact = await page.$eval('.sh-sunlight-floorplan', element => {
         element.closest('.widget-surface').style.height = '200px';
         element.classList.add('sh-sunlight-floorplan--bare');

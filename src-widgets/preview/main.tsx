@@ -131,7 +131,7 @@ const sunlightScenes = [
     },
     {
         id: 'overcast', label: 'Overcast', note: 'Diffuse daylight',
-        values: { 'preview.sun.azimuth': 190, 'preview.sun.elevation': 34, 'preview.weather.cloudiness': 90, 'preview.weather.radiation': 260, 'preview.weather.condition': 'Overcast', 'preview.sunlight.blindPosition': 100,
+        values: { 'preview.sun.azimuth': 190, 'preview.sun.elevation': 34, 'preview.weather.cloudiness': 100, 'preview.weather.radiation': 220, 'preview.weather.condition': 'Overcast', 'preview.sunlight.blindPosition': 100,
             'preview.sunlight.bottomRightLight': true, 'preview.sunlight.smallRoomLight': false, 'preview.sunlight.corridorLight': true, 'preview.sunlight.livingRoomLight': false },
     },
     {
@@ -175,14 +175,6 @@ function App(): React.JSX.Element {
         ...morningSceneValues,
     };
     const [selectedSunlightScene, setSelectedSunlightScene] = React.useState<string | null>('morning');
-    const setManualSunlightValue = (id: string, value: unknown): void => {
-        setSelectedSunlightScene(null);
-        context.setValue(id, value);
-    };
-    const applySunlightScene = (scene: typeof sunlightScenes[number]): void => {
-        setSelectedSunlightScene(scene.id);
-        setValues(old => ({ ...old, ...Object.fromEntries(Object.entries(scene.values).map(([id, value]) => [`${id}.val`, value])) }));
-    };
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
         [`${weatherBindings.oidCurrentTemperatureMin}.val`]: 12,
@@ -220,6 +212,14 @@ function App(): React.JSX.Element {
             'horizontal-demo': { settings: { sizex: 760, sizey: 190 }, widgets: {} },
         },
     }), [theme]);
+    const setManualSunlightValue = (id: string, value: unknown): void => {
+        setSelectedSunlightScene(null);
+        context.setValue(id, value);
+    };
+    const applySunlightScene = (scene: typeof sunlightScenes[number]): void => {
+        setSelectedSunlightScene(scene.id);
+        setValues(old => ({ ...old, ...Object.fromEntries(Object.entries(scene.values).map(([id, value]) => [`${id}.val`, value])) }));
+    };
     const commonProps = {
         view: 'preview', context, editMode: false, runtime: true, isRelative: true, selectedWidgets: [],
         relativeWidgetOrder: [], moveAllowed: false, selectedGroup: null, tpl: '', viewsActiveFilter: null,
