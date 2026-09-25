@@ -8,6 +8,71 @@ const artifacts = process.env.SUNLIGHT_ARTIFACTS || path.join(os.tmpdir(), 'sunl
 fs.mkdirSync(artifacts, { recursive: true });
 const screenshotPath = name => path.join(artifacts, name);
 
+async function lightingPixels(page) {
+    const png = await (await page.$('.sh-sunlight-floorplan')).screenshot();
+    return page.$eval('.sh-sunlight-floorplan', async (element, base64) => {
+        const svg = element.querySelector('svg');
+        const matrix = svg.getScreenCTM();
+        const bounds = element.getBoundingClientRect();
+        const image = new Image();
+        image.src = `data:image/png;base64,${base64}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        // Fixed locations in the production floor plan at azimuth 85°, elevation 25°.
+        const points = {
+            highlight: [131, 93], tail: [205, 111],
+            halo: [223, 111], falloff: [259, 111], background: [365, 158],
+            outside: [160, 330], adjoiningRoom: [470, 520],
+        };
+        return Object.fromEntries(Object.entries(points).map(([name, [x, y]]) => {
+            const point = new DOMPoint(x, y).matrixTransform(matrix);
+            const pixelX = Math.round((point.x - bounds.left) * image.width / bounds.width);
+            const pixelY = Math.round((point.y - bounds.top) * image.height / bounds.height);
+            const data = context.getImageData(pixelX - 1, pixelY - 1, 3, 3).data;
+            return [name, [0, 1, 2].map(channel =>
+                Array.from({ length: 9 }, (_, index) => data[index * 4 + channel]).reduce((a, b) => a + b) / 9,
+            )];
+        }));
+    }, Buffer.from(png).toString('base64'));
+}
+
+async function checkLightingAppearance(page) {
+    const attached = await page.$eval('.sh-sunlight-floorplan', element => {
+        const patches = [...element.querySelectorAll('.sh-sunlight-floorplan__beam')];
+        const scatter = [...element.querySelectorAll('.sh-sunlight-floorplan__beam-scatter')];
+        return patches.length === scatter.length && patches.every((patch, index) =>
+            patch.getAttribute('d') === scatter[index].getAttribute('d') &&
+            patch.parentElement.getAttribute('clip-path') === scatter[index].parentElement.getAttribute('clip-path'),
+        );
+    });
+    assert(attached, 'Scatter must use the actual wall-clipped footprint and its room mask');
+    const lit = await lightingPixels(page);
+    assert(lit.highlight[0] > 235 && lit.highlight[0] - lit.highlight[2] > 70,
+        'Direct sunlight should have a luminous warm highlight');
+    assert(lit.highlight[0] - lit.tail[0] > 40, 'Sun patches should visibly soften toward their far edge');
+    assert(lit.halo[0] - lit.falloff[0] > 15 && lit.falloff[0] - lit.background[0] > 10,
+        'Warm scatter should extend beyond the patch and fall off gradually');
+    const hidden = await page.addStyleTag({
+        content: '.sh-sunlight-floorplan__beam-scatter, .sh-sunlight-floorplan__beam-glow { visibility: hidden; }',
+    });
+    try {
+        const withoutScatter = await lightingPixels(page);
+        assert(lit.halo[0] - withoutScatter.halo[0] > 30,
+            'Scatter must make a visible contribution, not just add invisible SVG layers');
+        for (const point of ['outside', 'adjoiningRoom']) {
+            assert(lit[point].every((channel, index) => Math.abs(channel - withoutScatter[point][index]) < 2),
+                `Scatter leaked across a room boundary at ${point}`);
+        }
+    } finally {
+        await hidden.evaluate(element => element.remove());
+    }
+    console.log('Lighting appearance and room clipping passed', lit);
+}
+
 async function checkRenderer(browser) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1440, height: 1000 });
@@ -59,6 +124,7 @@ async function checkRenderer(browser) {
     const inspect = () =>
         page.$eval('.sh-sunlight-floorplan', e => ({
             beams: e.querySelectorAll('.sh-sunlight-floorplan__beam').length,
+            scatter: e.querySelectorAll('.sh-sunlight-floorplan__beam-scatter').length,
             ambient: e.querySelectorAll('.sh-sunlight-floorplan__ambient').length,
             reflections: e.querySelectorAll('.sh-sunlight-floorplan__reflection').length,
             lamps: e.querySelectorAll('.sh-sunlight-floorplan__light-glow').length,
@@ -67,6 +133,8 @@ async function checkRenderer(browser) {
     const screenshot = async name =>
         (await page.$('.sh-sunlight-floorplan')).screenshot({ path: screenshotPath(name + '.png') });
     const day = await inspect();
+    assert(day.scatter > 0, 'Direct sunlight should add scatter around illuminated floor patches');
+    assert.equal(day.scatter, day.beams);
     console.log('day', day);
     const patchBoundsArea = () =>
         page.$eval('.sh-sunlight-floorplan', element =>
@@ -87,11 +155,13 @@ async function checkRenderer(browser) {
         Math.max(...grazingAngleAreas) / Math.min(...grazingAngleAreas) < 1.1,
         `Rendered patch bounds changed abruptly at the grazing wall angle: ${grazingAngleAreas}`,
     );
+    await checkLightingAppearance(page);
     await set({ 0: 108 });
     await set({ 1: -5 });
     const night = await inspect();
     assert.equal(night.beams, 0);
     assert.equal(night.ambient, 0);
+    assert.equal(night.scatter, 0);
     assert.equal(night.lamps, 2);
     await screenshot('night');
     console.log('night', night);
@@ -99,20 +169,25 @@ async function checkRenderer(browser) {
     const closed = await inspect();
     assert(closed.beams < day.beams, 'Closing configured blinds should reduce direct sunlight');
     assert(closed.ambient < day.ambient, 'Closing configured blinds should reduce indirect room light');
+    assert(closed.scatter < day.scatter, 'Closed blinds should reduce scatter from floor patches');
+    assert.equal(closed.scatter, closed.beams, 'Scatter must disappear with its floor footprint');
     console.log('closed', closed);
     await set({ 4: 100, 2: 100 });
     const cloudy = await inspect();
     assert.equal(cloudy.beams, 0);
     assert(cloudy.ambient > 0);
+    assert.equal(cloudy.scatter, 0, 'Overcast light should stay diffuse without direct-light scatter');
     await screenshot('cloudy');
     console.log('cloudy', cloudy);
     await set({ 2: 0, 1: 10 });
     const atCutoff = await inspect();
     assert(atCutoff.beams > 0, 'Sun exactly at the cutoff should still cast direct patches');
+    assert(atCutoff.scatter > 0, 'Sun at the cutoff should still receive direct-light scatter');
     await set({ 1: 9 });
     const low = await inspect();
     assert.equal(low.beams, 0);
     assert.equal(low.reflections, 0);
+    assert.equal(low.scatter, 0, 'Sun below the cutoff must not add direct-light scatter');
     assert(low.ambient > 0, 'Sun below the direct-light cutoff should still contribute indirect light');
     await screenshot('low');
     console.log('low', low);

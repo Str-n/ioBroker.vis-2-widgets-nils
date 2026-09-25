@@ -59,13 +59,15 @@
 
 .sh-sunlight-floorplan__beam,
 .sh-sunlight-floorplan__beam-glow,
+.sh-sunlight-floorplan__beam-scatter,
 .sh-sunlight-floorplan__reflection {
     pointer-events: none;
     mix-blend-mode: normal;
 }
 
 .sh-sunlight-floorplan__beam,
-.sh-sunlight-floorplan__beam-glow {
+.sh-sunlight-floorplan__beam-glow,
+.sh-sunlight-floorplan__beam-scatter {
     transition:
         fill 450ms ease,
         opacity 450ms ease;
@@ -98,6 +100,7 @@
 @media (prefers-reduced-motion: reduce) {
     .sh-sunlight-floorplan__beam,
     .sh-sunlight-floorplan__beam-glow,
+    .sh-sunlight-floorplan__beam-scatter,
     .sh-sunlight-floorplan__reflection,
     .sh-sunlight-floorplan__ambient,
     .sh-sunlight-floorplan__light-room,

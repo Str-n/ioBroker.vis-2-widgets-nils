@@ -195,7 +195,7 @@ function rgbToHex(red: number, green: number, blue: number): string {
 export function sunlightColor(sunElevation: number): string {
     // Low sun is amber; the color moves continuously toward neutral daylight as the sun rises.
     const warmth = clamp(1 - Math.max(0, sunElevation) / 55, 0, 1);
-    return rgbToHex(255, 246 - 65 * warmth, 226 - 126 * warmth);
+    return rgbToHex(255, 250 - 65 * warmth, 228 - 154 * warmth);
 }
 
 export function normalizeBlindOpenFactorForWindow(window: SunlightWindow): number {
