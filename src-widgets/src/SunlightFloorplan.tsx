@@ -6,6 +6,7 @@ import Generic from './Generic';
 import {
     calculateSunlightBeam,
     calculateSunlightFactors,
+    inferWindowAzimuthFromRoomBoundary,
     normalizeBlindOpenFactorForWindow,
     parseRoomPolygon,
     pointsAttribute,
@@ -39,11 +40,10 @@ interface SunlightRxData extends Record<string, any> {
     roomHeightMeters: number | string;
     windowCount: number | string;
     roomPolygonCount: number | string;
-    [key: `windowStartX${number}`]: number | string;
-    [key: `windowStartY${number}`]: number | string;
-    [key: `windowEndX${number}`]: number | string;
-    [key: `windowEndY${number}`]: number | string;
-    [key: `windowAzimuth${number}`]: number | string;
+    [key: `windowCenterX${number}`]: number | string;
+    [key: `windowCenterY${number}`]: number | string;
+    [key: `windowWidthX${number}`]: number | string;
+    [key: `windowWidthY${number}`]: number | string;
     [key: `blindOid${number}`]: string;
     [key: `blindMin${number}`]: number | string;
     [key: `blindMax${number}`]: number | string;
@@ -416,11 +416,16 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                     indexFrom: 1,
                     indexTo: 'windowCount',
                     fields: [
-                        { name: 'windowStartX', label: 'window_start_x', type: 'number', default: 0 },
-                        { name: 'windowStartY', label: 'window_start_y', type: 'number', default: 0 },
-                        { name: 'windowEndX', label: 'window_end_x', type: 'number', default: 0 },
-                        { name: 'windowEndY', label: 'window_end_y', type: 'number', default: 0 },
-                        { name: 'windowAzimuth', label: 'window_azimuth', type: 'number', min: 0, max: 359, default: 163 },
+                        { name: 'windowCenterX', label: 'window_center_x', type: 'number', default: 0 },
+                        { name: 'windowCenterY', label: 'window_center_y', type: 'number', default: 0 },
+                        {
+                            name: 'windowWidthX',
+                            label: 'window_width_x',
+                            type: 'number',
+                            default: 0,
+                            tooltip: 'window_geometry_help',
+                        },
+                        { name: 'windowWidthY', label: 'window_width_y', type: 'number', default: 0 },
                         { name: 'windowHeightMeters', label: 'window_height_meters', type: 'number', min: 0.1, step: 0.05, default: 1.35 },
                         { name: 'windowSillHeightMeters', label: 'window_sill_height_meters', type: 'number', min: 0, step: 0.05, default: 0.9 },
                         {
@@ -529,17 +534,36 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
 
         const activeSashKeys = new Set<string>();
         for (let index = 1; index <= windowCount; index++) {
-            const startX = Number(data[`windowStartX${index}`]);
-            const startY = Number(data[`windowStartY${index}`]);
-            const endX = Number(data[`windowEndX${index}`]);
-            const endY = Number(data[`windowEndY${index}`]);
-            const windowAzimuth = Number(data[`windowAzimuth${index}`]);
             const roomIndex = Math.max(1, Math.min(16, Number(data[`roomIndex${index}`]) || 1));
             const configuredRoomPolygon = data[`roomBoundary${roomIndex}`];
             // Keep supporting widgets saved before room polygons became shared room settings.
             const roomPolygon = parseRoomPolygon(configuredRoomPolygon || data[`roomPolygon${index}`]);
             const blindOid = data[`blindOid${index}`];
-            if (![startX, startY, endX, endY, windowAzimuth].every(Number.isFinite) || roomPolygon.length < 3) {
+            const centerX = Number(data[`windowCenterX${index}`]);
+            const centerY = Number(data[`windowCenterY${index}`]);
+            const widthX = Number(data[`windowWidthX${index}`]);
+            const widthY = Number(data[`windowWidthY${index}`]);
+            const hasNewGeometry =
+                [centerX, centerY, widthX, widthY].every(Number.isFinite) && Math.hypot(widthX, widthY) > 0;
+            const startX = centerX - widthX / 2;
+            const startY = centerY - widthY / 2;
+            const endX = centerX + widthX / 2;
+            const endY = centerY + widthY / 2;
+            const windowAzimuth = inferWindowAzimuthFromRoomBoundary(
+                centerX,
+                centerY,
+                widthX,
+                widthY,
+                roomPolygon,
+                floorTopAzimuth,
+            );
+            if (
+                !hasNewGeometry ||
+                ![startX, startY, endX, endY].every(Number.isFinite) ||
+                windowAzimuth === undefined ||
+                !Number.isFinite(windowAzimuth) ||
+                roomPolygon.length < 3
+            ) {
                 continue;
             }
             configuredWindowCount++;

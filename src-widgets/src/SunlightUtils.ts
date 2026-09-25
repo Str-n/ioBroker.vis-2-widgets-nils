@@ -256,6 +256,78 @@ function isPointInPolygon(point: [number, number], polygon: Array<[number, numbe
     return inside;
 }
 
+/** Infer a window's outward bearing from the nearby, parallel edge of its room polygon. */
+export function inferWindowAzimuthFromRoomBoundary(
+    centerX: number,
+    centerY: number,
+    widthX: number,
+    widthY: number,
+    polygon: Array<[number, number]>,
+    floorTopAzimuth: number,
+): number | undefined {
+    const windowLength = Math.hypot(widthX, widthY);
+    if (
+        polygon.length < 3 ||
+        ![centerX, centerY, widthX, widthY, floorTopAzimuth, windowLength].every(Number.isFinite) ||
+        windowLength <= 0
+    ) {
+        return undefined;
+    }
+
+    let doubleArea = 0;
+    for (let index = 0; index < polygon.length; index++) {
+        const [x1, y1] = polygon[index];
+        const [x2, y2] = polygon[(index + 1) % polygon.length];
+        doubleArea += x1 * y2 - x2 * y1;
+    }
+    if (Math.abs(doubleArea) < 0.001) {
+        return undefined;
+    }
+
+    const tangentX = widthX / windowLength;
+    const tangentY = widthY / windowLength;
+    let bestScore = Infinity;
+    let outward: [number, number] | undefined;
+    for (let index = 0; index < polygon.length; index++) {
+        const [startX, startY] = polygon[index];
+        const [endX, endY] = polygon[(index + 1) % polygon.length];
+        const edgeX = endX - startX;
+        const edgeY = endY - startY;
+        const edgeLength = Math.hypot(edgeX, edgeY);
+        if (edgeLength <= 0) {
+            continue;
+        }
+
+        const edgeUnitX = edgeX / edgeLength;
+        const edgeUnitY = edgeY / edgeLength;
+        const alignment = Math.abs(tangentX * edgeUnitX + tangentY * edgeUnitY);
+        if (alignment < 0.85) {
+            continue;
+        }
+
+        const offsetX = centerX - startX;
+        const offsetY = centerY - startY;
+        const projection = offsetX * edgeUnitX + offsetY * edgeUnitY;
+        if (projection < -windowLength / 2 || projection > edgeLength + windowLength / 2) {
+            continue;
+        }
+        const perpendicularDistance = Math.abs(offsetX * edgeUnitY - offsetY * edgeUnitX);
+        const score = perpendicularDistance + (1 - alignment) * windowLength * 2;
+        if (score < bestScore) {
+            bestScore = score;
+            // Positive signed area means the polygon is clockwise in SVG coordinates.
+            outward = doubleArea > 0 ? [edgeUnitY, -edgeUnitX] : [-edgeUnitY, edgeUnitX];
+        }
+    }
+
+    if (!outward || bestScore > Math.max(5, windowLength * 0.08)) {
+        return undefined;
+    }
+
+    const relativeBearing = (Math.atan2(outward[0], -outward[1]) * 180) / Math.PI;
+    return ((floorTopAzimuth + relativeBearing) % 360 + 360) % 360;
+}
+
 function firstRoomBoundaryHit(
     start: [number, number],
     end: [number, number],

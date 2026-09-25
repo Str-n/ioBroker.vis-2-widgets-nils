@@ -336,27 +336,26 @@ function App(): React.JSX.Element {
                         weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
                         weatherTemperatureOid: 'preview.weather.temperature', weatherRadiationOid: 'preview.weather.radiation',
                         sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent',
-                        svgUnitsPerMeter: 75, roomHeightMeters: 2.5, maximumProjection: 650, windowCount: 4, roomPolygonCount: 1,
-                        windowStartX1: 8, windowStartY1: 28,
-                        windowEndX1: 8, windowEndY1: 280, windowAzimuth1: 73,
+                        svgUnitsPerMeter: 62, roomHeightMeters: 2.5, maximumProjection: 650, windowCount: 5, roomPolygonCount: 1,
+                        windowCenterX1: 8, windowCenterY1: 154, windowWidthX1: 0, windowWidthY1: 252,
                         windowHeightMeters1: 1.35, windowSillHeightMeters1: 0.9,
-                        windowStartX2: 20, windowStartY2: 8,
-                        windowEndX2: 160, windowEndY2: 8, windowAzimuth2: 163,
+                        windowCenterX2: 90, windowCenterY2: 8, windowWidthX2: 140, windowWidthY2: 0,
                         windowHeightMeters2: 1.35, windowSillHeightMeters2: 0.9,
-                        windowStartX3: 300, windowStartY3: 8,
-                        windowEndX3: 440, windowEndY3: 8, windowAzimuth3: 163,
+                        windowCenterX3: 370, windowCenterY3: 8, windowWidthX3: 140, windowWidthY3: 0,
                         windowHeightMeters3: 1.35, windowSillHeightMeters3: 0.9,
-                        windowStartX4: 500, windowStartY4: 8,
-                        windowEndX4: 640, windowEndY4: 8, windowAzimuth4: 163,
+                        windowCenterX4: 630, windowCenterY4: 8, windowWidthX4: 140, windowWidthY4: 0,
                         windowHeightMeters4: 1.35, windowSillHeightMeters4: 0.9,
+                        windowCenterX5: 748, windowCenterY5: 210, windowWidthX5: 0, windowWidthY5: 240,
+                        windowHeightMeters5: 1.35, windowSillHeightMeters5: 0.9,
                         roomBoundary1: '7.7288049,6.7245844 748.51664,7.1971841 748.68714,409.96694 455.59287,409.80419 454.9311,295.80379 6.5534834,295.2866',
  
-                        roomIndex1: 1, roomIndex2: 1, roomIndex3: 1, roomIndex4: 1,
-                        windowSashCount1: 3, windowSashCount2: 2, windowSashCount3: 2,
+                        roomIndex1: 1, roomIndex2: 1, roomIndex3: 1, roomIndex4: 1, roomIndex5: 1,
+                        windowSashCount1: 3, windowSashCount2: 2, windowSashCount3: 2, windowSashCount4: 2, windowSashCount5: 3,
                         blindOid1: 'preview.sunlight.blindPosition', blindMin1: 0, blindMax1: 100, blindInvert1: false,
                         blindOid2: 'preview.sunlight.blindPosition', blindMin2: 0, blindMax2: 100, blindInvert2: false,
                         blindOid3: 'preview.sunlight.blindPosition', blindMin3: 0, blindMax3: 100, blindInvert3: false,
-                        blindOid4: 'preview.sunlight.blindPosition', blindMin4: 0, blindMax4: 100, blindInvert4: false,}
+                        blindOid4: 'preview.sunlight.blindPosition', blindMin4: 0, blindMax4: 100, blindInvert4: false,
+                        blindOid5: 'preview.sunlight.blindPosition', blindMin5: 0, blindMax5: 100, blindInvert5: false,}
                 }} />
                 <div className="sunlight-preview-controls">
                     <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => context.setValue('preview.sun.azimuth', Number(event.target.value))} /></label>
