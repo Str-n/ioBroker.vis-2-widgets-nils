@@ -17,6 +17,8 @@ export interface SunlightWindow {
 
 export interface SunlightBeam {
     points: Array<[number, number]>;
+    /** Floor footprint stopped at the first wall, including concave room corners. */
+    floorPoints: Array<[number, number]>;
     clipPoints: Array<[number, number]>;
     strength: number;
     softness: number;
@@ -41,6 +43,14 @@ export function clamp(value: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, value));
 }
 
+export function numericStateValue(value: unknown): number | undefined {
+    if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) {
+        return undefined;
+    }
+    const number = Number(value);
+    return Number.isFinite(number) ? number : undefined;
+}
+
 export function parseRoomPolygon(value: unknown): Array<[number, number]> {
     if (typeof value !== 'string') {
         return [];
@@ -57,7 +67,7 @@ export function parseRoomPolygon(value: unknown): Array<[number, number]> {
 }
 
 export function smallestAngularDifference(a: number, b: number): number {
-    return ((a - b + 540) % 360) - 180;
+    return ((((a - b) % 360) + 540) % 360) - 180;
 }
 
 export function normalizeBlindOpenFactor(value: unknown, min = 0, max = 100, invert = false): number {
@@ -71,8 +81,8 @@ export function normalizeBlindOpenFactor(value: unknown, min = 0, max = 100, inv
 }
 
 export function weatherSunFactorFromCloudiness(value: unknown, fraction = false): number | undefined {
-    const numericValue = Number(value);
-    if (value === undefined || value === null || value === '' || !Number.isFinite(numericValue)) {
+    const numericValue = numericStateValue(value);
+    if (numericValue === undefined) {
         return undefined;
     }
 
@@ -111,20 +121,14 @@ export function weatherSunFactorFromCondition(value: unknown): number | undefine
 }
 
 export function weatherSunFactorFromRadiation(value: unknown, clearSkyReference = 1000): number | undefined {
-    const radiation = Number(value);
-    if (
-        value === undefined ||
-        value === null ||
-        value === '' ||
-        !Number.isFinite(radiation) ||
-        !Number.isFinite(clearSkyReference) ||
-        clearSkyReference <= 0
-    ) {
+    const radiation = numericStateValue(value);
+    if (radiation === undefined || !Number.isFinite(clearSkyReference) || clearSkyReference <= 0) {
         return undefined;
     }
 
     // A small sensor/noise floor prevents a visible daytime wash when the sensor reads only a few W/m².
-    return clamp((radiation - 8) / (clearSkyReference - 8), 0, 1);
+    const noiseFloor = Math.min(8, clearSkyReference * 0.01);
+    return clamp((radiation - noiseFloor) / (clearSkyReference - noiseFloor), 0, 1);
 }
 
 function availableSkyClarity(cloudiness: unknown, condition: unknown, cloudinessIsFraction: boolean): number {
@@ -148,13 +152,12 @@ export function calculateSunlightFactors(
     const clarity = availableSkyClarity(cloudiness, condition, cloudinessIsFraction);
     const radiationFactor = weatherSunFactorFromRadiation(radiation, clearSkyReference);
 
-    const normalizedDirect = Number(directFactor);
-    const hasDirectFactor =
-        directFactor !== undefined && directFactor !== null && directFactor !== '' && Number.isFinite(normalizedDirect);
+    const normalizedDirect = numericStateValue(directFactor);
+    const hasDirectFactor = normalizedDirect !== undefined;
     const hasWeatherObservation =
         weatherSunFactorFromCloudiness(cloudiness, cloudinessIsFraction) !== undefined ||
         weatherSunFactorFromCondition(condition) !== undefined;
-    if (radiationFactor === undefined && !hasDirectFactor && !hasWeatherObservation) {
+    if ((source !== 'radiation' || radiationFactor === undefined) && !hasDirectFactor && !hasWeatherObservation) {
         return { total: 0, direct: 0, diffuse: 0, skyClarity: clarity };
     }
 
@@ -181,20 +184,33 @@ export function calculateSunlightFactors(
 
 function rgbToHex(red: number, green: number, blue: number): string {
     return `#${[red, green, blue]
-        .map(value => Math.round(clamp(value, 0, 255)).toString(16).padStart(2, '0'))
+        .map(value =>
+            Math.round(clamp(value, 0, 255))
+                .toString(16)
+                .padStart(2, '0'),
+        )
         .join('')}`;
 }
 
 export function sunlightColor(sunElevation: number): string {
     // Low sun is amber; the color moves continuously toward neutral daylight as the sun rises.
     const warmth = clamp(1 - Math.max(0, sunElevation) / 55, 0, 1);
-    return rgbToHex(255, 244 - 145 * warmth, 220 - 290 * warmth);
+    return rgbToHex(255, 246 - 65 * warmth, 226 - 126 * warmth);
 }
 
 export function normalizeBlindOpenFactorForWindow(window: SunlightWindow): number {
     const blindUnavailable =
-        window.blindValue === undefined || window.blindValue === null || window.blindValue === '';
-    if (window.blindStateConfigured && blindUnavailable) {
+        window.blindValue === undefined ||
+        window.blindValue === null ||
+        (typeof window.blindValue === 'string' && !window.blindValue.trim()) ||
+        !Number.isFinite(Number(window.blindValue));
+    if (
+        window.blindStateConfigured &&
+        (blindUnavailable ||
+            !Number.isFinite(window.blindMin) ||
+            !Number.isFinite(window.blindMax) ||
+            window.blindMax <= window.blindMin)
+    ) {
         return 0;
     }
     return normalizeBlindOpenFactor(window.blindValue, window.blindMin, window.blindMax, window.blindInvert);
@@ -228,7 +244,100 @@ function crossProduct(aX: number, aY: number, bX: number, bY: number): number {
     return aX * bY - aY * bX;
 }
 
-function isPointInPolygon(point: [number, number], polygon: Array<[number, number]>): boolean {
+export function polygonArea(points: Array<[number, number]>): number {
+    return (
+        Math.abs(
+            points.reduce((area, point, index) => {
+                const next = points[(index + 1) % points.length];
+                return area + point[0] * next[1] - next[0] * point[1];
+            }, 0),
+        ) / 2
+    );
+}
+
+/** Reject collapsed edges and crossing boundaries before they can become room masks. */
+export function isValidRoomPolygon(points: Array<[number, number]>): boolean {
+    if (points.length < 3 || !points.every(point => point.every(Number.isFinite)) || polygonArea(points) < 0.01) {
+        return false;
+    }
+    for (let i = 0; i < points.length; i++) {
+        const a = points[i];
+        const b = points[(i + 1) % points.length];
+        if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.001) {
+            return false;
+        }
+        for (let j = i + 2; j < points.length; j++) {
+            if (i === 0 && j === points.length - 1) {
+                continue;
+            }
+            const c = points[j];
+            const d = points[(j + 1) % points.length];
+            const orient = (p: [number, number], q: [number, number], r: [number, number]): number =>
+                crossProduct(q[0] - p[0], q[1] - p[1], r[0] - p[0], r[1] - p[1]);
+            if (
+                Math.max(a[0], b[0]) >= Math.min(c[0], d[0]) &&
+                Math.max(c[0], d[0]) >= Math.min(a[0], b[0]) &&
+                Math.max(a[1], b[1]) >= Math.min(c[1], d[1]) &&
+                Math.max(c[1], d[1]) >= Math.min(a[1], b[1]) &&
+                orient(a, b, c) * orient(a, b, d) <= 0 &&
+                orient(c, d, a) * orient(c, d, b) <= 0
+            ) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+export function snapPointToRoomBoundary(
+    point: [number, number],
+    polygon: Array<[number, number]>,
+    tolerance: number,
+): [number, number] {
+    let result = point;
+    let closest = tolerance;
+    polygon.forEach((start, index) => {
+        const end = polygon[(index + 1) % polygon.length];
+        const dx = end[0] - start[0];
+        const dy = end[1] - start[1];
+        const lengthSquared = dx * dx + dy * dy;
+        if (!lengthSquared) {
+            return;
+        }
+        const t = clamp(((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / lengthSquared, 0, 1);
+        const projected: [number, number] = [start[0] + t * dx, start[1] + t * dy];
+        const distance = Math.hypot(point[0] - projected[0], point[1] - projected[1]);
+        if (distance <= closest) {
+            result = projected;
+            closest = distance;
+        }
+    });
+    return result;
+}
+
+/** Find an interior position even for rooms whose bounding-box center is outside the room. */
+export function roomInteriorPoint(polygon: Array<[number, number]>): [number, number] {
+    const y = (Math.min(...polygon.map(point => point[1])) + Math.max(...polygon.map(point => point[1]))) / 2;
+    const crossings: number[] = [];
+    polygon.forEach(([x1, y1], index) => {
+        const [x2, y2] = polygon[(index + 1) % polygon.length];
+        if (y1 > y !== y2 > y) {
+            crossings.push(x1 + ((y - y1) * (x2 - x1)) / (y2 - y1));
+        }
+    });
+    crossings.sort((a, b) => a - b);
+    let result: [number, number] = polygon[0];
+    let width = 0;
+    for (let i = 0; i + 1 < crossings.length; i += 2) {
+        if (crossings[i + 1] - crossings[i] > width) {
+            width = crossings[i + 1] - crossings[i];
+            result = [(crossings[i] + crossings[i + 1]) / 2, y];
+        }
+    }
+    return result;
+}
+
+export function isPointInPolygon(point: [number, number], polygon: Array<[number, number]>): boolean {
     const [x, y] = point;
     let inside = false;
     for (let index = 0, previousIndex = polygon.length - 1; index < polygon.length; previousIndex = index++) {
@@ -249,7 +358,7 @@ function isPointInPolygon(point: [number, number], polygon: Array<[number, numbe
             return true;
         }
 
-        if ((startY > y) !== (endY > y) && x < ((endX - startX) * (y - startY)) / (endY - startY) + startX) {
+        if (startY > y !== endY > y && x < ((endX - startX) * (y - startY)) / (endY - startY) + startX) {
             inside = !inside;
         }
     }
@@ -308,7 +417,9 @@ export function inferWindowAzimuthFromRoomBoundary(
         const offsetX = centerX - startX;
         const offsetY = centerY - startY;
         const projection = offsetX * edgeUnitX + offsetY * edgeUnitY;
-        if (projection < -windowLength / 2 || projection > edgeLength + windowLength / 2) {
+        const tolerance = Math.max(5, windowLength * 0.08);
+        const halfSpan = (windowLength * alignment) / 2;
+        if (projection - halfSpan < -tolerance || projection + halfSpan > edgeLength + tolerance) {
             continue;
         }
         const perpendicularDistance = Math.abs(offsetX * edgeUnitY - offsetY * edgeUnitX);
@@ -325,7 +436,7 @@ export function inferWindowAzimuthFromRoomBoundary(
     }
 
     const relativeBearing = (Math.atan2(outward[0], -outward[1]) * 180) / Math.PI;
-    return ((floorTopAzimuth + relativeBearing) % 360 + 360) % 360;
+    return (((floorTopAzimuth + relativeBearing) % 360) + 360) % 360;
 }
 
 function firstRoomBoundaryHit(
@@ -442,12 +553,27 @@ export function calculateSunlightBeam(
 ): SunlightBeam | undefined {
     if (
         sunElevation <= 0 ||
-        ![sunAzimuth, sunElevation, floorTopAzimuth, window.azimuth].every(Number.isFinite) ||
+        sunElevation >= 90 ||
+        ![
+            sunAzimuth,
+            sunElevation,
+            floorTopAzimuth,
+            window.azimuth,
+            directFactor,
+            skyClarity,
+            maximumProjection,
+            window.startX,
+            window.startY,
+            window.endX,
+            window.endY,
+        ].every(Number.isFinite) ||
         window.roomPolygon.length < 3 ||
         ![svgUnitsPerMeter, window.windowHeightMeters, window.windowSillHeightMeters, window.roomHeightMeters].every(
             Number.isFinite,
         ) ||
         svgUnitsPerMeter <= 0 ||
+        maximumProjection <= 0 ||
+        Math.hypot(window.endX - window.startX, window.endY - window.startY) <= 0 ||
         window.windowHeightMeters <= 0 ||
         window.roomHeightMeters <= 0
     ) {
@@ -464,7 +590,7 @@ export function calculateSunlightBeam(
 
     // The blind covers from the top down. The remaining lower strip of glass is the aperture
     // through which rays enter, so its sill and exposed top determine the floor patch limits.
-    const elevationRadians = (clamp(sunElevation, 1, 85) * Math.PI) / 180;
+    const elevationRadians = (Math.max(sunElevation, 0.1) * Math.PI) / 180;
     const openBottom = clamp(window.windowSillHeightMeters, 0, window.roomHeightMeters);
     const openTop = clamp(
         window.windowSillHeightMeters + window.windowHeightMeters * blindOpenFactor,
@@ -476,21 +602,19 @@ export function calculateSunlightBeam(
     }
 
     const projectionPerMeter = svgUnitsPerMeter / Math.tan(elevationRadians);
-    const nearDistance = clamp(openBottom * projectionPerMeter, 0, maximumProjection);
-    const farDistance = clamp(openTop * projectionPerMeter, 0, maximumProjection);
-    if (farDistance <= nearDistance) {
-        return undefined;
-    }
+    // Keep the actual distances for wall interception, even when the floor patch is beyond the display cap.
+    const nearDistance = openBottom * projectionPerMeter;
+    const farDistance = openTop * projectionPerMeter;
 
     const screenRelativeAzimuth = ((sunAzimuth - floorTopAzimuth) * Math.PI) / 180;
     // Bearings are clockwise from north. In SVG coordinates, x points right and y points down.
     // The indoor ray points away from the sun's horizontal bearing.
     const rayX = -Math.sin(screenRelativeAzimuth);
     const rayY = Math.cos(screenRelativeAzimuth);
-    const nearDx = rayX * nearDistance;
-    const nearDy = rayY * nearDistance;
-    const farDx = rayX * farDistance;
-    const farDy = rayY * farDistance;
+    const nearDx = rayX * Math.min(nearDistance, maximumProjection);
+    const nearDy = rayY * Math.min(nearDistance, maximumProjection);
+    const farDx = rayX * Math.min(farDistance, maximumProjection);
+    const farDy = rayY * Math.min(farDistance, maximumProjection);
 
     const points: Array<[number, number]> = [
         [window.startX + nearDx, window.startY + nearDy],
@@ -499,12 +623,45 @@ export function calculateSunlightBeam(
         [window.startX + farDx, window.startY + farDy],
     ];
 
+    const windowDx = window.endX - window.startX;
+    const windowDy = window.endY - window.startY;
+    const samples = new Set([0, 1]);
+    const denominator = crossProduct(windowDx, windowDy, rayX, rayY);
+    if (Math.abs(denominator) > 0.000001) {
+        // Cast on either side of every corner so a beam cannot reappear beyond an intervening wall.
+        window.roomPolygon.forEach(([x, y]) => {
+            const across = crossProduct(x - window.startX, y - window.startY, rayX, rayY) / denominator;
+            if (across > 0 && across < 1) {
+                samples.add(Math.max(0, across - 0.00001));
+                samples.add(Math.min(1, across + 0.00001));
+            }
+        });
+    }
+    const nearPoints: Array<[number, number]> = [];
+    const farPoints: Array<[number, number]> = [];
+    [...samples]
+        .sort((a, b) => a - b)
+        .forEach(across => {
+            const start: [number, number] = [window.startX + windowDx * across, window.startY + windowDy * across];
+            const hit = firstRoomBoundaryHit(start, [start[0] + farDx, start[1] + farDy], window.roomPolygon);
+            const stop = (hit?.distanceFraction ?? 1) * Math.min(farDistance, maximumProjection);
+            const near = Math.min(nearDistance, stop);
+            nearPoints.push([start[0] + rayX * near, start[1] + rayY * near]);
+            farPoints.push([start[0] + rayX * stop, start[1] + rayY * stop]);
+        });
+    const actualPoints: Array<[number, number]> = [
+        points[0],
+        points[1],
+        [window.endX + rayX * farDistance, window.endY + rayY * farDistance],
+        [window.startX + rayX * farDistance, window.startY + rayY * farDistance],
+    ];
     return {
         points,
+        floorPoints: [...nearPoints, ...farPoints.reverse()],
         clipPoints: window.roomPolygon,
         strength,
-        softness: 13 + (1 - clamp(skyClarity, 0, 1)) * 9,
-        wallReflection: estimateWallReflection(window, points, nearDistance, farDistance),
+        softness: svgUnitsPerMeter * (0.065 + (1 - clamp(skyClarity, 0, 1)) * 0.11),
+        wallReflection: estimateWallReflection(window, actualPoints, nearDistance, farDistance),
     };
 }
 

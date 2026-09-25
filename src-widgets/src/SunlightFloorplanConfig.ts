@@ -1,3 +1,5 @@
+import { isValidRoomPolygon, numericStateValue } from './SunlightUtils';
+
 export type FloorplanPoint = [number, number];
 
 export interface FloorplanRoomGeometry {
@@ -38,20 +40,26 @@ export type FloorplanGeometries = Record<string, FloorplanGeometry>;
 export const emptyFloorplanGeometry: FloorplanGeometry = { rooms: [], windows: [], lightBubbles: [] };
 
 function finiteNumber(value: unknown, fallback: number): number {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : fallback;
+    return numericStateValue(value) ?? fallback;
 }
 
 function parsePoints(value: unknown): FloorplanPoint[] {
     if (!Array.isArray(value)) {
         return [];
     }
-    return value
-        .filter(
-            (point): point is [unknown, unknown] =>
-                Array.isArray(point) && point.length === 2 && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1])),
-        )
-        .map(point => [Number(point[0]), Number(point[1])] as FloorplanPoint);
+    const points = value.map(point =>
+        Array.isArray(point) && point.length === 2
+            ? ([finiteNumber(point[0], NaN), finiteNumber(point[1], NaN)] as FloorplanPoint)
+            : ([NaN, NaN] as FloorplanPoint),
+    );
+    if (
+        points.length > 3 &&
+        points[0][0] === points[points.length - 1][0] &&
+        points[0][1] === points[points.length - 1][1]
+    ) {
+        points.pop();
+    }
+    return isValidRoomPolygon(points) ? points : [];
 }
 
 function parseFloorGeometry(value: unknown): FloorplanGeometry {
@@ -60,12 +68,22 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
     }
 
     const source = value as Record<string, unknown>;
+    const roomIndices = new Map<number, number>();
+    let validRoomCount = 0;
     const rooms = Array.isArray(source.rooms)
         ? source.rooms
               .map(room => ({
-                  points: parsePoints(room && typeof room === 'object' ? (room as Record<string, unknown>).points : undefined),
+                  points: parsePoints(
+                      room && typeof room === 'object' ? (room as Record<string, unknown>).points : undefined,
+                  ),
               }))
-              .filter(room => room.points.length >= 3)
+              .filter((room, index) => {
+                  if (room.points.length < 3) {
+                      return false;
+                  }
+                  roomIndices.set(index + 1, ++validRoomCount);
+                  return true;
+              })
         : [];
     const windows = Array.isArray(source.windows)
         ? source.windows
@@ -76,7 +94,7 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
                       centerY: finiteNumber(value.centerY, 0),
                       widthX: finiteNumber(value.widthX, 0),
                       widthY: finiteNumber(value.widthY, 0),
-                      roomIndex: Math.max(1, Math.round(finiteNumber(value.roomIndex, 1))),
+                      roomIndex: roomIndices.get(Math.round(finiteNumber(value.roomIndex, 1))) ?? 0,
                       windowHeightMeters: Math.max(0.1, finiteNumber(value.windowHeightMeters, 1.35)),
                       windowSillHeightMeters: Math.max(0, finiteNumber(value.windowSillHeightMeters, 0.9)),
                       windowSashCount: Math.max(1, Math.min(3, Math.round(finiteNumber(value.windowSashCount, 1)))),
@@ -86,6 +104,7 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
                       blindInvert: value.blindInvert === true || value.blindInvert === 'true',
                   };
               })
+              .filter(item => item.roomIndex > 0)
         : [];
     const lightBubbles = Array.isArray(source.lightBubbles)
         ? source.lightBubbles
@@ -94,11 +113,12 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
                   return {
                       x: finiteNumber(value.x, 0),
                       y: finiteNumber(value.y, 0),
-                      roomIndex: Math.max(1, Math.round(finiteNumber(value.roomIndex, 1))),
+                      roomIndex: roomIndices.get(Math.round(finiteNumber(value.roomIndex, 1))) ?? 0,
                       statusOid: typeof value.statusOid === 'string' ? value.statusOid : '',
                       brightnessLumens: Math.max(100, Math.min(5000, finiteNumber(value.brightnessLumens, 800))),
                   };
               })
+              .filter(item => item.roomIndex > 0)
         : [];
 
     return { rooms, windows, lightBubbles };
@@ -118,6 +138,9 @@ export function parseFloorplanGeometries(value: unknown): FloorplanGeometries {
     }
 
     return Object.fromEntries(
-        Object.entries(parsed as Record<string, unknown>).map(([floor, geometry]) => [floor, parseFloorGeometry(geometry)]),
+        Object.entries(parsed as Record<string, unknown>).map(([floor, geometry]) => [
+            floor,
+            parseFloorGeometry(geometry),
+        ]),
     );
 }

@@ -6,6 +6,7 @@ import { useSelectedTheme } from '../src/theme/themeSelection';
 import { themeNames } from '../src/theme/presets';
 import '../public/smarthome.css';
 import './preview.css';
+import english from '../src/i18n/en.json';
 import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
 
 type Settings = { rxData: Record<string, any>; values: Record<string, any>; style: React.CSSProperties };
@@ -38,7 +39,7 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
             direct_light: 'Direct',
             diffuse_light: 'Diffuse',
         };
-        return translations[key] || key.replaceAll('_', ' ');
+        return translations[key] || (english as Record<string, string>)[key] || key.replaceAll('_', ' ');
     }
     static getLanguage(): string { return 'en'; }
     static getDerivedStateFromProps(props: PreviewProps): Record<string, unknown> {
@@ -114,6 +115,38 @@ const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: T
     import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
+const { default: SunlightFloorplanEditor } = await import('../src/SunlightFloorplanEditor');
+const sunlightPreviewGeometry = {
+    eg: {
+        rooms: [
+            { points: [[7.7288049, 6.7245844], [748.51664, 7.1971841], [748.68714, 409.96694], [455.59287, 409.80419], [454.9311, 295.80379], [6.5534834, 295.2866]] },
+            { points: [[455.5, 408.5], [748.5, 408.5], [748.5, 691.5], [455.5, 691.5]] },
+            { points: [[181.5, 526.5], [271.5, 526.5], [271.5, 691.5], [181.5, 691.5]] },
+        ],
+        windows: [
+            { centerX: 8, centerY: 154, widthX: 0, widthY: 252, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+            { centerX: 90, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+            { centerX: 370, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+            { centerX: 630, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+            { centerX: 748, centerY: 210, widthX: 0, widthY: 240, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+            { centerX: 748, centerY: 550, widthX: 0, widthY: 140, roomIndex: 2, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+            { centerX: 181.5, centerY: 600.5, widthX: 0, widthY: 80, roomIndex: 3, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 1, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
+        ],
+        lightBubbles: [
+            { x: 230, y: 140, roomIndex: 1, statusOid: 'preview.sunlight.livingRoomLight', brightnessLumens: 800 },
+            { x: 610, y: 535, roomIndex: 2, statusOid: 'preview.sunlight.bottomRightLight', brightnessLumens: 800 },
+            { x: 225, y: 605, roomIndex: 3, statusOid: 'preview.sunlight.smallRoomLight', brightnessLumens: 800 },
+        ],
+    },
+};
+const sunlightPreviewFloors = Object.fromEntries(await Promise.all(
+    Object.entries(import.meta.glob('../public/floorplans/*.svg', { query: '?raw', import: 'default' }))
+        .map(async ([path, load]) => {
+            const key = path.split('/').pop()!.replace('.svg', '');
+            return [key, { label: key.toUpperCase(), svg: await load() as string }];
+        }),
+));
+
 const objects: Record<string, Record<string, any>> = {
     'preview.light.brightness': { _id: 'preview.light.brightness', type: 'state', common: { type: 'number', min: 0, max: 100, step: 1, unit: '%' } },
     'preview.light.temperature': { _id: 'preview.light.temperature', type: 'state', common: { type: 'number', min: 220, max: 650, step: 5, unit: 'K' } },
@@ -127,6 +160,9 @@ function App(): React.JSX.Element {
     const theme = useTheme();
     const themeId = useSelectedTheme();
     const weatherBindings = createOpenWeatherMapBindings('openweathermap.0');
+    const [sunlightConfiguration, setSunlightConfiguration] = React.useState({
+        floorplan: 'eg', floorConfigurations: JSON.stringify(sunlightPreviewGeometry),
+    });
     const sunlightData = {
         'preview.sun.azimuth.val': 108,
         'preview.sun.elevation.val': 25,
@@ -336,36 +372,19 @@ function App(): React.JSX.Element {
                     values,
                     style: { width: 700, maxWidth: '100%', height: 620 },
                     rxData: {
-                        floorplan: 'eg', floorTopAzimuth: 163,
+                        floorplan: sunlightConfiguration.floorplan, floorTopAzimuth: 163,
                         sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
                         weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
                         weatherRadiationOid: 'preview.weather.radiation',
                         sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent',
                         svgUnitsPerMeter: 62, roomHeightMeters: 2.5, maximumProjection: 650,
-                        floorConfigurations: JSON.stringify({
-                            eg: {
-                                rooms: [
-                                    { points: [[7.7288049, 6.7245844], [748.51664, 7.1971841], [748.68714, 409.96694], [455.59287, 409.80419], [454.9311, 295.80379], [6.5534834, 295.2866]] },
-                                    { points: [[455.5, 408.5], [748.5, 408.5], [748.5, 691.5], [455.5, 691.5]] },
-                                    { points: [[181.5, 526.5], [271.5, 526.5], [271.5, 691.5], [181.5, 691.5]] },
-                                ],
-                                windows: [
-                                    { centerX: 8, centerY: 154, widthX: 0, widthY: 252, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                    { centerX: 90, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                    { centerX: 370, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                    { centerX: 630, centerY: 8, widthX: 140, widthY: 0, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                    { centerX: 748, centerY: 210, widthX: 0, widthY: 240, roomIndex: 1, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 3, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                    { centerX: 748, centerY: 550, widthX: 0, widthY: 140, roomIndex: 2, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                    { centerX: 181.5, centerY: 600.5, widthX: 0, widthY: 80, roomIndex: 3, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 1, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
-                                ],
-                                lightBubbles: [
-                                    { x: 230, y: 140, roomIndex: 1, statusOid: 'preview.sunlight.livingRoomLight', brightnessLumens: 800 },
-                                    { x: 610, y: 535, roomIndex: 2, statusOid: 'preview.sunlight.bottomRightLight', brightnessLumens: 800 },
-                                    { x: 225, y: 605, roomIndex: 3, statusOid: 'preview.sunlight.smallRoomLight', brightnessLumens: 800 },
-                                ],
-                            },
-                        }),}
+                        floorConfigurations: sunlightConfiguration.floorConfigurations,}
                 }} />
+                <SunlightFloorplanEditor
+                    data={sunlightConfiguration}
+                    onDataChange={data => setSunlightConfiguration({ floorplan: String(data.floorplan), floorConfigurations: String(data.floorConfigurations) })}
+                    floors={sunlightPreviewFloors}
+                />
                 <div className="sunlight-preview-controls">
                     <label>Sun azimuth <output>{values['preview.sun.azimuth.val']}°</output><input type="range" min="0" max="359" value={values['preview.sun.azimuth.val']} onChange={event => context.setValue('preview.sun.azimuth', Number(event.target.value))} /></label>
                     <label>Sun elevation <output>{values['preview.sun.elevation.val']}°</output><input type="range" min="-5" max="80" value={values['preview.sun.elevation.val']} onChange={event => context.setValue('preview.sun.elevation', Number(event.target.value))} /></label>

@@ -118,28 +118,38 @@ Measured solar radiation is the default and primary brightness input. Its defaul
 `0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2`, configurable in the widget settings. Set the clear-sky reference
 to the expected peak value for the sensor, normally 1000 W/m². When the sensor has no current value, cloudiness and
 weather condition below `openweathermap.0.forecast.current` provide the fallback. You can instead select cloudiness as
-the primary input. Optional weather child IDs can also provide the condition and outdoor temperature shown in the
-widget header.
+the primary input. Optional cloudiness and condition states determine how much of the available light is direct or diffuse.
 
 The model separates measured daylight into directional and diffuse components. Direct light is restricted by the
 current sun direction and each window's outward azimuth. It forms a room-clipped patch that becomes softer as cloud
-cover increases and warmer as the sun gets lower. Diffuse light brightens the whole configured room polygon without a
-directional patch. At night the solar overlay fades away.
+cover increases and warmer as the sun gets lower. Rays stop at the first room wall, including in concave rooms; low sun
+creates a soft wall reflection even when the floor projection exceeds the drawing limit. Diffuse light depends on exposed
+window area and room size. At night the solar overlay fades away.
 
-Add each room boundary once under **Room polygons**, then select the matching polygon for every exterior window in that
-room. Window endpoints and room polygons use the selected SVG's `viewBox` coordinates. A room polygon is a
-space-separated list of `x,y` pairs and clips both light layers to that room. Set each window's outward azimuth using
-0° = north and clockwise bearings. Set its sash count to 1, 2, or 3; the opening is divided into equal sections with
-narrow frame gaps, and each section creates its own light patch.
+Open **Edit floor plan geometry**, add a room, and click its corners in order. Choose **Finish room** to save it. Select
+the room before adding windows or lights. Drag along a wall to place a window; endpoints snap to nearby room boundaries,
+and the outward azimuth is inferred from that boundary. Set its sash count to 1, 2, or 3 to divide the opening into
+separate patches. Geometry uses the SVG's `viewBox` coordinates and is saved separately for each floor. Crossing room
+edges are rejected. Escape cancels the current drawing or drag before closing the editor.
+
+Place light bubbles inside rooms and assign their on/off state IDs and brightness in lumens. Their local warm glow
+stays visible in large rooms, while the broader room illumination depends on room size. Daylight reduces the lamp's
+visual contribution. Removing a room also removes its windows and lights.
 
 Blind positions are treated as exposed percentages: 100 means fully open, 50 leaves the bottom half of the glass
-exposed, 10 leaves only the bottom tenth exposed, and 0 blocks direct sunlight. The exposed lower window band determines
+exposed, 10 leaves only the bottom tenth exposed, and 0 blocks the window's daylight. The exposed lower window band determines
 the near and far rays and therefore the floor patch length. Diffuse daylight also weakens with smaller exposed areas.
+A configured blind with a missing or invalid value contributes no daylight until it reports a valid position.
 
 Default physical geometry is 2.5 m room height, 1.35 m window height, and 0.9 m sill height. These can be set per
-window or room. SVG scale defaults to 50 units per meter, with a 650-unit projection cap. Adjust the scale to match the
+window, with room height shared by the widget. SVG scale defaults to 50 units per meter, with a 650-unit projection cap. Adjust the scale to match the
 bundled floorplan drawings. The bundled coordinate spaces are EG 756 × 699, OG 581 × 704, DG 577 × 700, and basement
 756 × 699. The widget shows one live floor at a time.
+
+Run `npm run test:sunlight` for geometry and lighting regressions. Start `npm run preview:widgets`, then run
+`npm run test:sunlight:browser` to exercise lighting scenarios and the editor in Chromium. Set `SUNLIGHT_PREVIEW_URL`
+if the preview uses a different port. Browser screenshots are written to the system temporary directory under
+`sunlight-review` (or `SUNLIGHT_ARTIFACTS`). The preview includes a geometry editor beside the sunlight controls.
 
 ### Actual value with chart
 

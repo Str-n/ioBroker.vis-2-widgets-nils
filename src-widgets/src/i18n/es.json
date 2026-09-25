@@ -588,5 +588,7 @@
   "room_polygon": "Room boundary polygon (SVG points)",
   "window_room_polygon_index": "Room polygon",
   "window_sash_count": "Window sashes",
-  "window_sash_count_help": "Splits the window opening into 1–3 equal sections with narrow gaps for the frames. Each section casts its own sunlight beam."
+  "window_sash_count_help": "Splits the window opening into 1–3 equal sections with narrow gaps for the frames. Each section casts its own sunlight beam.",
+  "floorplan_editor_invalid_room": "Usa al menos tres esquinas distintas sin cruzar los bordes. Los cambios no se han guardado.",
+  "floorplan_editor_invalid_window": "Coloca la ventana en el límite de la habitación asignada para que pueda entrar la luz solar."
 }

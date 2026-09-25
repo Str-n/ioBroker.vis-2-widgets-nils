@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {
+    Alert,
     Box,
     Button,
     Checkbox,
@@ -21,6 +22,13 @@ import type { SelectChangeEvent } from '@mui/material/Select';
 import type { WidgetData } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
+import {
+    inferWindowAzimuthFromRoomBoundary,
+    isPointInPolygon,
+    isValidRoomPolygon,
+    roomInteriorPoint,
+    snapPointToRoomBoundary,
+} from './SunlightUtils';
 import {
     emptyFloorplanGeometry,
     parseFloorplanGeometries,
@@ -117,31 +125,51 @@ function closeOrthogonalRoom(points: FloorplanPoint[]): FloorplanPoint[] {
     return [...points, closingCorner];
 }
 
-function pointInsidePolygon(point: FloorplanPoint, polygon: FloorplanPoint[]): boolean {
-    let inside = false;
-    for (let index = 0, previousIndex = polygon.length - 1; index < polygon.length; previousIndex = index++) {
-        const [x1, y1] = polygon[previousIndex];
-        const [x2, y2] = polygon[index];
-        const cross = (point[0] - x1) * (y2 - y1) - (point[1] - y1) * (x2 - x1);
-        if (
-            Math.abs(cross) < 0.001 &&
-            point[0] >= Math.min(x1, x2) - 0.001 &&
-            point[0] <= Math.max(x1, x2) + 0.001 &&
-            point[1] >= Math.min(y1, y2) - 0.001 &&
-            point[1] <= Math.max(y1, y2) + 0.001
-        ) {
-            return true;
-        }
-
-        if ((y1 > point[1]) !== (y2 > point[1]) && point[0] < ((x2 - x1) * (point[1] - y1)) / (y2 - y1) + x1) {
-            inside = !inside;
-        }
-    }
-    return inside;
+function GeometryNumberField(props: {
+    label: string;
+    value: number;
+    onCommit: (value: number) => void;
+    min?: number;
+    max?: number;
+    step?: number;
+    helperText?: string;
+}): React.JSX.Element {
+    const [draft, setDraft] = React.useState(String(props.value));
+    React.useEffect(() => setDraft(String(props.value)), [props.value]);
+    return (
+        <TextField
+            size="small"
+            type="number"
+            label={props.label}
+            value={draft}
+            slotProps={{ htmlInput: { min: props.min, max: props.max, step: props.step ?? 'any' } }}
+            helperText={props.helperText}
+            onChange={event => setDraft(event.target.value)}
+            onKeyDown={event => {
+                if (event.key === 'Enter') {
+                    event.currentTarget.querySelector('input')?.blur();
+                }
+            }}
+            onBlur={() => {
+                const value = draft.trim() ? Number(draft) : NaN;
+                const valid = Number.isFinite(value)
+                    ? Math.max(props.min ?? -Infinity, Math.min(props.max ?? Infinity, value))
+                    : props.value;
+                setDraft(String(valid));
+                if (valid !== props.value) {
+                    props.onCommit(valid);
+                }
+            }}
+        />
+    );
 }
 
 export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorProps): React.JSX.Element {
-    const initialFloor = String(props.data.floorplan || 'eg');
+    const editorId = React.useId();
+    const requestedFloor = String(props.data.floorplan || 'eg');
+    const initialFloor = Object.prototype.hasOwnProperty.call(props.floors, requestedFloor)
+        ? requestedFloor
+        : Object.keys(props.floors)[0];
     const [open, setOpen] = React.useState(false);
     const [activeFloor, setActiveFloor] = React.useState(initialFloor);
     const [geometries, setGeometries] = React.useState<FloorplanGeometries>(() =>
@@ -157,6 +185,8 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     const [roomHover, setRoomHover] = React.useState<FloorplanPoint | null>(null);
     const [windowDraft, setWindowDraft] = React.useState<WindowDraft | null>(null);
     const [drag, setDrag] = React.useState<GeometryDrag | null>(null);
+    const [geometryError, setGeometryError] = React.useState('');
+    const dragSnapshot = React.useRef<FloorplanGeometry | null>(null);
     const svgRef = React.useRef<SVGSVGElement>(null);
     const geometriesRef = React.useRef(geometries);
 
@@ -165,9 +195,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             const updated = parseFloorplanGeometries(props.data.floorConfigurations);
             geometriesRef.current = updated;
             setGeometries(updated);
-            setActiveFloor(String(props.data.floorplan || 'eg'));
+            setActiveFloor(initialFloor);
         }
-    }, [props.data.floorConfigurations, props.data.floorplan, open]);
+    }, [props.data.floorConfigurations, initialFloor, open]);
 
     const currentFloor = props.floors[activeFloor] || props.floors.eg || Object.values(props.floors)[0];
     const currentGeometry = geometries[activeFloor] || emptyFloorplanGeometry;
@@ -218,7 +248,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
 
     function openEditor(): void {
         const loaded = parseFloorplanGeometries(props.data.floorConfigurations);
-        const floor = String(props.data.floorplan || 'eg');
+        const floor = initialFloor;
         if (!loaded[floor]) {
             loaded[floor] = emptyGeometry();
         }
@@ -234,11 +264,15 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setRoomHover(null);
         setWindowDraft(null);
         setDrag(null);
+        setGeometryError('');
         setOpen(true);
     }
 
     function changeFloor(event: SelectChangeEvent<string>): void {
         const floor = event.target.value;
+        setDrag(null);
+        dragSnapshot.current = null;
+        setGeometryError('');
         const next = { ...geometriesRef.current, [activeFloor]: currentGeometry };
         if (!next[floor]) {
             next[floor] = emptyGeometry();
@@ -256,6 +290,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }
 
     function addRoom(): void {
+        setGeometryError('');
         setSelectedWindow(-1);
         setSelectedLight(-1);
         setSelectedVertex(-1);
@@ -269,6 +304,11 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             return;
         }
         const points = orthogonalDrawing ? closeOrthogonalRoom(roomDraft) : roomDraft;
+        if (!isValidRoomPolygon(points)) {
+            setGeometryError(Generic.t('floorplan_editor_invalid_room'));
+            return;
+        }
+        setGeometryError('');
         const rooms = [...currentGeometry.rooms, { points }];
         replaceGeometry({ ...currentGeometry, rooms });
         setSelectedRoom(rooms.length - 1);
@@ -279,6 +319,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }
 
     function cancelRoom(): void {
+        setGeometryError('');
         setRoomDraft([]);
         setRoomHover(null);
         setTool('select');
@@ -314,8 +355,14 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             return;
         }
         const rooms = currentGeometry.rooms.map((entry, index) =>
-            index === selectedRoom ? { points: entry.points.filter((_, pointIndex) => pointIndex !== selectedVertex) } : entry,
+            index === selectedRoom
+                ? { points: entry.points.filter((_, pointIndex) => pointIndex !== selectedVertex) }
+                : entry,
         );
+        if (!isValidRoomPolygon(rooms[selectedRoom].points)) {
+            setGeometryError(Generic.t('floorplan_editor_invalid_room'));
+            return;
+        }
         replaceGeometry({ ...currentGeometry, rooms });
         setSelectedVertex(-1);
     }
@@ -385,7 +432,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         const point = eventPoint(event);
         if (tool === 'placeLight') {
             const room = currentGeometry.rooms[selectedRoom];
-            if (!room || !pointInsidePolygon(point, room.points)) {
+            if (!room || !isPointInPolygon(point, room.points)) {
                 return;
             }
             const lightBubbles = [
@@ -406,7 +453,14 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         if (tool !== 'drawRoom') {
             return;
         }
+        if (roomDraft.length >= 64) {
+            return;
+        }
         const previous = roomDraft[roomDraft.length - 1];
+        if (previous && Math.hypot(previous[0] - point[0], previous[1] - point[1]) < 0.5) {
+            return;
+        }
+        setGeometryError('');
         setRoomDraft([...roomDraft, orthogonalDrawing && previous ? constrainOrthogonally(point, previous) : point]);
         setRoomHover(null);
     }
@@ -417,22 +471,33 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         }
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
-        const point = eventPoint(event);
+        const point = snapPointToRoomBoundary(eventPoint(event), currentGeometry.rooms[selectedRoom]?.points || [], 10);
+        setGeometryError('');
         setWindowDraft({ start: point, end: point });
     }
 
-    function beginVertexDrag(event: React.PointerEvent<SVGCircleElement>, roomIndex: number, vertexIndex: number): void {
+    function beginVertexDrag(
+        event: React.PointerEvent<SVGCircleElement>,
+        roomIndex: number,
+        vertexIndex: number,
+    ): void {
         if (tool !== 'select') {
             return;
         }
         event.stopPropagation();
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
+        dragSnapshot.current = currentGeometry;
         setSelectedRoom(roomIndex);
         setSelectedWindow(-1);
         setSelectedLight(-1);
         setSelectedVertex(vertexIndex);
-        setDrag({ kind: 'vertex', pointerStart: eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>), roomIndex, vertexIndex });
+        setDrag({
+            kind: 'vertex',
+            pointerStart: eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>),
+            roomIndex,
+            vertexIndex,
+        });
     }
 
     function beginWindowDrag(
@@ -446,6 +511,8 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         event.stopPropagation();
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
+        dragSnapshot.current = currentGeometry;
+        setSelectedRoom(currentGeometry.windows[windowIndex].roomIndex - 1);
         const pointerStart = eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>);
         setSelectedWindow(windowIndex);
         setSelectedLight(-1);
@@ -466,6 +533,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         event.stopPropagation();
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
+        dragSnapshot.current = currentGeometry;
         setSelectedLight(lightIndex);
         setSelectedWindow(-1);
         setSelectedVertex(-1);
@@ -482,7 +550,11 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         if (tool === 'drawWindow' && windowDraft) {
             setWindowDraft({
                 ...windowDraft,
-                end: orthogonalDrawing ? constrainOrthogonally(point, windowDraft.start) : point,
+                end: snapPointToRoomBoundary(
+                    orthogonalDrawing ? constrainOrthogonally(point, windowDraft.start) : point,
+                    currentGeometry.rooms[selectedRoom]?.points || [],
+                    10,
+                ),
             });
             return;
         }
@@ -512,7 +584,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         if (drag.kind === 'light' && drag.lightIndex !== undefined) {
             const currentLight = base.lightBubbles[drag.lightIndex];
             const assignedRoom = currentLight && base.rooms[currentLight.roomIndex - 1];
-            if (!assignedRoom || !pointInsidePolygon(point, assignedRoom.points)) {
+            if (!assignedRoom || !isPointInPolygon(point, assignedRoom.points)) {
                 return;
             }
             const lightBubbles = base.lightBubbles.map((light, index) =>
@@ -537,6 +609,13 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         } else {
             updated = windowFromEndpoints(start, point, original);
         }
+        const boundary = base.rooms[updated.roomIndex - 1]?.points || [];
+        const [updatedStart, updatedEnd] = windowEndpoints(updated);
+        updated = windowFromEndpoints(
+            snapPointToRoomBoundary(updatedStart, boundary, 10),
+            snapPointToRoomBoundary(updatedEnd, boundary, 10),
+            updated,
+        );
         const windows = base.windows.map((window, index) => (index === drag.windowIndex ? updated : window));
         replaceGeometry({ ...base, windows }, false);
     }
@@ -544,7 +623,11 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     function finishPointer(event: React.PointerEvent<SVGSVGElement>): void {
         if (tool === 'drawWindow' && windowDraft) {
             const pointerEnd = eventPoint(event);
-            const end = orthogonalDrawing ? constrainOrthogonally(pointerEnd, windowDraft.start) : pointerEnd;
+            const end = snapPointToRoomBoundary(
+                orthogonalDrawing ? constrainOrthogonally(pointerEnd, windowDraft.start) : pointerEnd,
+                currentGeometry.rooms[selectedRoom]?.points || [],
+                10,
+            );
             const deltaX = end[0] - windowDraft.start[0];
             const deltaY = end[1] - windowDraft.start[1];
             if (Math.hypot(deltaX, deltaY) >= 2) {
@@ -565,15 +648,58 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                         blindInvert: false,
                     },
                 ];
+                const placed = windows[windows.length - 1];
+                if (
+                    inferWindowAzimuthFromRoomBoundary(
+                        placed.centerX,
+                        placed.centerY,
+                        placed.widthX,
+                        placed.widthY,
+                        currentGeometry.rooms[selectedRoom]?.points || [],
+                        0,
+                    ) === undefined
+                ) {
+                    setGeometryError(Generic.t('floorplan_editor_invalid_window'));
+                    setWindowDraft(null);
+                    return;
+                }
                 replaceGeometry({ ...currentGeometry, windows });
                 setSelectedWindow(windows.length - 1);
             }
             setWindowDraft(null);
             setTool('select');
         } else if (drag) {
-            save(geometriesRef.current);
+            const geometry = geometriesRef.current[activeFloor];
+            if (geometry.rooms.some(room => !isValidRoomPolygon(room.points))) {
+                if (dragSnapshot.current) {
+                    replaceGeometry(dragSnapshot.current, false);
+                }
+                setGeometryError(Generic.t('floorplan_editor_invalid_room'));
+            } else {
+                save(geometriesRef.current);
+                setGeometryError('');
+            }
         }
+        if (svgRef.current?.hasPointerCapture(event.pointerId)) {
+            svgRef.current.releasePointerCapture(event.pointerId);
+        }
+        dragSnapshot.current = null;
         setDrag(null);
+    }
+
+    function cancelPointer(): void {
+        if (dragSnapshot.current) {
+            replaceGeometry(dragSnapshot.current, false);
+        }
+        dragSnapshot.current = null;
+        setDrag(null);
+        setWindowDraft(null);
+    }
+
+    function closeEditor(): void {
+        cancelPointer();
+        save(geometriesRef.current);
+        setOpen(false);
     }
 
     function updateWindowField<K extends keyof FloorplanWindowGeometry>(
@@ -584,6 +710,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             return;
         }
         updateWindow(selectedWindow, window => ({ ...window, [key]: value }));
+        if (key === 'roomIndex') {
+            setSelectedRoom(Number(value) - 1);
+        }
     }
 
     function updateLightField<K extends keyof FloorplanLightBubbleGeometry>(
@@ -593,13 +722,32 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         if (selectedLight < 0) {
             return;
         }
-        const lightBubbles = currentGeometry.lightBubbles.map((light, index) =>
-            index === selectedLight ? { ...light, [key]: value } : light,
-        );
+        const lightBubbles = currentGeometry.lightBubbles.map((light, index) => {
+            if (index !== selectedLight) {
+                return light;
+            }
+            const updated = { ...light, [key]: value };
+            const room = currentGeometry.rooms[updated.roomIndex - 1];
+            if (key === 'roomIndex' && room && !isPointInPolygon([updated.x, updated.y], room.points)) {
+                [updated.x, updated.y] = roomInteriorPoint(room.points);
+                setSelectedRoom(updated.roomIndex - 1);
+            }
+            return updated;
+        });
         replaceGeometry({ ...currentGeometry, lightBubbles });
     }
 
     const selectedWindowGeometry = currentGeometry.windows[selectedWindow];
+    const windowNeedsWall =
+        selectedWindowGeometry &&
+        inferWindowAzimuthFromRoomBoundary(
+            selectedWindowGeometry.centerX,
+            selectedWindowGeometry.centerY,
+            selectedWindowGeometry.widthX,
+            selectedWindowGeometry.widthY,
+            currentGeometry.rooms[selectedWindowGeometry.roomIndex - 1]?.points || [],
+            0,
+        ) === undefined;
     const selectedLightGeometry = currentGeometry.lightBubbles[selectedLight];
     const selectedRoomGeometry = currentGeometry.rooms[selectedRoom];
     const selectedWindowEndpoints = selectedWindowGeometry ? windowEndpoints(selectedWindowGeometry) : undefined;
@@ -617,15 +765,50 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
 
     return (
         <>
-            <Button variant="outlined" size="small" onClick={openEditor}>
+            <Button
+                variant="outlined"
+                size="small"
+                onClick={openEditor}
+            >
                 {Generic.t('open_floorplan_editor')}
             </Button>
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xl" fullWidth>
-                <DialogTitle>{Generic.t('floorplan_editor_title')}</DialogTitle>
+            <Dialog
+                open={open}
+                onClose={(_event, reason) => {
+                    if (reason === 'escapeKeyDown' && (tool !== 'select' || drag)) {
+                        cancelPointer();
+                        cancelRoom();
+                        return;
+                    }
+                    closeEditor();
+                }}
+                maxWidth="xl"
+                fullWidth
+                aria-labelledby={`${editorId}-title`}
+            >
+                <DialogTitle id={`${editorId}-title`}>{Generic.t('floorplan_editor_title')}</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' }, alignItems: 'flex-start' }}>
-                        <Box sx={{ minWidth: 0, flex: 1 }}>
-                            <Typography variant="body2" sx={{ mb: 1 }}>
+                    {geometryError ? (
+                        <Alert
+                            severity="warning"
+                            sx={{ mb: 1 }}
+                        >
+                            {geometryError}
+                        </Alert>
+                    ) : null}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            gap: 2,
+                            flexDirection: { xs: 'column', md: 'row' },
+                            alignItems: 'flex-start',
+                        }}
+                    >
+                        <Box sx={{ minWidth: 0, flex: 1, width: '100%' }}>
+                            <Typography
+                                variant="body2"
+                                sx={{ mb: 1 }}
+                            >
                                 {tool === 'drawRoom'
                                     ? Generic.t('floorplan_editor_draw_room_help')
                                     : tool === 'drawWindow'
@@ -644,19 +827,25 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                 onPointerMove={onMapPointerMove}
                                 onPointerLeave={() => setRoomHover(null)}
                                 onPointerUp={finishPointer}
-                                onPointerCancel={finishPointer}
+                                onPointerCancel={cancelPointer}
                                 style={{
                                     display: 'block',
                                     width: '100%',
                                     maxHeight: '72vh',
                                     border: '1px solid #9e9e9e',
-                                    background: '#fff',
+                                    background: 'var(--sh-surface, #f5f5f5)',
                                     touchAction: 'none',
                                     pointerEvents: 'auto',
-                                    cursor: tool === 'drawRoom' || tool === 'drawWindow' || tool === 'placeLight' ? 'crosshair' : 'default',
+                                    cursor:
+                                        tool === 'drawRoom' || tool === 'drawWindow' || tool === 'placeLight'
+                                            ? 'crosshair'
+                                            : 'default',
                                 }}
                             >
-                                <g dangerouslySetInnerHTML={{ __html: currentSvgContents }} />
+                                <g
+                                    pointerEvents="none"
+                                    dangerouslySetInnerHTML={{ __html: currentSvgContents }}
+                                />
                                 {currentGeometry.rooms.map((room, roomIndex) => (
                                     <g key={`room-${roomIndex}`}>
                                         <polygon
@@ -667,7 +856,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             strokeWidth={roomIndex === selectedRoom ? 2 : 1.4}
                                             vectorEffect="non-scaling-stroke"
                                             onClick={event => {
-                                                if (tool !== 'drawRoom' && tool !== 'placeLight') {
+                                                if (tool === 'select') {
                                                     event.stopPropagation();
                                                     setSelectedRoom(roomIndex);
                                                     setSelectedWindow(-1);
@@ -676,24 +865,28 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                 }
                                             }}
                                         />
-                                        {roomIndex === selectedRoom && tool === 'select' && room.points.map((point, vertexIndex) => (
-                                            <circle
-                                                key={`room-${roomIndex}-vertex-${vertexIndex}`}
-                                                cx={point[0]}
-                                                cy={point[1]}
-                                                r={5}
-                                                fill={selectedVertex === vertexIndex ? '#d32f2f' : '#fff'}
-                                                stroke="#1565c0"
-                                                strokeWidth={2}
-                                                vectorEffect="non-scaling-stroke"
-                                                style={{ cursor: 'move' }}
-                                                onPointerDown={event => beginVertexDrag(event, roomIndex, vertexIndex)}
-                                                onClick={event => {
-                                                    event.stopPropagation();
-                                                    setSelectedVertex(vertexIndex);
-                                                }}
-                                            />
-                                        ))}
+                                        {roomIndex === selectedRoom &&
+                                            tool === 'select' &&
+                                            room.points.map((point, vertexIndex) => (
+                                                <circle
+                                                    key={`room-${roomIndex}-vertex-${vertexIndex}`}
+                                                    cx={point[0]}
+                                                    cy={point[1]}
+                                                    r={5}
+                                                    fill={selectedVertex === vertexIndex ? '#d32f2f' : '#fff'}
+                                                    stroke="#1565c0"
+                                                    strokeWidth={2}
+                                                    vectorEffect="non-scaling-stroke"
+                                                    style={{ cursor: 'move' }}
+                                                    onPointerDown={event =>
+                                                        beginVertexDrag(event, roomIndex, vertexIndex)
+                                                    }
+                                                    onClick={event => {
+                                                        event.stopPropagation();
+                                                        setSelectedVertex(vertexIndex);
+                                                    }}
+                                                />
+                                            ))}
                                     </g>
                                 ))}
                                 {roomDraft.length ? (
@@ -709,7 +902,13 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             />
                                         ) : null}
                                         {roomDraft.map((point, index) => (
-                                            <circle key={`draft-${index}`} cx={point[0]} cy={point[1]} r={4} fill="#d32f2f" />
+                                            <circle
+                                                key={`draft-${index}`}
+                                                cx={point[0]}
+                                                cy={point[1]}
+                                                r={4}
+                                                fill="#d32f2f"
+                                            />
                                         ))}
                                     </g>
                                 ) : null}
@@ -749,7 +948,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                         strokeWidth={2}
                                                         vectorEffect="non-scaling-stroke"
                                                         style={{ cursor: 'crosshair' }}
-                                                        onPointerDown={event => beginWindowDrag(event, windowIndex, 'start')}
+                                                        onPointerDown={event =>
+                                                            beginWindowDrag(event, windowIndex, 'start')
+                                                        }
                                                     />
                                                     <circle
                                                         cx={end[0]}
@@ -760,7 +961,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                         strokeWidth={2}
                                                         vectorEffect="non-scaling-stroke"
                                                         style={{ cursor: 'crosshair' }}
-                                                        onPointerDown={event => beginWindowDrag(event, windowIndex, 'end')}
+                                                        onPointerDown={event =>
+                                                            beginWindowDrag(event, windowIndex, 'end')
+                                                        }
                                                     />
                                                 </>
                                             ) : null}
@@ -793,7 +996,13 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                 strokeWidth={active ? 2.5 : 1.5}
                                                 vectorEffect="non-scaling-stroke"
                                             />
-                                            <circle cx={light.x} cy={light.y} r={2.5} fill="#fff9e6" pointerEvents="none" />
+                                            <circle
+                                                cx={light.x}
+                                                cy={light.y}
+                                                r={2.5}
+                                                fill="#fff9e6"
+                                                pointerEvents="none"
+                                            />
                                         </g>
                                     );
                                 })}
@@ -812,12 +1021,30 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                 ) : null}
                             </svg>
                         </Box>
-                        <Stack spacing={1.5} sx={{ width: { xs: '100%', md: 310 }, maxHeight: '72vh', overflow: 'auto', p: 0.5 }}>
-                            <FormControl size="small" fullWidth>
-                                <InputLabel>{Generic.t('floorplan_editor_floor')}</InputLabel>
-                                <Select label={Generic.t('floorplan_editor_floor')} value={activeFloor} onChange={changeFloor}>
+                        <Stack
+                            spacing={1.5}
+                            sx={{ width: { xs: '100%', md: 310 }, maxHeight: '72vh', overflow: 'auto', p: 0.5 }}
+                        >
+                            <FormControl
+                                size="small"
+                                fullWidth
+                            >
+                                <InputLabel id={`${editorId}-field-0`}>
+                                    {Generic.t('floorplan_editor_floor')}
+                                </InputLabel>
+                                <Select
+                                    labelId={`${editorId}-field-0`}
+                                    label={Generic.t('floorplan_editor_floor')}
+                                    value={activeFloor}
+                                    onChange={changeFloor}
+                                >
                                     {Object.entries(props.floors).map(([floorKey, floor]) => (
-                                        <MenuItem key={floorKey} value={floorKey}>{floor.label}</MenuItem>
+                                        <MenuItem
+                                            key={floorKey}
+                                            value={floorKey}
+                                        >
+                                            {floor.label}
+                                        </MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
@@ -832,16 +1059,30 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     }
                                     label={Generic.t('floorplan_editor_orthogonal_drawing')}
                                 />
-                                <Typography variant="caption" color="text.secondary" component="div">
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    component="div"
+                                >
                                     {Generic.t('floorplan_editor_orthogonal_help')}
                                 </Typography>
                             </Box>
 
                             <Typography variant="subtitle2">{Generic.t('floorplan_editor_rooms')}</Typography>
-                            <Stack direction="row" spacing={1}>
-                                <FormControl size="small" fullWidth disabled={!currentGeometry.rooms.length || tool === 'drawRoom'}>
-                                    <InputLabel>{Generic.t('floorplan_editor_room')}</InputLabel>
+                            <Stack
+                                direction="row"
+                                spacing={1}
+                            >
+                                <FormControl
+                                    size="small"
+                                    fullWidth
+                                    disabled={!currentGeometry.rooms.length || tool !== 'select'}
+                                >
+                                    <InputLabel id={`${editorId}-field-1`}>
+                                        {Generic.t('floorplan_editor_room')}
+                                    </InputLabel>
                                     <Select
+                                        labelId={`${editorId}-field-1`}
                                         label={Generic.t('floorplan_editor_room')}
                                         value={currentGeometry.rooms.length ? selectedRoom : ''}
                                         onChange={event => {
@@ -852,54 +1093,99 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                         }}
                                     >
                                         {currentGeometry.rooms.map((_, index) => (
-                                            <MenuItem key={index} value={index}>{`${Generic.t('floorplan_editor_room')} ${index + 1}`}</MenuItem>
+                                            <MenuItem
+                                                key={index}
+                                                value={index}
+                                            >{`${Generic.t('floorplan_editor_room')} ${index + 1}`}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
-                                <Button variant="outlined" onClick={addRoom} disabled={currentGeometry.rooms.length >= 16 || tool === 'drawWindow'}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={addRoom}
+                                    disabled={currentGeometry.rooms.length >= 16 || tool !== 'select'}
+                                >
                                     {Generic.t('add')}
                                 </Button>
                             </Stack>
                             {tool === 'drawRoom' ? (
-                                <Stack direction="row" spacing={1}>
-                                    <Button variant="contained" onClick={finishRoom} disabled={roomDraft.length < 3}>
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                >
+                                    <Button
+                                        variant="contained"
+                                        onClick={finishRoom}
+                                        disabled={roomDraft.length < 3}
+                                    >
                                         {Generic.t('floorplan_editor_finish_room')}
                                     </Button>
                                     <Button onClick={cancelRoom}>{Generic.t('cancel')}</Button>
                                 </Stack>
                             ) : (
-                                <Stack direction="row" spacing={1}>
-                                    <Button variant="outlined" onClick={removeRoom} disabled={!selectedRoomGeometry}>
+                                <Stack
+                                    direction="row"
+                                    spacing={1}
+                                >
+                                    <Button
+                                        variant="outlined"
+                                        onClick={removeRoom}
+                                        disabled={!selectedRoomGeometry || tool !== 'select'}
+                                    >
                                         {Generic.t('floorplan_editor_remove_room')}
                                     </Button>
                                     <Button
                                         variant="outlined"
                                         onClick={addVertex}
-                                        disabled={!selectedRoomGeometry || selectedVertex < 0 || selectedRoomGeometry.points.length >= 64}
+                                        disabled={
+                                            !selectedRoomGeometry ||
+                                            selectedVertex < 0 ||
+                                            selectedRoomGeometry.points.length >= 64
+                                        }
                                     >
                                         {Generic.t('floorplan_editor_add_vertex')}
                                     </Button>
                                     <Button
                                         variant="outlined"
                                         onClick={removeVertex}
-                                        disabled={!selectedRoomGeometry || selectedVertex < 0 || selectedRoomGeometry.points.length <= 3}
+                                        disabled={
+                                            !selectedRoomGeometry ||
+                                            selectedVertex < 0 ||
+                                            selectedRoomGeometry.points.length <= 3
+                                        }
                                     >
                                         {Generic.t('floorplan_editor_remove_vertex')}
                                     </Button>
                                 </Stack>
                             )}
 
-                            <Typography variant="subtitle2" sx={{ mt: 1 }}>{Generic.t('floorplan_editor_windows')}</Typography>
-                            <Stack direction="row" spacing={1}>
-                                <FormControl size="small" fullWidth disabled={!currentGeometry.windows.length || tool !== 'select'}>
-                                    <InputLabel>{Generic.t('floorplan_editor_window')}</InputLabel>
+                            <Typography
+                                variant="subtitle2"
+                                sx={{ mt: 1 }}
+                            >
+                                {Generic.t('floorplan_editor_windows')}
+                            </Typography>
+                            <Stack
+                                direction="row"
+                                spacing={1}
+                            >
+                                <FormControl
+                                    size="small"
+                                    fullWidth
+                                    disabled={!currentGeometry.windows.length || tool !== 'select'}
+                                >
+                                    <InputLabel id={`${editorId}-field-2`}>
+                                        {Generic.t('floorplan_editor_window')}
+                                    </InputLabel>
                                     <Select
+                                        labelId={`${editorId}-field-2`}
                                         label={Generic.t('floorplan_editor_window')}
                                         value={selectedWindow >= 0 ? selectedWindow : ''}
                                         onChange={event => {
                                             const index = Number(event.target.value);
                                             setSelectedWindow(index);
                                             setSelectedLight(-1);
+                                            setSelectedVertex(-1);
                                             const window = currentGeometry.windows[index];
                                             if (window) {
                                                 setSelectedRoom(Math.max(0, window.roomIndex - 1));
@@ -907,26 +1193,44 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                         }}
                                     >
                                         {currentGeometry.windows.map((_, index) => (
-                                            <MenuItem key={index} value={index}>{`${Generic.t('floorplan_editor_window')} ${index + 1}`}</MenuItem>
+                                            <MenuItem
+                                                key={index}
+                                                value={index}
+                                            >{`${Generic.t('floorplan_editor_window')} ${index + 1}`}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
                                 <Button
                                     variant="outlined"
                                     onClick={addWindow}
-                                    disabled={!currentGeometry.rooms.length || currentGeometry.windows.length >= 16 || tool !== 'select'}
+                                    disabled={
+                                        !currentGeometry.rooms.length ||
+                                        currentGeometry.windows.length >= 16 ||
+                                        tool !== 'select'
+                                    }
                                 >
                                     {Generic.t('add')}
                                 </Button>
                             </Stack>
                             {tool === 'drawWindow' ? (
-                                <Button onClick={() => { setWindowDraft(null); setTool('select'); }}>
+                                <Button
+                                    onClick={() => {
+                                        setWindowDraft(null);
+                                        setTool('select');
+                                    }}
+                                >
                                     {Generic.t('cancel')}
                                 </Button>
                             ) : null}
+                            {windowNeedsWall ? (
+                                <Alert severity="warning">{Generic.t('floorplan_editor_invalid_window')}</Alert>
+                            ) : null}
                             {selectedWindowGeometry && selectedWindowEndpoints ? (
                                 <>
-                                    <Stack direction="row" spacing={1}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                    >
                                         <Button
                                             variant="outlined"
                                             onClick={removeWindow}
@@ -934,35 +1238,95 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                         >
                                             {Generic.t('floorplan_editor_remove_window')}
                                         </Button>
-                                        <FormControl size="small" sx={{ minWidth: 110 }}>
-                                            <InputLabel>{Generic.t('floorplan_editor_room')}</InputLabel>
+                                        <FormControl
+                                            size="small"
+                                            sx={{ minWidth: 110 }}
+                                        >
+                                            <InputLabel id={`${editorId}-field-3`}>
+                                                {Generic.t('floorplan_editor_room')}
+                                            </InputLabel>
                                             <Select
+                                                labelId={`${editorId}-field-3`}
                                                 label={Generic.t('floorplan_editor_room')}
                                                 value={selectedWindowGeometry.roomIndex - 1}
-                                                onChange={event => updateWindowField('roomIndex', Number(event.target.value) + 1)}
+                                                onChange={event =>
+                                                    updateWindowField('roomIndex', Number(event.target.value) + 1)
+                                                }
                                             >
                                                 {currentGeometry.rooms.map((_, index) => (
-                                                    <MenuItem key={index} value={index}>{index + 1}</MenuItem>
+                                                    <MenuItem
+                                                        key={index}
+                                                        value={index}
+                                                    >
+                                                        {index + 1}
+                                                    </MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
                                     </Stack>
                                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                                        <TextField size="small" type="number" label={Generic.t('window_center_x')} value={selectedWindowGeometry.centerX} onChange={event => updateWindowField('centerX', Number(event.target.value))} />
-                                        <TextField size="small" type="number" label={Generic.t('window_center_y')} value={selectedWindowGeometry.centerY} onChange={event => updateWindowField('centerY', Number(event.target.value))} />
-                                        <TextField size="small" type="number" label={Generic.t('window_width_x')} value={selectedWindowGeometry.widthX} onChange={event => updateWindowField('widthX', Number(event.target.value))} />
-                                        <TextField size="small" type="number" label={Generic.t('window_width_y')} value={selectedWindowGeometry.widthY} onChange={event => updateWindowField('widthY', Number(event.target.value))} />
-                                        <TextField size="small" type="number" label={Generic.t('window_height_meters')} value={selectedWindowGeometry.windowHeightMeters} onChange={event => updateWindowField('windowHeightMeters', Number(event.target.value))} />
-                                        <TextField size="small" type="number" label={Generic.t('window_sill_height_meters')} value={selectedWindowGeometry.windowSillHeightMeters} onChange={event => updateWindowField('windowSillHeightMeters', Number(event.target.value))} />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-centerX`}
+                                            label={Generic.t('window_center_x')}
+                                            value={selectedWindowGeometry.centerX}
+                                            onCommit={value => updateWindowField('centerX', value)}
+                                        />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-centerY`}
+                                            label={Generic.t('window_center_y')}
+                                            value={selectedWindowGeometry.centerY}
+                                            onCommit={value => updateWindowField('centerY', value)}
+                                        />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-widthX`}
+                                            label={Generic.t('window_width_x')}
+                                            value={selectedWindowGeometry.widthX}
+                                            onCommit={value => updateWindowField('widthX', value)}
+                                        />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-widthY`}
+                                            label={Generic.t('window_width_y')}
+                                            value={selectedWindowGeometry.widthY}
+                                            onCommit={value => updateWindowField('widthY', value)}
+                                        />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-windowHeightMeters`}
+                                            label={Generic.t('window_height_meters')}
+                                            value={selectedWindowGeometry.windowHeightMeters}
+                                            min={0.1}
+                                            onCommit={value => updateWindowField('windowHeightMeters', value)}
+                                        />
+                                        <GeometryNumberField
+                                            key={`${selectedWindow}-windowSillHeightMeters`}
+                                            label={Generic.t('window_sill_height_meters')}
+                                            value={selectedWindowGeometry.windowSillHeightMeters}
+                                            min={0}
+                                            onCommit={value => updateWindowField('windowSillHeightMeters', value)}
+                                        />
                                     </Box>
-                                    <FormControl size="small" fullWidth>
-                                        <InputLabel>{Generic.t('window_sash_count')}</InputLabel>
+                                    <FormControl
+                                        size="small"
+                                        fullWidth
+                                    >
+                                        <InputLabel id={`${editorId}-field-4`}>
+                                            {Generic.t('window_sash_count')}
+                                        </InputLabel>
                                         <Select
+                                            labelId={`${editorId}-field-4`}
                                             label={Generic.t('window_sash_count')}
                                             value={selectedWindowGeometry.windowSashCount}
-                                            onChange={event => updateWindowField('windowSashCount', Number(event.target.value))}
+                                            onChange={event =>
+                                                updateWindowField('windowSashCount', Number(event.target.value))
+                                            }
                                         >
-                                            {[1, 2, 3].map(value => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                                            {[1, 2, 3].map(value => (
+                                                <MenuItem
+                                                    key={value}
+                                                    value={value}
+                                                >
+                                                    {value}
+                                                </MenuItem>
+                                            ))}
                                         </Select>
                                     </FormControl>
                                     <TextField
@@ -973,11 +1337,26 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     />
                                     {selectedWindowGeometry.blindOid ? (
                                         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-                                            <TextField size="small" type="number" label={Generic.t('blind_minimum')} value={selectedWindowGeometry.blindMin} onChange={event => updateWindowField('blindMin', Number(event.target.value))} />
-                                            <TextField size="small" type="number" label={Generic.t('blind_maximum')} value={selectedWindowGeometry.blindMax} onChange={event => updateWindowField('blindMax', Number(event.target.value))} />
+                                            <GeometryNumberField
+                                                key={`${selectedWindow}-blindMin`}
+                                                label={Generic.t('blind_minimum')}
+                                                value={selectedWindowGeometry.blindMin}
+                                                onCommit={value => updateWindowField('blindMin', value)}
+                                            />
+                                            <GeometryNumberField
+                                                key={`${selectedWindow}-blindMax`}
+                                                label={Generic.t('blind_maximum')}
+                                                value={selectedWindowGeometry.blindMax}
+                                                onCommit={value => updateWindowField('blindMax', value)}
+                                            />
                                             <Button
                                                 variant={selectedWindowGeometry.blindInvert ? 'contained' : 'outlined'}
-                                                onClick={() => updateWindowField('blindInvert', !selectedWindowGeometry.blindInvert)}
+                                                onClick={() =>
+                                                    updateWindowField(
+                                                        'blindInvert',
+                                                        !selectedWindowGeometry.blindInvert,
+                                                    )
+                                                }
                                             >
                                                 {Generic.t('blind_invert')}
                                             </Button>
@@ -985,11 +1364,24 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     ) : null}
                                 </>
                             ) : null}
-                            <Typography variant="subtitle2" sx={{ mt: 1 }}>{Generic.t('light_bubbles')}</Typography>
-                            <Stack direction="row" spacing={1}>
-                                <FormControl size="small" fullWidth disabled={!currentGeometry.lightBubbles.length || tool !== 'select'}>
-                                    <InputLabel>{Generic.t('light_bubble')}</InputLabel>
+                            <Typography
+                                variant="subtitle2"
+                                sx={{ mt: 1 }}
+                            >
+                                {Generic.t('light_bubbles')}
+                            </Typography>
+                            <Stack
+                                direction="row"
+                                spacing={1}
+                            >
+                                <FormControl
+                                    size="small"
+                                    fullWidth
+                                    disabled={!currentGeometry.lightBubbles.length || tool !== 'select'}
+                                >
+                                    <InputLabel id={`${editorId}-field-5`}>{Generic.t('light_bubble')}</InputLabel>
                                     <Select
+                                        labelId={`${editorId}-field-5`}
                                         label={Generic.t('light_bubble')}
                                         value={selectedLight >= 0 ? selectedLight : ''}
                                         onChange={event => {
@@ -997,20 +1389,28 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             const light = currentGeometry.lightBubbles[index];
                                             setSelectedLight(index);
                                             setSelectedWindow(-1);
+                                            setSelectedVertex(-1);
                                             if (light) {
                                                 setSelectedRoom(Math.max(0, light.roomIndex - 1));
                                             }
                                         }}
                                     >
                                         {currentGeometry.lightBubbles.map((_, index) => (
-                                            <MenuItem key={index} value={index}>{`${Generic.t('light_bubble')} ${index + 1}`}</MenuItem>
+                                            <MenuItem
+                                                key={index}
+                                                value={index}
+                                            >{`${Generic.t('light_bubble')} ${index + 1}`}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
                                 <Button
                                     variant="outlined"
                                     onClick={addLightBubble}
-                                    disabled={!currentGeometry.rooms.length || currentGeometry.lightBubbles.length >= 32 || tool !== 'select'}
+                                    disabled={
+                                        !currentGeometry.rooms.length ||
+                                        currentGeometry.lightBubbles.length >= 32 ||
+                                        tool !== 'select'
+                                    }
                                 >
                                     {Generic.t('add')}
                                 </Button>
@@ -1020,19 +1420,38 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                             ) : null}
                             {selectedLightGeometry ? (
                                 <>
-                                    <Stack direction="row" spacing={1}>
-                                        <Button variant="outlined" onClick={removeLightBubble}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                    >
+                                        <Button
+                                            variant="outlined"
+                                            onClick={removeLightBubble}
+                                        >
                                             {Generic.t('light_bubble_remove')}
                                         </Button>
-                                        <FormControl size="small" sx={{ minWidth: 110 }}>
-                                            <InputLabel>{Generic.t('floorplan_editor_room')}</InputLabel>
+                                        <FormControl
+                                            size="small"
+                                            sx={{ minWidth: 110 }}
+                                        >
+                                            <InputLabel id={`${editorId}-field-6`}>
+                                                {Generic.t('floorplan_editor_room')}
+                                            </InputLabel>
                                             <Select
+                                                labelId={`${editorId}-field-6`}
                                                 label={Generic.t('floorplan_editor_room')}
                                                 value={selectedLightGeometry.roomIndex - 1}
-                                                onChange={event => updateLightField('roomIndex', Number(event.target.value) + 1)}
+                                                onChange={event =>
+                                                    updateLightField('roomIndex', Number(event.target.value) + 1)
+                                                }
                                             >
                                                 {currentGeometry.rooms.map((_, index) => (
-                                                    <MenuItem key={index} value={index}>{index + 1}</MenuItem>
+                                                    <MenuItem
+                                                        key={index}
+                                                        value={index}
+                                                    >
+                                                        {index + 1}
+                                                    </MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
@@ -1043,26 +1462,32 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                         value={selectedLightGeometry.statusOid}
                                         onChange={event => updateLightField('statusOid', event.target.value)}
                                     />
-                                    <TextField
-                                        size="small"
-                                        type="number"
+                                    <GeometryNumberField
+                                        key={`light-${selectedLight}`}
                                         label={Generic.t('light_bubble_brightness')}
                                         value={selectedLightGeometry.brightnessLumens}
-                                        inputProps={{ min: 100, max: 5000, step: 50 }}
+                                        min={100}
+                                        max={5000}
+                                        step={50}
                                         helperText={Generic.t('light_bubble_brightness_help')}
-                                        onChange={event => updateLightField('brightnessLumens', Number(event.target.value))}
-                                        onBlur={event => updateLightField('brightnessLumens', Math.max(100, Math.min(5000, Number(event.target.value) || 100)))}
+                                        onCommit={value => updateLightField('brightnessLumens', value)}
                                     />
                                 </>
                             ) : null}
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                                variant="caption"
+                                color="text.secondary"
+                            >
                                 {`${Math.round(svgWidth)} × ${Math.round(svgHeight)} ${Generic.t('svg_units')}`}
                             </Typography>
                         </Stack>
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => { save(geometriesRef.current); setOpen(false); }} variant="contained">
+                    <Button
+                        onClick={closeEditor}
+                        variant="contained"
+                    >
                         {Generic.t('done')}
                     </Button>
                 </DialogActions>
