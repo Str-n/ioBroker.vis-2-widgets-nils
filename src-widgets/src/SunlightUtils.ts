@@ -372,20 +372,23 @@ function firstRoomBoundaryHit(
 }
 
 function estimateWallReflection(
+    window: SunlightWindow,
     points: Array<[number, number]>,
-    roomPolygon: Array<[number, number]>,
+    nearDistance: number,
+    farDistance: number,
 ): SunlightBeam['wallReflection'] {
     const raySamples = 9;
     let validRays = 0;
     let reflectedFractionTotal = 0;
     let weightedHitX = 0;
     let weightedHitY = 0;
+    const roomPolygon = window.roomPolygon;
 
     for (let index = 0; index < raySamples; index++) {
         const across = (index + 0.5) / raySamples;
         const start: [number, number] = [
-            points[0][0] + (points[1][0] - points[0][0]) * across,
-            points[0][1] + (points[1][1] - points[0][1]) * across,
+            window.startX + (window.endX - window.startX) * across,
+            window.startY + (window.endY - window.startY) * across,
         ];
         const end: [number, number] = [
             points[3][0] + (points[2][0] - points[3][0]) * across,
@@ -401,7 +404,17 @@ function estimateWallReflection(
             continue;
         }
 
-        const reflectedFraction = 1 - hit.distanceFraction;
+        // Measure reflection against the floor projection, while tracing from the window itself.
+        // At low sun angles the lower ray can reach the wall before it reaches the floor.
+        const distanceToHit = hit.distanceFraction * farDistance;
+        const reflectedFraction = clamp(
+            (farDistance - Math.max(nearDistance, distanceToHit)) / (farDistance - nearDistance),
+            0,
+            1,
+        );
+        if (reflectedFraction <= 0) {
+            continue;
+        }
         reflectedFractionTotal += reflectedFraction;
         weightedHitX += hit.point[0] * reflectedFraction;
         weightedHitY += hit.point[1] * reflectedFraction;
@@ -491,7 +504,7 @@ export function calculateSunlightBeam(
         clipPoints: window.roomPolygon,
         strength,
         softness: 13 + (1 - clamp(skyClarity, 0, 1)) * 9,
-        wallReflection: estimateWallReflection(points, window.roomPolygon),
+        wallReflection: estimateWallReflection(window, points, nearDistance, farDistance),
     };
 }
 
