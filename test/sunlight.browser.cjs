@@ -294,6 +294,17 @@ async function checkEditor(browser) {
         await page.keyboard.press('Tab');
         await pause();
     };
+    const text = async (label, value) => {
+        const control = await field(label);
+        const input = await control.$('textarea');
+        await input.click();
+        await page.keyboard.down('Control');
+        await page.keyboard.press('A');
+        await page.keyboard.up('Control');
+        await page.keyboard.type(value);
+        await page.keyboard.press('Tab');
+        await pause();
+    };
     await button('Add', 0);
     for (const p of [
         [430, 420],
@@ -316,6 +327,20 @@ async function checkEditor(browser) {
     await number('Direct sun cutoff elevation (°)', 17);
     assert.equal((await data()).eg.windows[0].directSunlightElevationCutoffDegrees, 17);
     await (await page.$('[role=dialog]')).screenshot({ path: screenshotPath('sunlight-editor.png') });
+    await button('Edit as JSON');
+    let jsonGeometry = await (await (await field('Geometry JSON')).$('textarea')).evaluate(input =>
+        JSON.parse(input.value),
+    );
+    assert.equal(jsonGeometry.windows[0].directSunlightElevationCutoffDegrees, 17);
+    await (await page.$('[role=dialog]')).screenshot({ path: screenshotPath('sunlight-editor-json.png') });
+    await text('Geometry JSON', '{ invalid json');
+    await button('Apply JSON');
+    assert(await page.$('[role=dialog] [role=alert]'));
+    assert.equal((await data()).eg.windows[0].directSunlightElevationCutoffDegrees, 17);
+    jsonGeometry.windows[0].directSunlightElevationCutoffDegrees = 22;
+    await text('Geometry JSON', JSON.stringify(jsonGeometry, null, 2));
+    await button('Apply JSON');
+    assert.equal((await data()).eg.windows[0].directSunlightElevationCutoffDegrees, 22);
     await button('Add', 2);
     await click(560, 510);
     assert.equal((await data()).eg.lightBubbles.length, 1);

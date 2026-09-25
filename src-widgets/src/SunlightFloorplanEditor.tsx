@@ -89,6 +89,14 @@ function emptyGeometry(): FloorplanGeometry {
     return { rooms: [], windows: [], lightBubbles: [] };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasFiniteNumberFields(value: Record<string, unknown>, fields: string[]): boolean {
+    return fields.every(field => typeof value[field] === 'number' && Number.isFinite(value[field]));
+}
+
 function svgContents(svg: string): string {
     const openTagEnd = svg.indexOf('>');
     const closeTagStart = svg.lastIndexOf('</svg>');
@@ -188,6 +196,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     const [windowDraft, setWindowDraft] = React.useState<WindowDraft | null>(null);
     const [drag, setDrag] = React.useState<GeometryDrag | null>(null);
     const [geometryError, setGeometryError] = React.useState('');
+    const [jsonMode, setJsonMode] = React.useState(false);
+    const [jsonDraft, setJsonDraft] = React.useState('');
+    const [jsonError, setJsonError] = React.useState('');
     const dragSnapshot = React.useRef<FloorplanGeometry | null>(null);
     const svgRef = React.useRef<SVGSVGElement>(null);
     const geometriesRef = React.useRef(geometries);
@@ -223,6 +234,126 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         if (shouldSave) {
             save(next);
         }
+    }
+
+    function startJsonEditing(): void {
+        setJsonDraft(JSON.stringify(currentGeometry, null, 2));
+        setJsonError('');
+        setGeometryError('');
+        setJsonMode(true);
+    }
+
+    function cancelJsonEditing(): void {
+        setJsonMode(false);
+        setJsonError('');
+    }
+
+    function applyJsonEditing(): void {
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(jsonDraft) as unknown;
+        } catch {
+            setJsonError(Generic.t('floorplan_editor_json_invalid'));
+            return;
+        }
+        if (!isRecord(parsed)) {
+            setJsonError(Generic.t('floorplan_editor_json_invalid'));
+            return;
+        }
+
+        const rooms = parsed.rooms;
+        const windows = parsed.windows;
+        const lightBubbles = parsed.lightBubbles;
+        if (
+            !Array.isArray(rooms) ||
+            !Array.isArray(windows) ||
+            !Array.isArray(lightBubbles) ||
+            rooms.length > 16 ||
+            windows.length > 16 ||
+            lightBubbles.length > 32 ||
+            rooms.some(room => {
+                if (!isRecord(room) || !Array.isArray(room.points)) {
+                    return true;
+                }
+                const points = room.points;
+                return (
+                    points.length < 3 ||
+                    points.length > 64 ||
+                    points.some(
+                        point =>
+                            !Array.isArray(point) ||
+                            point.length !== 2 ||
+                            !point.every(value => typeof value === 'number' && Number.isFinite(value)),
+                    ) ||
+                    !isValidRoomPolygon(points as FloorplanPoint[])
+                );
+            }) ||
+            windows.some(window => {
+                if (!isRecord(window)) {
+                    return true;
+                }
+                const roomIndex = typeof window.roomIndex === 'number' ? window.roomIndex : NaN;
+                if (
+                    !hasFiniteNumberFields(window, ['centerX', 'centerY', 'widthX', 'widthY', 'roomIndex']) ||
+                    !Number.isInteger(roomIndex) ||
+                    roomIndex < 1 ||
+                    roomIndex > rooms.length ||
+                    Math.hypot(window.widthX as number, window.widthY as number) === 0
+                ) {
+                    return true;
+                }
+                const optionalNumberFields = [
+                    'windowHeightMeters',
+                    'windowSillHeightMeters',
+                    'directSunlightElevationCutoffDegrees',
+                    'windowSashCount',
+                    'blindMin',
+                    'blindMax',
+                ];
+                return optionalNumberFields.some(
+                    field => field in window && (typeof window[field] !== 'number' || !Number.isFinite(window[field])),
+                );
+            }) ||
+            lightBubbles.some(light => {
+                if (!isRecord(light)) {
+                    return true;
+                }
+                const roomIndex = typeof light.roomIndex === 'number' ? light.roomIndex : NaN;
+                return (
+                    !hasFiniteNumberFields(light, ['x', 'y', 'roomIndex']) ||
+                    !Number.isInteger(roomIndex) ||
+                    roomIndex < 1 ||
+                    roomIndex > rooms.length ||
+                    ('brightnessLumens' in light &&
+                        (typeof light.brightnessLumens !== 'number' || !Number.isFinite(light.brightnessLumens))) ||
+                    ('statusOid' in light && typeof light.statusOid !== 'string')
+                );
+            })
+        ) {
+            setJsonError(Generic.t('floorplan_editor_json_invalid'));
+            return;
+        }
+
+        const nextGeometry = parseFloorplanGeometries({ [activeFloor]: parsed })[activeFloor];
+        if (
+            !nextGeometry ||
+            nextGeometry.rooms.length !== rooms.length ||
+            nextGeometry.windows.length !== windows.length ||
+            nextGeometry.lightBubbles.length !== lightBubbles.length
+        ) {
+            setJsonError(Generic.t('floorplan_editor_json_invalid'));
+            return;
+        }
+
+        save({ ...geometriesRef.current, [activeFloor]: nextGeometry });
+        setJsonDraft(JSON.stringify(nextGeometry, null, 2));
+        setJsonError('');
+        setJsonMode(false);
+        setSelectedRoom(Math.min(selectedRoom, Math.max(0, nextGeometry.rooms.length - 1)));
+        setSelectedWindow(-1);
+        setSelectedLight(-1);
+        setSelectedVertex(-1);
+        setTool('select');
     }
 
     function updateWindow(index: number, update: (window: FloorplanWindowGeometry) => FloorplanWindowGeometry): void {
@@ -267,6 +398,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setWindowDraft(null);
         setDrag(null);
         setGeometryError('');
+        setJsonMode(false);
+        setJsonDraft('');
+        setJsonError('');
         setOpen(true);
     }
 
@@ -778,6 +912,10 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             <Dialog
                 open={open}
                 onClose={(_event, reason) => {
+                    if (reason === 'escapeKeyDown' && jsonMode) {
+                        cancelJsonEditing();
+                        return;
+                    }
                     if (reason === 'escapeKeyDown' && (tool !== 'select' || drag)) {
                         cancelPointer();
                         cancelRoom();
@@ -799,9 +937,44 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                             {geometryError}
                         </Alert>
                     ) : null}
+                    {jsonMode ? (
+                        <Stack
+                            spacing={1.5}
+                            sx={{ width: '100%' }}
+                        >
+                            <Typography variant="subtitle2">
+                                {`${Generic.t('floorplan_editor_json_title')} — ${currentFloor?.label || activeFloor}`}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                color="text.secondary"
+                            >
+                                {Generic.t('floorplan_editor_json_help')}
+                            </Typography>
+                            {jsonError ? <Alert severity="error">{jsonError}</Alert> : null}
+                            <TextField
+                                label={Generic.t('floorplan_editor_json_label')}
+                                value={jsonDraft}
+                                onChange={event => {
+                                    setJsonDraft(event.target.value);
+                                    setJsonError('');
+                                }}
+                                multiline
+                                minRows={22}
+                                maxRows={32}
+                                fullWidth
+                                slotProps={{
+                                    htmlInput: {
+                                        spellCheck: false,
+                                        style: { fontFamily: 'monospace', fontSize: '0.875rem' },
+                                    },
+                                }}
+                            />
+                        </Stack>
+                    ) : null}
                     <Box
                         sx={{
-                            display: 'flex',
+                            display: jsonMode ? 'none' : 'flex',
                             gap: 2,
                             flexDirection: { xs: 'column', md: 'row' },
                             alignItems: 'flex-start',
@@ -1051,6 +1224,13 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     ))}
                                 </Select>
                             </FormControl>
+                            <Button
+                                variant="outlined"
+                                onClick={startJsonEditing}
+                                disabled={tool !== 'select' || Boolean(drag)}
+                            >
+                                {Generic.t('floorplan_editor_edit_json')}
+                            </Button>
 
                             <Box>
                                 <FormControlLabel
@@ -1500,12 +1680,24 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        onClick={closeEditor}
-                        variant="contained"
-                    >
-                        {Generic.t('done')}
-                    </Button>
+                    {jsonMode ? (
+                        <>
+                            <Button onClick={cancelJsonEditing}>{Generic.t('floorplan_editor_json_back')}</Button>
+                            <Button
+                                variant="contained"
+                                onClick={applyJsonEditing}
+                            >
+                                {Generic.t('floorplan_editor_json_apply')}
+                            </Button>
+                        </>
+                    ) : (
+                        <Button
+                            onClick={closeEditor}
+                            variant="contained"
+                        >
+                            {Generic.t('done')}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
         </>
