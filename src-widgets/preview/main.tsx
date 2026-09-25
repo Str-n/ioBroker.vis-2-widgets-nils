@@ -135,6 +135,9 @@ function App(): React.JSX.Element {
         'preview.weather.condition.val': 'Partly cloudy',
         'preview.weather.temperature.val': 18.4,
         'preview.sunlight.blindPosition.val': 50,
+        'preview.sunlight.livingRoomLight.val': true,
+        'preview.sunlight.bottomRightLight.val': false,
+        'preview.sunlight.smallRoomLight.val': true,
     };
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
@@ -355,6 +358,11 @@ function App(): React.JSX.Element {
                                     { centerX: 748, centerY: 550, widthX: 0, widthY: 140, roomIndex: 2, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 2, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
                                     { centerX: 181.5, centerY: 600.5, widthX: 0, widthY: 80, roomIndex: 3, windowHeightMeters: 1.35, windowSillHeightMeters: 0.9, windowSashCount: 1, blindOid: 'preview.sunlight.blindPosition', blindMin: 0, blindMax: 100, blindInvert: false },
                                 ],
+                                lightBubbles: [
+                                    { x: 230, y: 140, roomIndex: 1, statusOid: 'preview.sunlight.livingRoomLight', brightnessLumens: 800 },
+                                    { x: 610, y: 535, roomIndex: 2, statusOid: 'preview.sunlight.bottomRightLight', brightnessLumens: 800 },
+                                    { x: 225, y: 605, roomIndex: 3, statusOid: 'preview.sunlight.smallRoomLight', brightnessLumens: 800 },
+                                ],
                             },
                         }),}
                 }} />
@@ -364,6 +372,9 @@ function App(): React.JSX.Element {
                     <label>Cloudiness <output>{values['preview.weather.cloudiness.val']}%</output><input type="range" min="0" max="100" value={values['preview.weather.cloudiness.val']} onChange={event => context.setValue('preview.weather.cloudiness', Number(event.target.value))} /></label>
                     <label>Solar radiation <output>{values['preview.weather.radiation.val']} W/m²</output><input type="range" min="0" max="1000" step="10" value={values['preview.weather.radiation.val']} onChange={event => context.setValue('preview.weather.radiation', Number(event.target.value))} /></label>
                     <label>Blind open <output>{values['preview.sunlight.blindPosition.val']}%</output><input type="range" min="0" max="100" value={values['preview.sunlight.blindPosition.val']} onChange={event => context.setValue('preview.sunlight.blindPosition', Number(event.target.value))} /></label>
+                    <label className="light-toggle"><input type="checkbox" checked={Boolean(values['preview.sunlight.livingRoomLight.val'])} onChange={event => context.setValue('preview.sunlight.livingRoomLight', event.target.checked)} />Living room light</label>
+                    <label className="light-toggle"><input type="checkbox" checked={Boolean(values['preview.sunlight.bottomRightLight.val'])} onChange={event => context.setValue('preview.sunlight.bottomRightLight', event.target.checked)} />Bottom right light</label>
+                    <label className="light-toggle"><input type="checkbox" checked={Boolean(values['preview.sunlight.smallRoomLight.val'])} onChange={event => context.setValue('preview.sunlight.smallRoomLight', event.target.checked)} />Small room light</label>
                 </div>
             </article>
         </section>

@@ -70,15 +70,42 @@ interface RenderedReflection {
     color: string;
 }
 
+interface RenderedLightBubble {
+    clipPoints: Array<[number, number]>;
+    x: number;
+    y: number;
+    radius: number;
+    glowOpacity: number;
+    roomOpacity: number;
+}
+
+function polygonArea(points: Array<[number, number]>): number {
+    let area = 0;
+    for (let index = 0; index < points.length; index++) {
+        const current = points[index];
+        const next = points[(index + 1) % points.length];
+        area += current[0] * next[1] - next[0] * current[1];
+    }
+    return Math.abs(area) / 2;
+}
+
+function isLightStateOn(value: unknown): boolean {
+    return value === true || value === 1 || value === 'true' || value === '1';
+}
+
+const estimatedUsefulLampOutput = 0.55;
+const luxForHalfLampImpact = 65;
+
 function renderFloorplan(
     svg: string,
     beams: RenderedBeam[],
     ambient: RenderedAmbient[],
     reflections: RenderedReflection[],
+    lightBubbles: RenderedLightBubble[],
     id: string,
     color: string,
 ): string {
-    if (!beams.length && !ambient.length && !reflections.length) {
+    if (!beams.length && !ambient.length && !reflections.length && !lightBubbles.length) {
         return svg;
     }
 
@@ -93,6 +120,12 @@ function renderFloorplan(
         .map(
             (reflection, index) =>
                 `<clipPath id="${safeId}-sun-reflection-room-${index}" clipPathUnits="userSpaceOnUse"><polygon points="${pointsAttribute(reflection.clipPoints)}" /></clipPath><radialGradient id="${safeId}-sun-reflection-${index}" gradientUnits="userSpaceOnUse" cx="${reflection.point[0].toFixed(2)}" cy="${reflection.point[1].toFixed(2)}" r="${reflection.radius.toFixed(2)}"><stop offset="0" stop-color="${reflection.color}" stop-opacity="0.76" /><stop offset="0.38" stop-color="${reflection.color}" stop-opacity="0.34" /><stop offset="1" stop-color="${reflection.color}" stop-opacity="0" /></radialGradient>`,
+        )
+        .join('');
+    const lightDefinitions = lightBubbles
+        .map(
+            (light, index) =>
+                `<clipPath id="${safeId}-light-room-${index}" clipPathUnits="userSpaceOnUse"><polygon points="${pointsAttribute(light.clipPoints)}" /></clipPath><radialGradient id="${safeId}-light-glow-${index}" gradientUnits="userSpaceOnUse" cx="${light.x.toFixed(2)}" cy="${light.y.toFixed(2)}" r="${light.radius.toFixed(2)}"><stop offset="0" stop-color="#fff5d6" stop-opacity="0.94" /><stop offset="0.28" stop-color="#ffd27e" stop-opacity="0.68" /><stop offset="0.7" stop-color="#ffbf68" stop-opacity="0.25" /><stop offset="1" stop-color="#ffb45c" stop-opacity="0" /></radialGradient>`,
         )
         .join('');
     const beamDefinitions = beams
@@ -123,6 +156,12 @@ function renderFloorplan(
                 `<polygon class="sh-sunlight-floorplan__reflection" points="${pointsAttribute(reflection.clipPoints)}" clip-path="url(#${safeId}-sun-reflection-room-${index})" fill="url(#${safeId}-sun-reflection-${index})" opacity="${reflection.opacity.toFixed(3)}" />`,
         )
         .join('');
+    const lightOverlays = lightBubbles
+        .map(
+            (light, index) =>
+                `<polygon class="sh-sunlight-floorplan__light-room" points="${pointsAttribute(light.clipPoints)}" clip-path="url(#${safeId}-light-room-${index})" fill="#ffd99a" opacity="${light.roomOpacity.toFixed(3)}" /><circle class="sh-sunlight-floorplan__light-glow" cx="${light.x.toFixed(2)}" cy="${light.y.toFixed(2)}" r="${light.radius.toFixed(2)}" clip-path="url(#${safeId}-light-room-${index})" fill="url(#${safeId}-light-glow-${index})" opacity="${light.glowOpacity.toFixed(3)}" />`,
+        )
+        .join('');
     const beamOverlays = beams
         .map(
             (beam, index) => {
@@ -139,11 +178,11 @@ function renderFloorplan(
 
     const withDefinitions = svg.replace(
         /(<svg\b[^>]*>)/,
-        `$1<defs>${ambientDefinitions}${reflectionDefinitions}${beamDefinitions}</defs>`,
+        `$1<defs>${ambientDefinitions}${reflectionDefinitions}${lightDefinitions}${beamDefinitions}</defs>`,
     );
     return withDefinitions.replace(
         '<g class="sh-floorplan-walls">',
-        `${ambientOverlays}${reflectedOverlays}${beamOverlays}<g class="sh-floorplan-walls">`,
+        `${ambientOverlays}${lightOverlays}${reflectedOverlays}${beamOverlays}<g class="sh-floorplan-walls">`,
     );
 }
 
@@ -152,6 +191,7 @@ function SunlightFloorplanContent(props: {
     beams: RenderedBeam[];
     ambient: RenderedAmbient[];
     reflections: RenderedReflection[];
+    lightBubbles: RenderedLightBubble[];
     id: string;
     sunAzimuth?: number;
     sunElevation?: number;
@@ -183,6 +223,7 @@ function SunlightFloorplanContent(props: {
                             props.beams,
                             props.ambient,
                             props.reflections,
+                            props.lightBubbles,
                             props.id,
                             sunlightColor(props.sunElevation ?? 40),
                         ),
@@ -197,63 +238,66 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
     static smartHomeTheme = true;
 
     private previousBeamPoints = new Map<string, Array<[number, number]>>();
-    private blindValues = new Map<string, unknown>();
-    private subscribedBlindOids = new Set<string>();
+    private configuredStateValues = new Map<string, unknown>();
+    private subscribedStateOids = new Set<string>();
 
-    private onBlindStateChange = (id: string, state: ioBroker.State | null | undefined): void => {
-        if (!this.subscribedBlindOids.has(id)) {
+    private onConfiguredStateChange = (id: string, state: ioBroker.State | null | undefined): void => {
+        if (!this.subscribedStateOids.has(id)) {
             return;
         }
         if (state) {
-            this.blindValues.set(id, state.val);
+            this.configuredStateValues.set(id, state.val);
         } else {
-            this.blindValues.delete(id);
+            this.configuredStateValues.delete(id);
         }
         this.forceUpdate();
     };
 
     componentDidMount(): void {
         super.componentDidMount();
-        this.updateBlindSubscriptions();
+        this.updateConfiguredStateSubscriptions();
     }
 
     componentDidUpdate(prevProps: VisRxWidgetProps, prevState: typeof this.state): void {
         super.componentDidUpdate(prevProps, prevState);
         if (prevState.rxData.floorConfigurations !== this.state.rxData.floorConfigurations) {
-            this.updateBlindSubscriptions();
+            this.updateConfiguredStateSubscriptions();
         }
     }
 
     componentWillUnmount(): void {
-        const subscribedOids = [...this.subscribedBlindOids];
+        const subscribedOids = [...this.subscribedStateOids];
         if (subscribedOids.length) {
-            this.props.context.socket.unsubscribeState(subscribedOids, this.onBlindStateChange);
+            this.props.context.socket.unsubscribeState(subscribedOids, this.onConfiguredStateChange);
         }
-        this.subscribedBlindOids.clear();
-        this.blindValues.clear();
+        this.subscribedStateOids.clear();
+        this.configuredStateValues.clear();
         super.componentWillUnmount();
     }
 
-    private updateBlindSubscriptions(): void {
+    private updateConfiguredStateSubscriptions(): void {
         const geometries = parseFloorplanGeometries(this.state.rxData.floorConfigurations);
         const configuredOids = new Set(
             Object.values(geometries)
-                .flatMap(geometry => geometry.windows.map(window => window.blindOid.trim()))
+                .flatMap(geometry => [
+                    ...geometry.windows.map(window => window.blindOid.trim()),
+                    ...geometry.lightBubbles.map(light => light.statusOid.trim()),
+                ])
                 .filter(oid => oid && oid !== 'nothing_selected'),
         );
-        const removedOids = [...this.subscribedBlindOids].filter(oid => !configuredOids.has(oid));
+        const removedOids = [...this.subscribedStateOids].filter(oid => !configuredOids.has(oid));
         if (removedOids.length) {
-            this.props.context.socket.unsubscribeState(removedOids, this.onBlindStateChange);
+            this.props.context.socket.unsubscribeState(removedOids, this.onConfiguredStateChange);
             removedOids.forEach(oid => {
-                this.subscribedBlindOids.delete(oid);
-                this.blindValues.delete(oid);
+                this.subscribedStateOids.delete(oid);
+                this.configuredStateValues.delete(oid);
             });
         }
 
-        const addedOids = [...configuredOids].filter(oid => !this.subscribedBlindOids.has(oid));
+        const addedOids = [...configuredOids].filter(oid => !this.subscribedStateOids.has(oid));
         if (addedOids.length) {
-            addedOids.forEach(oid => this.subscribedBlindOids.add(oid));
-            void this.props.context.socket.subscribeState(addedOids, this.onBlindStateChange);
+            addedOids.forEach(oid => this.subscribedStateOids.add(oid));
+            void this.props.context.socket.subscribeState(addedOids, this.onConfiguredStateChange);
         }
     }
 
@@ -410,7 +454,9 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         if (!oid) {
             return undefined;
         }
-        return this.blindValues.has(oid) ? this.blindValues.get(oid) : this.state.values[`${oid}.val`];
+        return this.configuredStateValues.has(oid)
+            ? this.configuredStateValues.get(oid)
+            : this.state.values[`${oid}.val`];
     }
 
     private numericValue(oid: string): number | undefined {
@@ -448,6 +494,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         const floorGeometry = parseFloorplanGeometries(data.floorConfigurations)[data.floorplan] || {
             rooms: [],
             windows: [],
+            lightBubbles: [],
         };
         const windowCount = Math.min(16, floorGeometry.windows.length);
         const svgUnitsPerMeter = Math.max(1, Number(data.svgUnitsPerMeter) || 50);
@@ -456,6 +503,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         const floorTopAzimuth = Number(data.floorTopAzimuth ?? 163);
         const beams: RenderedBeam[] = [];
         const ambientByRoom = new Map<string, RenderedAmbient>();
+        const daylightByRoom = new Map<string, number>();
         const reflections: RenderedReflection[] = [];
         let configuredWindowCount = 0;
         const solarAmbientFactor =
@@ -525,6 +573,16 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                     opacity: 1 - (1 - (previous?.opacity || 0)) * (1 - roomDiffuse),
                 });
             }
+            const daylightTransmission = 0.1 + 0.9 * openFraction;
+            const windowDaylight = Math.max(
+                0,
+                Math.min(
+                    1,
+                    (factors.diffuse * 0.72 + factors.direct * 0.78) * daylightTransmission * solarAmbientFactor,
+                ),
+            );
+            const previousDaylight = daylightByRoom.get(roomKey) || 0;
+            daylightByRoom.set(roomKey, 1 - (1 - previousDaylight) * (1 - windowDaylight * 0.72));
 
             if (sunAzimuth !== undefined && sunElevation !== undefined) {
                 const sashCount = Math.max(1, Math.min(3, configuredWindow.windowSashCount));
@@ -545,6 +603,10 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                         beams.push({ ...beam, previousPoints: this.previousBeamPoints.get(sashKey) });
                         this.previousBeamPoints.set(sashKey, beam.points);
                         activeSashKeys.add(sashKey);
+
+                        const previousDaylight = daylightByRoom.get(roomKey) || 0;
+                        const directDaylight = Math.max(0, Math.min(1, beam.strength * openFraction));
+                        daylightByRoom.set(roomKey, 1 - (1 - previousDaylight) * (1 - directDaylight * 0.9));
 
                         if (beam.wallReflection && wholeWindowLength > 0) {
                             const sashFraction = Math.hypot(sash.endX - sash.startX, sash.endY - sash.startY) / wholeWindowLength;
@@ -582,12 +644,39 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
 
         const noCard = Boolean(data.noCard === true || data.noCard === 'true' || props.widget.usedInWidget);
         const ambient = [...ambientByRoom.values()];
+        const lightBubbles: RenderedLightBubble[] = [];
+        for (const light of floorGeometry.lightBubbles.slice(0, 32)) {
+            const statusOid = light.statusOid.trim();
+            if (!statusOid || statusOid === 'nothing_selected' || !isLightStateOn(this.stateValue(statusOid))) {
+                continue;
+            }
+            const roomPolygon = floorGeometry.rooms[Math.max(0, Math.min(floorGeometry.rooms.length - 1, light.roomIndex - 1))]?.points;
+            if (!roomPolygon || roomPolygon.length < 3) {
+                continue;
+            }
+            const roomKey = roomPolygon.map(point => `${point[0]},${point[1]}`).join(' ');
+            const roomAreaMeters = Math.max(1, polygonArea(roomPolygon) / (svgUnitsPerMeter * svgUnitsPerMeter));
+            const effectiveLux = (light.brightnessLumens * estimatedUsefulLampOutput) / roomAreaMeters;
+            const perceivedBrightness = effectiveLux / (effectiveLux + luxForHalfLampImpact);
+            const daylight = daylightByRoom.get(roomKey) || 0;
+            // Let electric light register clearly in dim rooms, while sunlight progressively dominates it.
+            const daylightRelevance = Math.max(0.06, 1 - 0.92 * Math.pow(daylight, 1.25));
+            lightBubbles.push({
+                clipPoints: roomPolygon,
+                x: light.x,
+                y: light.y,
+                radius: svgUnitsPerMeter * Math.max(1.2, Math.min(5, 1 + 1.9 * Math.sqrt(light.brightnessLumens / 800))),
+                glowOpacity: Math.min(0.58, 0.55 * Math.sqrt(perceivedBrightness) * daylightRelevance),
+                roomOpacity: Math.min(0.28, 0.34 * perceivedBrightness * daylightRelevance),
+            });
+        }
         return (
             <SunlightFloorplanContent
                 svg={floor.svg}
                 beams={beams}
                 ambient={ambient}
                 reflections={reflections}
+                lightBubbles={lightBubbles}
                 id={props.id}
                 sunAzimuth={sunAzimuth}
                 sunElevation={sunElevation}

@@ -19,14 +19,23 @@ export interface FloorplanWindowGeometry {
     blindInvert: boolean;
 }
 
+export interface FloorplanLightBubbleGeometry {
+    x: number;
+    y: number;
+    roomIndex: number;
+    statusOid: string;
+    brightnessLumens: number;
+}
+
 export interface FloorplanGeometry {
     rooms: FloorplanRoomGeometry[];
     windows: FloorplanWindowGeometry[];
+    lightBubbles: FloorplanLightBubbleGeometry[];
 }
 
 export type FloorplanGeometries = Record<string, FloorplanGeometry>;
 
-export const emptyFloorplanGeometry: FloorplanGeometry = { rooms: [], windows: [] };
+export const emptyFloorplanGeometry: FloorplanGeometry = { rooms: [], windows: [], lightBubbles: [] };
 
 function finiteNumber(value: unknown, fallback: number): number {
     const parsed = Number(value);
@@ -47,7 +56,7 @@ function parsePoints(value: unknown): FloorplanPoint[] {
 
 function parseFloorGeometry(value: unknown): FloorplanGeometry {
     if (!value || typeof value !== 'object') {
-        return { rooms: [], windows: [] };
+        return { rooms: [], windows: [], lightBubbles: [] };
     }
 
     const source = value as Record<string, unknown>;
@@ -78,8 +87,21 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
                   };
               })
         : [];
+    const lightBubbles = Array.isArray(source.lightBubbles)
+        ? source.lightBubbles
+              .map(light => {
+                  const value = light && typeof light === 'object' ? (light as Record<string, unknown>) : {};
+                  return {
+                      x: finiteNumber(value.x, 0),
+                      y: finiteNumber(value.y, 0),
+                      roomIndex: Math.max(1, Math.round(finiteNumber(value.roomIndex, 1))),
+                      statusOid: typeof value.statusOid === 'string' ? value.statusOid : '',
+                      brightnessLumens: Math.max(100, Math.min(5000, finiteNumber(value.brightnessLumens, 800))),
+                  };
+              })
+        : [];
 
-    return { rooms, windows };
+    return { rooms, windows, lightBubbles };
 }
 
 export function parseFloorplanGeometries(value: unknown): FloorplanGeometries {

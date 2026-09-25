@@ -77,6 +77,13 @@
     transition: opacity 600ms ease;
 }
 
+.sh-sunlight-floorplan__light-room,
+.sh-sunlight-floorplan__light-glow {
+    pointer-events: none;
+    mix-blend-mode: screen;
+    transition: opacity 600ms ease;
+}
+
 @media (max-width: 520px) {
     .sh-sunlight-floorplan {
         gap: 8px;
@@ -88,7 +95,9 @@
     .sh-sunlight-floorplan__beam,
     .sh-sunlight-floorplan__beam-glow,
     .sh-sunlight-floorplan__reflection,
-    .sh-sunlight-floorplan__ambient {
+    .sh-sunlight-floorplan__ambient,
+    .sh-sunlight-floorplan__light-room,
+    .sh-sunlight-floorplan__light-glow {
         transition: none;
     }
 }

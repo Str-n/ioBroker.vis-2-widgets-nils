@@ -26,6 +26,7 @@ import {
     parseFloorplanGeometries,
     type FloorplanGeometries,
     type FloorplanGeometry,
+    type FloorplanLightBubbleGeometry,
     type FloorplanPoint,
     type FloorplanWindowGeometry,
 } from './SunlightFloorplanConfig';
@@ -36,15 +37,16 @@ interface SunlightFloorplanEditorProps {
     floors: Record<string, { label: string; svg: string }>;
 }
 
-type EditorTool = 'select' | 'drawRoom' | 'drawWindow';
+type EditorTool = 'select' | 'drawRoom' | 'drawWindow' | 'placeLight';
 type WindowDragKind = 'start' | 'end' | 'move';
 
 interface GeometryDrag {
-    kind: 'vertex' | 'window';
+    kind: 'vertex' | 'window' | 'light';
     pointerStart: FloorplanPoint;
     roomIndex?: number;
     vertexIndex?: number;
     windowIndex?: number;
+    lightIndex?: number;
     windowDragKind?: WindowDragKind;
     originalWindow?: FloorplanWindowGeometry;
 }
@@ -76,7 +78,7 @@ function windowFromEndpoints(
 }
 
 function emptyGeometry(): FloorplanGeometry {
-    return { rooms: [], windows: [] };
+    return { rooms: [], windows: [], lightBubbles: [] };
 }
 
 function svgContents(svg: string): string {
@@ -115,6 +117,29 @@ function closeOrthogonalRoom(points: FloorplanPoint[]): FloorplanPoint[] {
     return [...points, closingCorner];
 }
 
+function pointInsidePolygon(point: FloorplanPoint, polygon: FloorplanPoint[]): boolean {
+    let inside = false;
+    for (let index = 0, previousIndex = polygon.length - 1; index < polygon.length; previousIndex = index++) {
+        const [x1, y1] = polygon[previousIndex];
+        const [x2, y2] = polygon[index];
+        const cross = (point[0] - x1) * (y2 - y1) - (point[1] - y1) * (x2 - x1);
+        if (
+            Math.abs(cross) < 0.001 &&
+            point[0] >= Math.min(x1, x2) - 0.001 &&
+            point[0] <= Math.max(x1, x2) + 0.001 &&
+            point[1] >= Math.min(y1, y2) - 0.001 &&
+            point[1] <= Math.max(y1, y2) + 0.001
+        ) {
+            return true;
+        }
+
+        if ((y1 > point[1]) !== (y2 > point[1]) && point[0] < ((x2 - x1) * (point[1] - y1)) / (y2 - y1) + x1) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
 export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorProps): React.JSX.Element {
     const initialFloor = String(props.data.floorplan || 'eg');
     const [open, setOpen] = React.useState(false);
@@ -124,6 +149,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     );
     const [selectedRoom, setSelectedRoom] = React.useState(0);
     const [selectedWindow, setSelectedWindow] = React.useState(-1);
+    const [selectedLight, setSelectedLight] = React.useState(-1);
     const [selectedVertex, setSelectedVertex] = React.useState(-1);
     const [tool, setTool] = React.useState<EditorTool>('select');
     const [orthogonalDrawing, setOrthogonalDrawing] = React.useState(false);
@@ -201,6 +227,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setActiveFloor(floor);
         setSelectedRoom(0);
         setSelectedWindow(-1);
+        setSelectedLight(-1);
         setSelectedVertex(-1);
         setTool('select');
         setRoomDraft([]);
@@ -219,6 +246,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setActiveFloor(floor);
         setSelectedRoom(0);
         setSelectedWindow(-1);
+        setSelectedLight(-1);
         setSelectedVertex(-1);
         setTool('select');
         setRoomDraft([]);
@@ -229,6 +257,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
 
     function addRoom(): void {
         setSelectedWindow(-1);
+        setSelectedLight(-1);
         setSelectedVertex(-1);
         setRoomDraft([]);
         setRoomHover(null);
@@ -243,6 +272,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         const rooms = [...currentGeometry.rooms, { points }];
         replaceGeometry({ ...currentGeometry, rooms });
         setSelectedRoom(rooms.length - 1);
+        setSelectedLight(-1);
         setRoomDraft([]);
         setRoomHover(null);
         setTool('select');
@@ -265,9 +295,16 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                 ...window,
                 roomIndex: window.roomIndex > selectedRoom + 1 ? window.roomIndex - 1 : window.roomIndex,
             }));
-        replaceGeometry({ ...currentGeometry, rooms, windows });
+        const lightBubbles = currentGeometry.lightBubbles
+            .filter(light => light.roomIndex !== selectedRoom + 1)
+            .map(light => ({
+                ...light,
+                roomIndex: light.roomIndex > selectedRoom + 1 ? light.roomIndex - 1 : light.roomIndex,
+            }));
+        replaceGeometry({ ...currentGeometry, rooms, windows, lightBubbles });
         setSelectedRoom(Math.max(0, Math.min(selectedRoom, rooms.length - 1)));
         setSelectedWindow(-1);
+        setSelectedLight(-1);
         setSelectedVertex(-1);
     }
 
@@ -310,8 +347,29 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         }
         setSelectedVertex(-1);
         setSelectedWindow(-1);
+        setSelectedLight(-1);
         setWindowDraft(null);
         setTool('drawWindow');
+    }
+
+    function addLightBubble(): void {
+        if (!currentGeometry.rooms.length || currentGeometry.lightBubbles.length >= 32) {
+            return;
+        }
+        setSelectedVertex(-1);
+        setSelectedWindow(-1);
+        setSelectedLight(-1);
+        setRoomHover(null);
+        setTool('placeLight');
+    }
+
+    function removeLightBubble(): void {
+        if (selectedLight < 0) {
+            return;
+        }
+        const lightBubbles = currentGeometry.lightBubbles.filter((_, index) => index !== selectedLight);
+        replaceGeometry({ ...currentGeometry, lightBubbles });
+        setSelectedLight(Math.min(selectedLight, lightBubbles.length - 1));
     }
 
     function removeWindow(): void {
@@ -324,10 +382,30 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }
 
     function onMapClick(event: React.MouseEvent<SVGSVGElement>): void {
+        const point = eventPoint(event);
+        if (tool === 'placeLight') {
+            const room = currentGeometry.rooms[selectedRoom];
+            if (!room || !pointInsidePolygon(point, room.points)) {
+                return;
+            }
+            const lightBubbles = [
+                ...currentGeometry.lightBubbles,
+                {
+                    x: point[0],
+                    y: point[1],
+                    roomIndex: selectedRoom + 1,
+                    statusOid: '',
+                    brightnessLumens: 800,
+                },
+            ];
+            replaceGeometry({ ...currentGeometry, lightBubbles });
+            setSelectedLight(lightBubbles.length - 1);
+            setTool('select');
+            return;
+        }
         if (tool !== 'drawRoom') {
             return;
         }
-        const point = eventPoint(event);
         const previous = roomDraft[roomDraft.length - 1];
         setRoomDraft([...roomDraft, orthogonalDrawing && previous ? constrainOrthogonally(point, previous) : point]);
         setRoomHover(null);
@@ -351,6 +429,8 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
         setSelectedRoom(roomIndex);
+        setSelectedWindow(-1);
+        setSelectedLight(-1);
         setSelectedVertex(vertexIndex);
         setDrag({ kind: 'vertex', pointerStart: eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>), roomIndex, vertexIndex });
     }
@@ -368,12 +448,32 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         svgRef.current?.setPointerCapture(event.pointerId);
         const pointerStart = eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>);
         setSelectedWindow(windowIndex);
+        setSelectedLight(-1);
+        setSelectedVertex(-1);
         setDrag({
             kind: 'window',
             pointerStart,
             windowIndex,
             windowDragKind,
             originalWindow: currentGeometry.windows[windowIndex],
+        });
+    }
+
+    function beginLightDrag(event: React.PointerEvent<SVGElement>, lightIndex: number): void {
+        if (tool !== 'select') {
+            return;
+        }
+        event.stopPropagation();
+        event.preventDefault();
+        svgRef.current?.setPointerCapture(event.pointerId);
+        setSelectedLight(lightIndex);
+        setSelectedWindow(-1);
+        setSelectedVertex(-1);
+        setSelectedRoom(Math.max(0, currentGeometry.lightBubbles[lightIndex].roomIndex - 1));
+        setDrag({
+            kind: 'light',
+            pointerStart: eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>),
+            lightIndex,
         });
     }
 
@@ -406,6 +506,19 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                     : room,
             );
             replaceGeometry({ ...base, rooms }, false);
+            return;
+        }
+
+        if (drag.kind === 'light' && drag.lightIndex !== undefined) {
+            const currentLight = base.lightBubbles[drag.lightIndex];
+            const assignedRoom = currentLight && base.rooms[currentLight.roomIndex - 1];
+            if (!assignedRoom || !pointInsidePolygon(point, assignedRoom.points)) {
+                return;
+            }
+            const lightBubbles = base.lightBubbles.map((light, index) =>
+                index === drag.lightIndex ? { ...light, x: point[0], y: point[1] } : light,
+            );
+            replaceGeometry({ ...base, lightBubbles }, false);
             return;
         }
 
@@ -473,7 +586,21 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         updateWindow(selectedWindow, window => ({ ...window, [key]: value }));
     }
 
+    function updateLightField<K extends keyof FloorplanLightBubbleGeometry>(
+        key: K,
+        value: FloorplanLightBubbleGeometry[K],
+    ): void {
+        if (selectedLight < 0) {
+            return;
+        }
+        const lightBubbles = currentGeometry.lightBubbles.map((light, index) =>
+            index === selectedLight ? { ...light, [key]: value } : light,
+        );
+        replaceGeometry({ ...currentGeometry, lightBubbles });
+    }
+
     const selectedWindowGeometry = currentGeometry.windows[selectedWindow];
+    const selectedLightGeometry = currentGeometry.lightBubbles[selectedLight];
     const selectedRoomGeometry = currentGeometry.rooms[selectedRoom];
     const selectedWindowEndpoints = selectedWindowGeometry ? windowEndpoints(selectedWindowGeometry) : undefined;
     const roomPreviewPoints = roomHover
@@ -503,7 +630,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     ? Generic.t('floorplan_editor_draw_room_help')
                                     : tool === 'drawWindow'
                                       ? Generic.t('floorplan_editor_draw_window_help')
-                                      : Generic.t('floorplan_editor_drag_help')}
+                                      : tool === 'placeLight'
+                                        ? Generic.t('floorplan_editor_place_light_help')
+                                        : Generic.t('floorplan_editor_drag_help')}
                             </Typography>
                             <svg
                                 ref={svgRef}
@@ -524,7 +653,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     background: '#fff',
                                     touchAction: 'none',
                                     pointerEvents: 'auto',
-                                    cursor: tool === 'drawRoom' || tool === 'drawWindow' ? 'crosshair' : 'default',
+                                    cursor: tool === 'drawRoom' || tool === 'drawWindow' || tool === 'placeLight' ? 'crosshair' : 'default',
                                 }}
                             >
                                 <g dangerouslySetInnerHTML={{ __html: currentSvgContents }} />
@@ -538,10 +667,11 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             strokeWidth={roomIndex === selectedRoom ? 2 : 1.4}
                                             vectorEffect="non-scaling-stroke"
                                             onClick={event => {
-                                                if (tool !== 'drawRoom') {
+                                                if (tool !== 'drawRoom' && tool !== 'placeLight') {
                                                     event.stopPropagation();
                                                     setSelectedRoom(roomIndex);
                                                     setSelectedWindow(-1);
+                                                    setSelectedLight(-1);
                                                     setSelectedVertex(-1);
                                                 }
                                             }}
@@ -603,6 +733,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                     if (tool === 'select') {
                                                         event.stopPropagation();
                                                         setSelectedWindow(windowIndex);
+                                                        setSelectedLight(-1);
                                                         setSelectedRoom(Math.max(0, window.roomIndex - 1));
                                                     }
                                                 }}
@@ -633,6 +764,36 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                     />
                                                 </>
                                             ) : null}
+                                        </g>
+                                    );
+                                })}
+                                {currentGeometry.lightBubbles.map((light, lightIndex) => {
+                                    const active = lightIndex === selectedLight;
+                                    return (
+                                        <g
+                                            key={`light-${lightIndex}`}
+                                            style={{ cursor: tool === 'select' ? 'move' : 'crosshair' }}
+                                            onPointerDown={event => beginLightDrag(event, lightIndex)}
+                                            onClick={event => {
+                                                if (tool === 'select') {
+                                                    event.stopPropagation();
+                                                    setSelectedLight(lightIndex);
+                                                    setSelectedWindow(-1);
+                                                    setSelectedRoom(Math.max(0, light.roomIndex - 1));
+                                                    setSelectedVertex(-1);
+                                                }
+                                            }}
+                                        >
+                                            <circle
+                                                cx={light.x}
+                                                cy={light.y}
+                                                r={active ? 9 : 7}
+                                                fill="#ffd27e"
+                                                stroke={active ? '#d32f2f' : '#8d5c00'}
+                                                strokeWidth={active ? 2.5 : 1.5}
+                                                vectorEffect="non-scaling-stroke"
+                                            />
+                                            <circle cx={light.x} cy={light.y} r={2.5} fill="#fff9e6" pointerEvents="none" />
                                         </g>
                                     );
                                 })}
@@ -687,6 +848,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             setSelectedRoom(Number(event.target.value));
                                             setSelectedVertex(-1);
                                             setSelectedWindow(-1);
+                                            setSelectedLight(-1);
                                         }}
                                     >
                                         {currentGeometry.rooms.map((_, index) => (
@@ -737,6 +899,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                         onChange={event => {
                                             const index = Number(event.target.value);
                                             setSelectedWindow(index);
+                                            setSelectedLight(-1);
                                             const window = currentGeometry.windows[index];
                                             if (window) {
                                                 setSelectedRoom(Math.max(0, window.roomIndex - 1));
@@ -820,6 +983,76 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                             </Button>
                                         </Box>
                                     ) : null}
+                                </>
+                            ) : null}
+                            <Typography variant="subtitle2" sx={{ mt: 1 }}>{Generic.t('light_bubbles')}</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <FormControl size="small" fullWidth disabled={!currentGeometry.lightBubbles.length || tool !== 'select'}>
+                                    <InputLabel>{Generic.t('light_bubble')}</InputLabel>
+                                    <Select
+                                        label={Generic.t('light_bubble')}
+                                        value={selectedLight >= 0 ? selectedLight : ''}
+                                        onChange={event => {
+                                            const index = Number(event.target.value);
+                                            const light = currentGeometry.lightBubbles[index];
+                                            setSelectedLight(index);
+                                            setSelectedWindow(-1);
+                                            if (light) {
+                                                setSelectedRoom(Math.max(0, light.roomIndex - 1));
+                                            }
+                                        }}
+                                    >
+                                        {currentGeometry.lightBubbles.map((_, index) => (
+                                            <MenuItem key={index} value={index}>{`${Generic.t('light_bubble')} ${index + 1}`}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <Button
+                                    variant="outlined"
+                                    onClick={addLightBubble}
+                                    disabled={!currentGeometry.rooms.length || currentGeometry.lightBubbles.length >= 32 || tool !== 'select'}
+                                >
+                                    {Generic.t('add')}
+                                </Button>
+                            </Stack>
+                            {tool === 'placeLight' ? (
+                                <Button onClick={() => setTool('select')}>{Generic.t('cancel')}</Button>
+                            ) : null}
+                            {selectedLightGeometry ? (
+                                <>
+                                    <Stack direction="row" spacing={1}>
+                                        <Button variant="outlined" onClick={removeLightBubble}>
+                                            {Generic.t('light_bubble_remove')}
+                                        </Button>
+                                        <FormControl size="small" sx={{ minWidth: 110 }}>
+                                            <InputLabel>{Generic.t('floorplan_editor_room')}</InputLabel>
+                                            <Select
+                                                label={Generic.t('floorplan_editor_room')}
+                                                value={selectedLightGeometry.roomIndex - 1}
+                                                onChange={event => updateLightField('roomIndex', Number(event.target.value) + 1)}
+                                            >
+                                                {currentGeometry.rooms.map((_, index) => (
+                                                    <MenuItem key={index} value={index}>{index + 1}</MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Stack>
+                                    <TextField
+                                        size="small"
+                                        label={Generic.t('light_bubble_status_oid')}
+                                        value={selectedLightGeometry.statusOid}
+                                        onChange={event => updateLightField('statusOid', event.target.value)}
+                                    />
+                                    <TextField
+                                        size="small"
+                                        type="number"
+                                        label={Generic.t('light_bubble_brightness')}
+                                        value={selectedLightGeometry.brightnessLumens}
+                                        inputProps={{ min: 100, max: 5000, step: 50 }}
+                                        helperText={Generic.t('light_bubble_brightness_help')}
+                                        onChange={event => updateLightField('brightnessLumens', Number(event.target.value))}
+                                        onBlur={event => updateLightField('brightnessLumens', Math.max(100, Math.min(5000, Number(event.target.value) || 100)))}
+                                    />
                                 </>
                             ) : null}
                             <Typography variant="caption" color="text.secondary">
