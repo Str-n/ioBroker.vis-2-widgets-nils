@@ -519,6 +519,8 @@
   "floorplan_editor_remove_vertex": "Remove selected corner",
   "floorplan_editor_add_vertex": "Add corner",
   "floorplan_editor_remove_window": "Remove window",
+  "floorplan_editor_orthogonal_drawing": "Orthogonal drawing (horizontal/vertical)",
+  "floorplan_editor_orthogonal_help": "New room edges and windows snap exactly horizontal or vertical. The closing room edge is kept orthogonal too.",
   "floorplan_editor_draw_room_help": "Click the room corners in order, then choose Finish room.",
   "floorplan_editor_draw_window_help": "Drag along a wall to place a window. Drag its center to move it or an end to resize it.",
   "floorplan_editor_drag_help": "Drag a room corner to reshape it. Drag a window to move it or an end handle to resize it.",

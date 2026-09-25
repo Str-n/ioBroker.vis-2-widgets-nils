@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetState } from '@iobroker/types-vis-2';
+import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
 
 import Generic from './Generic';
 import {
@@ -23,7 +23,6 @@ import './SunlightFloorplan.css';
 
 interface SunlightRxData extends Record<string, any> {
     noCard: boolean | 'true';
-    widgetTitle: string;
     floorplan: string;
     floorTopAzimuth: number | string;
     sunAzimuthOid: string;
@@ -31,7 +30,6 @@ interface SunlightRxData extends Record<string, any> {
     weatherSunFactorOid: string;
     weatherCloudinessOid: string;
     weatherConditionOid: string;
-    weatherTemperatureOid: string;
     weatherRadiationOid: string;
     sunlightSource: 'cloudiness' | 'radiation';
     cloudinessScale: 'percent' | 'fraction';
@@ -149,80 +147,33 @@ function renderFloorplan(
     );
 }
 
-function formatDegrees(value: number | undefined): string {
-    return value === undefined ? '–' : `${Math.round(value)}°`;
-}
-
-function cardinalDirection(azimuth: number | undefined): string {
-    if (azimuth === undefined) {
-        return '–';
-    }
-    return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(azimuth / 45) % 8];
-}
-
 function SunlightFloorplanContent(props: {
     svg: string;
     beams: RenderedBeam[];
     ambient: RenderedAmbient[];
     reflections: RenderedReflection[];
     id: string;
-    title: string;
-    floorName: string;
     sunAzimuth?: number;
     sunElevation?: number;
-    diffuseStrength: number;
-    directFactor: number;
-    radiation?: number;
-    weatherCondition?: string;
-    temperature?: number;
     windowCount: number;
     configuredWindowCount: number;
     noCard: boolean;
-    labels: Record<string, string>;
+    labels: {
+        sunDataMissing: string;
+        configureWindows: string;
+    };
 }): React.JSX.Element {
-    const [now, setNow] = React.useState(() => new Date());
-
-    React.useEffect(() => {
-        const timer = window.setInterval(() => setNow(new Date()), 60_000);
-        return () => window.clearInterval(timer);
-    }, []);
-
     const status =
-        props.sunAzimuth === undefined || props.sunElevation === undefined
-            ? props.labels.sunDataMissing
-            : props.sunElevation <= 0
-              ? props.labels.sunBelowHorizon
+        props.sunElevation !== undefined && props.sunElevation <= 0
+            ? undefined
+            : props.sunAzimuth === undefined || props.sunElevation === undefined
+              ? props.labels.sunDataMissing
               : props.windowCount === 0 || props.configuredWindowCount < props.windowCount
                 ? props.labels.configureWindows
                 : undefined;
 
     return (
         <section className={`sh-sunlight-floorplan${props.noCard ? ' sh-sunlight-floorplan--bare' : ''}`}>
-            <header className="sh-sunlight-floorplan__header">
-                <div className="sh-sunlight-floorplan__time">
-                    <strong>{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
-                    <span>{now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })}</span>
-                </div>
-                <div className="sh-sunlight-floorplan__summary">
-                    <span className="sh-sunlight-floorplan__eyebrow">{props.floorName}</span>
-                    <strong>{props.title}</strong>
-                    <span>{props.weatherCondition || props.labels.weatherUnavailable}</span>
-                </div>
-                <div className="sh-sunlight-floorplan__sun" aria-label={props.labels.sunPosition}>
-                    <span className="sh-sunlight-floorplan__sun-icon" aria-hidden="true">☀</span>
-                    <strong>{cardinalDirection(props.sunAzimuth)}</strong>
-                    <span>{formatDegrees(props.sunAzimuth)} · {formatDegrees(props.sunElevation)}</span>
-                </div>
-                <div className="sh-sunlight-floorplan__weather">
-                    {props.radiation === undefined ? (
-                        props.temperature === undefined ? null : <strong>{props.temperature.toFixed(1)}°</strong>
-                    ) : (
-                        <strong>{Math.round(props.radiation)} W/m²</strong>
-                    )}
-                    <span>{props.labels.direct}: {Math.round(props.directFactor * 100)}%</span>
-                    <span>{props.labels.diffuse}: {Math.round(props.diffuseStrength * 100)}%</span>
-                </div>
-            </header>
             {status ? <div className="sh-sunlight-floorplan__status" role="status">{status}</div> : null}
             <div className="sh-sunlight-floorplan__drawing">
                 <div
@@ -246,6 +197,65 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
     static smartHomeTheme = true;
 
     private previousBeamPoints = new Map<string, Array<[number, number]>>();
+    private blindValues = new Map<string, unknown>();
+    private subscribedBlindOids = new Set<string>();
+
+    private onBlindStateChange = (id: string, state: ioBroker.State | null | undefined): void => {
+        if (!this.subscribedBlindOids.has(id)) {
+            return;
+        }
+        if (state) {
+            this.blindValues.set(id, state.val);
+        } else {
+            this.blindValues.delete(id);
+        }
+        this.forceUpdate();
+    };
+
+    componentDidMount(): void {
+        super.componentDidMount();
+        this.updateBlindSubscriptions();
+    }
+
+    componentDidUpdate(prevProps: VisRxWidgetProps, prevState: typeof this.state): void {
+        super.componentDidUpdate(prevProps, prevState);
+        if (prevState.rxData.floorConfigurations !== this.state.rxData.floorConfigurations) {
+            this.updateBlindSubscriptions();
+        }
+    }
+
+    componentWillUnmount(): void {
+        const subscribedOids = [...this.subscribedBlindOids];
+        if (subscribedOids.length) {
+            this.props.context.socket.unsubscribeState(subscribedOids, this.onBlindStateChange);
+        }
+        this.subscribedBlindOids.clear();
+        this.blindValues.clear();
+        super.componentWillUnmount();
+    }
+
+    private updateBlindSubscriptions(): void {
+        const geometries = parseFloorplanGeometries(this.state.rxData.floorConfigurations);
+        const configuredOids = new Set(
+            Object.values(geometries)
+                .flatMap(geometry => geometry.windows.map(window => window.blindOid.trim()))
+                .filter(oid => oid && oid !== 'nothing_selected'),
+        );
+        const removedOids = [...this.subscribedBlindOids].filter(oid => !configuredOids.has(oid));
+        if (removedOids.length) {
+            this.props.context.socket.unsubscribeState(removedOids, this.onBlindStateChange);
+            removedOids.forEach(oid => {
+                this.subscribedBlindOids.delete(oid);
+                this.blindValues.delete(oid);
+            });
+        }
+
+        const addedOids = [...configuredOids].filter(oid => !this.subscribedBlindOids.has(oid));
+        if (addedOids.length) {
+            addedOids.forEach(oid => this.subscribedBlindOids.add(oid));
+            void this.props.context.socket.subscribeState(addedOids, this.onBlindStateChange);
+        }
+    }
 
     static getWidgetInfo(): RxWidgetInfo {
         return {
@@ -258,7 +268,6 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                     name: 'common',
                     fields: [
                         { name: 'noCard', label: 'without_card', type: 'checkbox', default: false },
-                        { name: 'widgetTitle', label: 'name', default: 'Sunlight' },
                         {
                             name: 'floorplan',
                             label: 'floor_plan',
@@ -385,12 +394,6 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                             type: 'id',
                             default: '',
                         },
-                        {
-                            name: 'weatherTemperatureOid',
-                            label: 'weather_temperature_oid',
-                            type: 'id',
-                            default: '',
-                        },
                     ],
                 },
             ],
@@ -404,7 +407,10 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
     }
 
     private stateValue(oid: string): unknown {
-        return oid ? this.state.values[`${oid}.val`] : undefined;
+        if (!oid) {
+            return undefined;
+        }
+        return this.blindValues.has(oid) ? this.blindValues.get(oid) : this.state.values[`${oid}.val`];
     }
 
     private numericValue(oid: string): number | undefined {
@@ -428,7 +434,6 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         const sunAzimuth = this.numericValue(data.sunAzimuthOid);
         const sunElevation = this.numericValue(data.sunElevationOid);
         const conditionValue = this.stateValue(data.weatherConditionOid);
-        const temperature = this.numericValue(data.weatherTemperatureOid);
         const condition = typeof conditionValue === 'string' ? conditionValue : undefined;
         const radiation = this.numericValue(data.weatherRadiationOid);
         const factors = calculateSunlightFactors(
@@ -490,6 +495,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
             }
             configuredWindowCount++;
 
+            const blindOid = configuredWindow.blindOid.trim();
             const window: Parameters<typeof calculateSunlightBeam>[0] = {
                 startX,
                 startY,
@@ -497,8 +503,8 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 endY,
                 azimuth: windowAzimuth,
                 roomPolygon,
-                blindValue: this.stateValue(configuredWindow.blindOid),
-                blindStateConfigured: Boolean(configuredWindow.blindOid),
+                blindValue: this.stateValue(blindOid),
+                blindStateConfigured: Boolean(blindOid && blindOid !== 'nothing_selected'),
                 blindMin: configuredWindow.blindMin,
                 blindMax: configuredWindow.blindMax,
                 blindInvert: configuredWindow.blindInvert,
@@ -583,26 +589,14 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 ambient={ambient}
                 reflections={reflections}
                 id={props.id}
-                title={String(data.widgetTitle || this.translated('sunlight_floorplan'))}
-                floorName={floor.label}
                 sunAzimuth={sunAzimuth}
                 sunElevation={sunElevation}
-                directFactor={factors.direct}
-                diffuseStrength={factors.diffuse}
-                radiation={radiation}
-                weatherCondition={condition}
-                temperature={temperature}
                 windowCount={windowCount}
                 configuredWindowCount={configuredWindowCount}
                 noCard={noCard}
                 labels={{
-                    direct: this.translated('direct_light'),
-                    diffuse: this.translated('diffuse_light'),
                     sunDataMissing: this.translated('sun_data_missing'),
-                    sunBelowHorizon: this.translated('sun_below_horizon'),
                     configureWindows: this.translated('configure_sunlight_windows'),
-                    weatherUnavailable: this.translated('weather_unavailable'),
-                    sunPosition: this.translated('sun_position'),
                 }}
             />
         );

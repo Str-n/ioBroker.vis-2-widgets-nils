@@ -538,6 +538,8 @@
   "floorplan_editor_remove_vertex": "Ausgewählte Ecke entfernen",
   "floorplan_editor_add_vertex": "Ecke hinzufügen",
   "floorplan_editor_remove_window": "Fenster entfernen",
+  "floorplan_editor_orthogonal_drawing": "Orthogonales Zeichnen (horizontal/vertikal)",
+  "floorplan_editor_orthogonal_help": "Neue Raumkanten und Fenster werden exakt horizontal oder vertikal ausgerichtet. Auch die Abschlusskante des Raums bleibt orthogonal.",
   "floorplan_editor_draw_room_help": "Klicken Sie nacheinander auf die Raumecken und wählen Sie dann „Raum abschließen“.",
   "floorplan_editor_draw_window_help": "Ziehen Sie entlang einer Wand, um ein Fenster zu platzieren. Ziehen Sie die Mitte zum Verschieben oder ein Ende zum Ändern der Größe.",
   "floorplan_editor_drag_help": "Ziehen Sie eine Raumecke zum Ändern der Form. Ziehen Sie ein Fenster zum Verschieben oder einen Endpunkt zum Ändern der Größe.",

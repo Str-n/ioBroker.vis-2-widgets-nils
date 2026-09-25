@@ -163,6 +163,8 @@ function App(): React.JSX.Element {
         socket: {
             getObject: async (id: string) => objects[id] || null,
             getObjectsById: async (ids: string[]) => Object.fromEntries(ids.filter(id => objects[id]).map(id => [id, objects[id]])),
+            subscribeState: async () => undefined,
+            unsubscribeState: () => undefined,
         },
         setValue: (id: string, value: unknown) => setValues(old => ({ ...old, [`${id}.val`]: value })),
         systemConfig: { common: { dateFormat: 'DD.MM.YYYY', isFloatComma: false } },
@@ -331,10 +333,10 @@ function App(): React.JSX.Element {
                     values,
                     style: { width: 700, maxWidth: '100%', height: 620 },
                     rxData: {
-                        floorplan: 'eg', floorTopAzimuth: 163, widgetTitle: 'Ground floor',
+                        floorplan: 'eg', floorTopAzimuth: 163,
                         sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
                         weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
-                        weatherTemperatureOid: 'preview.weather.temperature', weatherRadiationOid: 'preview.weather.radiation',
+                        weatherRadiationOid: 'preview.weather.radiation',
                         sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent',
                         svgUnitsPerMeter: 62, roomHeightMeters: 2.5, maximumProjection: 650,
                         floorConfigurations: JSON.stringify({

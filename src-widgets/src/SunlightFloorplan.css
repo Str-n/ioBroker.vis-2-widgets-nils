@@ -22,85 +22,6 @@
     padding: 0;
 }
 
-.sh-sunlight-floorplan__header {
-    flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: minmax(74px, 0.7fr) minmax(120px, 1.5fr) minmax(105px, 1fr) minmax(90px, 1fr);
-    align-items: center;
-    gap: 12px;
-    max-width: none;
-    margin: 0;
-    min-height: 60px;
-    padding: 0 4px 12px;
-    border-bottom: 1px solid var(--sh-divider);
-}
-
-.sh-sunlight-floorplan__time,
-.sh-sunlight-floorplan__summary,
-.sh-sunlight-floorplan__sun,
-.sh-sunlight-floorplan__weather {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.sh-sunlight-floorplan__time strong,
-.sh-sunlight-floorplan__weather strong {
-    font-size: 1.2rem;
-    font-weight: 650;
-    line-height: 1.2;
-}
-
-.sh-sunlight-floorplan__time span,
-.sh-sunlight-floorplan__summary span,
-.sh-sunlight-floorplan__sun span,
-.sh-sunlight-floorplan__weather span {
-    overflow: hidden;
-    color: var(--sh-text-secondary);
-    font-size: 0.78rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sh-sunlight-floorplan__summary strong {
-    overflow: hidden;
-    font-size: 1rem;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sh-sunlight-floorplan__eyebrow {
-    font-size: 0.68rem !important;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.sh-sunlight-floorplan__sun {
-    position: relative;
-    padding-left: 30px;
-}
-
-.sh-sunlight-floorplan__sun-icon {
-    position: absolute;
-    top: 1px;
-    left: 0;
-    color: var(--sh-warning) !important;
-    font-size: 24px !important;
-    line-height: 1;
-}
-
-.sh-sunlight-floorplan__sun strong {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.sh-sunlight-floorplan__weather {
-    align-items: flex-end;
-    text-align: right;
-}
-
 .sh-sunlight-floorplan__status {
     flex: 0 0 auto;
     padding: 7px 10px;
@@ -160,18 +81,6 @@
     .sh-sunlight-floorplan {
         gap: 8px;
         padding: 10px;
-    }
-
-    .sh-sunlight-floorplan__header {
-        grid-template-columns: minmax(65px, 0.7fr) minmax(100px, 1.25fr) minmax(90px, 1fr);
-        gap: 8px;
-        padding-bottom: 8px;
-    }
-
-    .sh-sunlight-floorplan__weather {
-        grid-column: 2 / -1;
-        align-items: flex-start;
-        text-align: left;
     }
 }
 

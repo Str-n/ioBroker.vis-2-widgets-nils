@@ -3,11 +3,13 @@ import React from 'react';
 import {
     Box,
     Button,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     FormControl,
+    FormControlLabel,
     InputLabel,
     MenuItem,
     Select,
@@ -91,6 +93,28 @@ function pointsAttribute(points: FloorplanPoint[]): string {
     return points.map(point => `${point[0]},${point[1]}`).join(' ');
 }
 
+function constrainOrthogonally(point: FloorplanPoint, anchor: FloorplanPoint): FloorplanPoint {
+    const deltaX = point[0] - anchor[0];
+    const deltaY = point[1] - anchor[1];
+    return Math.abs(deltaX) >= Math.abs(deltaY) ? [point[0], anchor[1]] : [anchor[0], point[1]];
+}
+
+function closeOrthogonalRoom(points: FloorplanPoint[]): FloorplanPoint[] {
+    if (points.length < 3) {
+        return points;
+    }
+    const first = points[0];
+    const last = points[points.length - 1];
+    if (first[0] === last[0] || first[1] === last[1]) {
+        return points;
+    }
+
+    const previous = points[points.length - 2];
+    const lastEdgeIsHorizontal = previous[1] === last[1];
+    const closingCorner: FloorplanPoint = lastEdgeIsHorizontal ? [last[0], first[1]] : [first[0], last[1]];
+    return [...points, closingCorner];
+}
+
 export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorProps): React.JSX.Element {
     const initialFloor = String(props.data.floorplan || 'eg');
     const [open, setOpen] = React.useState(false);
@@ -102,7 +126,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     const [selectedWindow, setSelectedWindow] = React.useState(-1);
     const [selectedVertex, setSelectedVertex] = React.useState(-1);
     const [tool, setTool] = React.useState<EditorTool>('select');
+    const [orthogonalDrawing, setOrthogonalDrawing] = React.useState(false);
     const [roomDraft, setRoomDraft] = React.useState<FloorplanPoint[]>([]);
+    const [roomHover, setRoomHover] = React.useState<FloorplanPoint | null>(null);
     const [windowDraft, setWindowDraft] = React.useState<WindowDraft | null>(null);
     const [drag, setDrag] = React.useState<GeometryDrag | null>(null);
     const svgRef = React.useRef<SVGSVGElement>(null);
@@ -177,6 +203,10 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setSelectedWindow(-1);
         setSelectedVertex(-1);
         setTool('select');
+        setRoomDraft([]);
+        setRoomHover(null);
+        setWindowDraft(null);
+        setDrag(null);
         setOpen(true);
     }
 
@@ -192,6 +222,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setSelectedVertex(-1);
         setTool('select');
         setRoomDraft([]);
+        setRoomHover(null);
         setWindowDraft(null);
         save(next, floor);
     }
@@ -200,6 +231,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setSelectedWindow(-1);
         setSelectedVertex(-1);
         setRoomDraft([]);
+        setRoomHover(null);
         setTool('drawRoom');
     }
 
@@ -207,15 +239,18 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         if (roomDraft.length < 3) {
             return;
         }
-        const rooms = [...currentGeometry.rooms, { points: roomDraft }];
+        const points = orthogonalDrawing ? closeOrthogonalRoom(roomDraft) : roomDraft;
+        const rooms = [...currentGeometry.rooms, { points }];
         replaceGeometry({ ...currentGeometry, rooms });
         setSelectedRoom(rooms.length - 1);
         setRoomDraft([]);
+        setRoomHover(null);
         setTool('select');
     }
 
     function cancelRoom(): void {
         setRoomDraft([]);
+        setRoomHover(null);
         setTool('select');
     }
 
@@ -293,7 +328,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             return;
         }
         const point = eventPoint(event);
-        setRoomDraft(old => [...old, point]);
+        const previous = roomDraft[roomDraft.length - 1];
+        setRoomDraft([...roomDraft, orthogonalDrawing && previous ? constrainOrthogonally(point, previous) : point]);
+        setRoomHover(null);
     }
 
     function beginWindowDraw(event: React.PointerEvent<SVGSVGElement>): void {
@@ -343,7 +380,14 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     function onMapPointerMove(event: React.PointerEvent<SVGSVGElement>): void {
         const point = eventPoint(event);
         if (tool === 'drawWindow' && windowDraft) {
-            setWindowDraft({ ...windowDraft, end: point });
+            setWindowDraft({
+                ...windowDraft,
+                end: orthogonalDrawing ? constrainOrthogonally(point, windowDraft.start) : point,
+            });
+            return;
+        }
+        if (tool === 'drawRoom') {
+            setRoomHover(point);
             return;
         }
         if (!drag) {
@@ -386,7 +430,8 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
 
     function finishPointer(event: React.PointerEvent<SVGSVGElement>): void {
         if (tool === 'drawWindow' && windowDraft) {
-            const end = eventPoint(event);
+            const pointerEnd = eventPoint(event);
+            const end = orthogonalDrawing ? constrainOrthogonally(pointerEnd, windowDraft.start) : pointerEnd;
             const deltaX = end[0] - windowDraft.start[0];
             const deltaY = end[1] - windowDraft.start[1];
             if (Math.hypot(deltaX, deltaY) >= 2) {
@@ -431,6 +476,14 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     const selectedWindowGeometry = currentGeometry.windows[selectedWindow];
     const selectedRoomGeometry = currentGeometry.rooms[selectedRoom];
     const selectedWindowEndpoints = selectedWindowGeometry ? windowEndpoints(selectedWindowGeometry) : undefined;
+    const roomPreviewPoints = roomHover
+        ? [
+              ...roomDraft,
+              orthogonalDrawing && roomDraft.length
+                  ? constrainOrthogonally(roomHover, roomDraft[roomDraft.length - 1])
+                  : roomHover,
+          ]
+        : roomDraft;
     const currentViewBox = viewBox.split(/[\s,]+/).map(Number);
     const svgWidth = currentViewBox[2] || 756;
     const svgHeight = currentViewBox[3] || 699;
@@ -460,6 +513,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                 onClick={onMapClick}
                                 onPointerDown={beginWindowDraw}
                                 onPointerMove={onMapPointerMove}
+                                onPointerLeave={() => setRoomHover(null)}
                                 onPointerUp={finishPointer}
                                 onPointerCancel={finishPointer}
                                 style={{
@@ -514,9 +568,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                 ))}
                                 {roomDraft.length ? (
                                     <g pointerEvents="none">
-                                        {roomDraft.length > 1 ? (
+                                        {roomPreviewPoints.length > 1 ? (
                                             <polyline
-                                                points={pointsAttribute(roomDraft)}
+                                                points={pointsAttribute(roomPreviewPoints)}
                                                 fill="none"
                                                 stroke="#d32f2f"
                                                 strokeWidth={2}
@@ -606,6 +660,21 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     ))}
                                 </Select>
                             </FormControl>
+
+                            <Box>
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={orthogonalDrawing}
+                                            onChange={event => setOrthogonalDrawing(event.target.checked)}
+                                        />
+                                    }
+                                    label={Generic.t('floorplan_editor_orthogonal_drawing')}
+                                />
+                                <Typography variant="caption" color="text.secondary" component="div">
+                                    {Generic.t('floorplan_editor_orthogonal_help')}
+                                </Typography>
+                            </Box>
 
                             <Typography variant="subtitle2">{Generic.t('floorplan_editor_rooms')}</Typography>
                             <Stack direction="row" spacing={1}>
