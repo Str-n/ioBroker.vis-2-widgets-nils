@@ -2,12 +2,23 @@ import React from 'react';
 import type { RxRenderWidgetProps, RxWidgetInfo } from '@iobroker/types-vis-2';
 import Generic from './Generic';
 import { calculateSunlightFactors, clamp, numericStateValue } from './SunlightUtils';
-import { sunChartPoint, sunDay, sunPath, sunPositionBindings, todayTimestamp } from './SunPositionUtils';
+import {
+    sunChartFrame,
+    sunChartFramePoint,
+    sunChartPoint,
+    sunDay,
+    sunDayForDate,
+    sunPath,
+    sunPositionBindings,
+    todayTimestamp,
+    type SunDay,
+} from './SunPositionUtils';
 import '../public/smarthome.css';
 import './SunPosition.css';
 
 interface SunPositionData extends Record<string, any> {
     noCard: boolean | 'true';
+    showYearSunpaths: boolean | 'true';
     sunlightSource: 'radiation' | 'cloudiness';
     radiationReference: number | string;
     cloudinessScale: 'percent' | 'fraction';
@@ -40,7 +51,15 @@ export default class SunPosition extends Generic<SunPositionData> {
             visAttrs: [
                 {
                     name: 'common',
-                    fields: [{ name: 'noCard', label: 'without_card', type: 'checkbox', default: false }],
+                    fields: [
+                        { name: 'noCard', label: 'without_card', type: 'checkbox', default: false },
+                        {
+                            name: 'showYearSunpaths',
+                            label: 'sun_position_show_year_paths',
+                            type: 'checkbox',
+                            default: false,
+                        },
+                    ],
                 },
                 {
                     name: 'sun_data',
@@ -57,6 +76,14 @@ export default class SunPosition extends Generic<SunPositionData> {
                                         {
                                             sunAzimuthOid: 'sun_azimuth_oid',
                                             sunElevationOid: 'sun_elevation_oid',
+                                            winterSunriseOid: 'sun_position_winterSunriseOid',
+                                            winterSolarNoonOid: 'sun_position_winterSolarNoonOid',
+                                            winterSunsetOid: 'sun_position_winterSunsetOid',
+                                            winterNoonElevationOid: 'sun_position_winterNoonElevationOid',
+                                            summerSunriseOid: 'sun_position_summerSunriseOid',
+                                            summerSolarNoonOid: 'sun_position_summerSolarNoonOid',
+                                            summerSunsetOid: 'sun_position_summerSunsetOid',
+                                            summerNoonElevationOid: 'sun_position_summerNoonElevationOid',
                                         } as Record<string, string>
                                     )[name] || `sun_position_${name}`,
                             })),
@@ -144,6 +171,30 @@ export default class SunPosition extends Generic<SunPositionData> {
             value('noonElevationOid'),
             now,
         );
+        const showYearSunpaths = data.showYearSunpaths === true || data.showYearSunpaths === 'true';
+        const winterDay = showYearSunpaths
+            ? sunDayForDate(
+                  value('winterSunriseOid'),
+                  value('winterSolarNoonOid'),
+                  value('winterSunsetOid'),
+                  value('winterNoonElevationOid'),
+              )
+            : undefined;
+        const summerDay = showYearSunpaths
+            ? sunDayForDate(
+                  value('summerSunriseOid'),
+                  value('summerSolarNoonOid'),
+                  value('summerSunsetOid'),
+                  value('summerNoonElevationOid'),
+              )
+            : undefined;
+        const yearFrame = showYearSunpaths
+            ? sunChartFrame([day, winterDay, summerDay].filter((candidate): candidate is SunDay => !!candidate))
+            : undefined;
+        const project = yearFrame
+            ? (_chartDay: SunDay, timestamp: number, height: number) => sunChartFramePoint(yearFrame, timestamp, height)
+            : sunChartPoint;
+        const yearComparison = !!yearFrame && (!!winterDay || !!summerDay);
         const rawElevation = numericStateValue(value('sunElevationOid'));
         const elevation = rawElevation !== undefined && Math.abs(rawElevation) <= 90 ? rawElevation : undefined;
         const rawAzimuth = numericStateValue(value('sunAzimuthOid'));
@@ -164,9 +215,15 @@ export default class SunPosition extends Generic<SunPositionData> {
         const night = elevation !== undefined && elevation <= 0;
         const marker =
             day && elevation !== undefined && !night && now >= day.sunrise && now <= day.sunset
-                ? sunChartPoint(day, now, elevation)
+                ? project(day, now, elevation)
                 : undefined;
-        const path = day ? sunPath(day) : '';
+        const path = day ? sunPath(day, project) : '';
+        const winterPath = winterDay ? sunPath(winterDay, project) : '';
+        const summerPath = summerDay ? sunPath(summerDay, project) : '';
+        const dayStartX = day ? project(day, day.sunrise, 0)[0] : 24;
+        const dayEndX = day ? project(day, day.sunset, 0)[0] : 232;
+        const todayLegendX = winterDay ? 94 : 24;
+        const summerLegendX = todayLegendX + 57;
         const id = `sun-position-${Array.from(this.props.id, char => char.codePointAt(0)!.toString(16)).join('-')}`;
         const t = (key: string): string => this.translated(key);
         const time = (input: unknown): string => {
@@ -181,6 +238,13 @@ export default class SunPosition extends Generic<SunPositionData> {
             input === undefined ? '–' : `${this.formatValue(input, 0)}°`;
         const status =
             elevation === undefined ? 'sun_position_unavailable' : night ? 'sun_position_night' : 'sun_position_today';
+        const description = [
+            `${t(status)}.`,
+            `${t('sun_position_azimuth')}: ${degrees(azimuth)}.`,
+            `${t('sun_position_elevation')}: ${degrees(elevation)}.`,
+            t(yearComparison ? 'sun_position_year_path_help' : 'sun_position_path_help'),
+        ].join(' ');
+        const todayPathClass = `sh-sun-position__path${yearComparison ? ' sh-sun-position__year-path--today' : ''}`;
 
         return (
             <div
@@ -192,9 +256,7 @@ export default class SunPosition extends Generic<SunPositionData> {
                     aria-labelledby={`${id}-title ${id}-description`}
                 >
                     <title id={`${id}-title`}>{t('sun_position')}</title>
-                    <desc
-                        id={`${id}-description`}
-                    >{`${t(status)}. ${t('sun_position_azimuth')}: ${degrees(azimuth)}. ${t('sun_position_elevation')}: ${degrees(elevation)}. ${t('sun_position_path_help')}`}</desc>
+                    <desc id={`${id}-description`}>{description}</desc>
                     <defs>
                         <linearGradient
                             id={`${id}-fill`}
@@ -230,7 +292,7 @@ export default class SunPosition extends Generic<SunPositionData> {
                             <rect
                                 x="0"
                                 y="30"
-                                width={day ? sunChartPoint(day, now, 0)[0] : 0}
+                                width={day ? project(day, now, 0)[0] : 0}
                                 height="75"
                             />
                         </clipPath>
@@ -258,37 +320,69 @@ export default class SunPosition extends Generic<SunPositionData> {
                         d="M24 99H232"
                         className="sh-sun-position__divider"
                     />
+                    {yearComparison ? (
+                        <g className="sh-sun-position__legend">
+                            {winterDay ? (
+                                <>
+                                    <path d="M24 32H32" className="sh-sun-position__year-path--winter" />
+                                    <text x="35" y="35">{t('sun_position_year_min')}</text>
+                                </>
+                            ) : null}
+                            <path
+                                d={`M${todayLegendX} 32H${todayLegendX + 8}`}
+                                className="sh-sun-position__year-path--today"
+                            />
+                            <text x={todayLegendX + 11} y="35">{t('sun_position_today')}</text>
+                            {summerDay ? (
+                                <>
+                                    <path
+                                        d={`M${summerLegendX} 32H${summerLegendX + 8}`}
+                                        className="sh-sun-position__year-path--summer"
+                                    />
+                                    <text x={summerLegendX + 11} y="35">
+                                        {t('sun_position_year_max')}
+                                    </text>
+                                </>
+                            ) : null}
+                        </g>
+                    ) : null}
+                    {day ? (
+                        <path
+                            d={`${path} L${dayEndX},99 L${dayStartX},99 Z`}
+                            fill={`url(#${id}-fill)`}
+                        />
+                    ) : null}
+                    {winterPath ? <path d={winterPath} className="sh-sun-position__year-path--winter" /> : null}
+                    {summerPath ? <path d={summerPath} className="sh-sun-position__year-path--summer" /> : null}
                     {day ? (
                         <>
                             <path
-                                d={`${path} L232,99 L24,99 Z`}
-                                fill={`url(#${id}-fill)`}
-                            />
-                            <path
                                 d={path}
-                                className="sh-sun-position__path"
+                                className={todayPathClass}
                             />
                             <path
                                 d={path}
                                 className="sh-sun-position__elapsed"
                                 clipPath={`url(#${id}-elapsed)`}
                             />
-                            <text
-                                x={sunChartPoint(day, day.noon, day.peak)[0]}
-                                y="37"
-                                textAnchor="middle"
-                                className="sh-sun-position__muted"
-                            >
-                                {degrees(day.peak)}
-                            </text>
+                            {!yearComparison ? (
+                                <text
+                                    x={project(day, day.noon, day.peak)[0]}
+                                    y="37"
+                                    textAnchor="middle"
+                                    className="sh-sun-position__muted"
+                                >
+                                    {degrees(day.peak)}
+                                </text>
+                            ) : null}
                             <circle
-                                cx="24"
+                                cx={dayStartX}
                                 cy="99"
                                 r="2.5"
                                 fill="var(--sun-accent)"
                             />
                             <circle
-                                cx="232"
+                                cx={dayEndX}
                                 cy="99"
                                 r="2.5"
                                 fill="var(--sun-accent)"

@@ -88,6 +88,11 @@ Defaults use `followthesun.0.current.azimuth` / `altitude` and the `sunrise_time
 editable, including for another adapter instance. The curve interpolates the three daily events; it is not an exact
 astronomical ephemeris. Event timestamps use the browser's local day and timezone.
 
+Enable **Compare winter and summer sun paths** to overlay this year's shortest and longest daily arcs from the
+`thisYear.start of winter` and `thisYear.start of summer` groups. The widget plots both references and today's path
+on shared local-time and elevation scales, so today's sunrise, sunset, and solar-noon height appear between them.
+The winter and summer sunrise, noon, sunset, and noon-altitude state IDs are editable in the **Live data** settings.
+
 Brightness uses the same `weatherRadiationOid` default as **Sunlight floor plan**:
 `0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2`. Cloudiness defaults to
 `openweathermap.0.forecast.current.clouds`. Copy the floorplan's weather bindings, source, reference, and cloudiness
