@@ -8,6 +8,7 @@ import '../public/smarthome.css';
 import './preview.css';
 import sunlightPreviewGeometry from './sunlight-floorplan.json';
 import english from '../src/i18n/en.json';
+import { energyConsumptionBindings } from '../src/EnergyConsumptionUtils';
 import { sunPositionBindings } from '../src/SunPositionUtils';
 import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
 
@@ -113,8 +114,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: SunlightFloorplan }, { default: SunPosition }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/SunPosition'), import('../src/Trash'), import('../src/ThemeSelector'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: SunlightFloorplan }, { default: SunPosition }, { default: EnergyConsumption }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/SunPosition'), import('../src/EnergyConsumption'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
 const { default: SunlightFloorplanEditor } = await import('../src/SunlightFloorplanEditor');
@@ -179,6 +180,7 @@ function App(): React.JSX.Element {
         [`${sunPositionBindings.noonElevationOid}.val`]: 58,
         ...morningSceneValues,
     };
+    const [energyScene, setEnergyScene] = React.useState('import');
     const [selectedSunlightScene, setSelectedSunlightScene] = React.useState<string | null>('morning');
     const weatherValues = {
         [`${weatherBindings.oidCurrentTemperature}.val`]: 18.4,
@@ -369,6 +371,26 @@ function App(): React.JSX.Element {
                     }} />
                 </div>)}
             </div>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Energy consumption</h2><p>Live solar and grid power in a 370 × 150 tile. Negative grid power means export.</p></div></div>
+            <article className="thermostat-card sunlight-preview-card">
+                <EnergyConsumption {...commonProps as any} id="energy-consumption-preview" customSettings={{
+                    values: energyScene === 'missing' ? {} : {
+                        [`${energyConsumptionBindings.gridOid}.val`]: ({ import: 620, export: -850, night: 480, idle: 0 } as Record<string, number>)[energyScene],
+                        [`${energyConsumptionBindings.solarOid}.val`]: ({ import: 1200, export: 2400, night: 0, idle: 0 } as Record<string, number>)[energyScene],
+                    },
+                    style: { width: 370, maxWidth: '100%', height: 150 },
+                    rxData: { ...energyConsumptionBindings, gridUnit: 'W', solarUnit: 'W' },
+                }} />
+                <div className="sunlight-scene-grid" role="group" aria-label="Energy scene presets">
+                    {['import', 'export', 'night', 'idle', 'missing'].map(scene => <button
+                        key={scene} type="button" data-energy-scene={scene}
+                        className={`sunlight-scene-button${energyScene === scene ? ' sunlight-scene-button--selected' : ''}`}
+                        aria-pressed={energyScene === scene} onClick={() => setEnergyScene(scene)}
+                    >{({ import: 'Grid + solar', export: 'Solar surplus', night: 'Night', idle: 'No consumption', missing: 'Unavailable' } as Record<string, string>)[scene]}</button>)}
+                </div>
+            </article>
         </section>
         <section>
             <div className="section-heading"><div><h2>Blinds</h2><p>Click the window to open its control dialog.</p></div></div>

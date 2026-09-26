@@ -22,6 +22,43 @@ function loadSource(name) {
 }
 const utils = loadSource('SunlightUtils');
 const { parseFloorplanGeometries } = loadSource('SunlightFloorplanConfig');
+const position = loadSource('SunPositionUtils');
+
+describe('Sun position daily path', () => {
+    const now = new Date(2026, 8, 26, 12).getTime();
+    const at = hour => new Date(2026, 8, 26, hour).getTime();
+    it('accepts adapter millisecond timestamps and numeric strings, including ISO overrides', () => {
+        assert.equal(position.todayTimestamp(String(at(6)), now), at(6));
+        assert.equal(position.todayTimestamp(new Date(at(6)).toISOString(), now), at(6));
+    });
+    it('rejects missing, invalid, yesterday and tomorrow events', () => {
+        for (const input of [null, undefined, '', false, NaN, 0, 'Invalid Date', at(6) - 86400000, at(6) + 86400000]) {
+            assert.equal(position.todayTimestamp(input, now), undefined);
+        }
+    });
+    it('rejects incomplete paths, reversed events and polar days without rise/set', () => {
+        for (const inputs of [[at(6), at(12), null, 40], [at(18), at(12), at(6), 40], [at(6), at(12), at(18), -5], [at(6), at(12), at(18), 91]]) {
+            assert.equal(position.sunDay(...inputs, now), undefined);
+        }
+    });
+    it('places the peak at the adapter solar noon, even with unequal day halves', () => {
+        const day = position.sunDay(at(6), at(13), at(18), 60, now);
+        const path = position.sunPath(day);
+        assert(path.startsWith('M24.00,99.00'));
+        assert(path.endsWith('L232.00,99.00'));
+        assert(path.includes('L145.33,46.00'));
+        assert.deepEqual(position.sunChartPoint(day, at(9), 30), [76, 72.5]);
+    });
+    it('keeps low winter peaks lower and clamps geometry to the chart', () => {
+        const day = position.sunDay(at(6), at(12), at(18), 5, now);
+        assert.deepEqual(position.sunChartPoint(day, at(12), 5), [128, 72.5]);
+        assert.deepEqual(position.sunChartPoint(day, at(3), -5), [24, 99]);
+        assert.deepEqual(position.sunChartPoint(day, at(22), 100), [232, 46]);
+    });
+    it('invalidates the previous daily path at midnight', () => {
+        assert.equal(position.sunDay(at(6), at(12), at(18), 40, at(24)), undefined);
+    });
+});
 const room = [
     [0, 0],
     [200, 0],

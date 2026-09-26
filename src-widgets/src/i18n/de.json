@@ -629,5 +629,22 @@
   "sun_position_path_unavailable": "Tagesbahn nicht verfügbar",
   "sun_position_path_help": "Angenäherte Tagesbahn durch Sonnenaufgang, Sonnenmittag und Sonnenuntergang; die Markierung zeigt die gemessene Höhe zur aktuellen Uhrzeit.",
   "sun_position_azimuth": "Azimut",
-  "sun_position_elevation": "Höhe"
+  "sun_position_elevation": "Höhe",
+  "energy_consumption": "Stromverbrauch",
+  "energy_inputs": "Leistungswerte",
+  "energy_grid_oid": "Datenpunkt Netzleistung",
+  "energy_solar_oid": "Datenpunkt Solarproduktion",
+  "energy_grid_unit": "Einheit Netzleistung",
+  "energy_solar_unit": "Einheit Solarproduktion",
+  "energy_invert_grid": "Vorzeichen Netzleistung umkehren",
+  "energy_grid_help": "Positive Werte bedeuten Bezug, negative Einspeisung. Hausverbrauch ist Netzleistung plus Solarproduktion, ohne Speicher oder weitere Stromquellen.",
+  "energy_home": "Hausverbrauch",
+  "energy_solar": "Solar",
+  "energy_grid": "Netz",
+  "energy_import": "Netzbezug",
+  "energy_export": "Einspeisung",
+  "energy_now": "Jetzt",
+  "energy_unavailable": "Warte auf Daten",
+  "energy_check_readings": "Werte prüfen",
+  "energy_solar_share": "Solaranteil"
 }

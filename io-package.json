@@ -209,6 +209,8 @@
           "EnergyGame",
           "Weather",
           "SunlightFloorplan",
+          "SunPosition",
+          "EnergyConsumption",
           "Trash"
         ]
       }

@@ -49,13 +49,16 @@
     "release-patch": "release-script patch --yes",
     "release-minor": "release-script minor --yes",
     "release-major": "release-script major --yes",
-    "test": "npm run test:sunlight && npm run test:integration && npm run test:package",
+    "test": "npm run test:sunlight && npm run test:energy-consumption && npm run test:integration && npm run test:package",
     "setup:local-test": "bash ./scripts/setup-local-test.sh",
     "preview:widgets": "bash ./scripts/setup-local-test.sh",
     "update-packages": "npx -y npm-check-updates --upgrade && cd src-widgets && npx -y npm-check-updates --upgrade",
     "npm": "npm i && cd src-widgets && npm i",
     "test:sunlight": "mocha test/sunlight.test.js --exit",
-    "test:sunlight:browser": "node test/sunlight.browser.cjs"
+    "test:sunlight:browser": "node test/sunlight.browser.cjs",
+    "test:sun-position:browser": "node test/sun-position.browser.cjs",
+    "test:energy-consumption": "mocha test/energy-consumption.test.js --exit",
+    "test:energy-consumption:browser": "node test/energy-consumption.browser.cjs"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils/issues"

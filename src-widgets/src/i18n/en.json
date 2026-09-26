@@ -629,5 +629,22 @@
   "sun_position_path_unavailable": "Daily path unavailable",
   "sun_position_path_help": "Approximate daily arc through sunrise, solar noon and sunset; the marker shows the measured elevation at the current time.",
   "sun_position_azimuth": "Azimuth",
-  "sun_position_elevation": "Elevation"
+  "sun_position_elevation": "Elevation",
+  "energy_consumption": "Energy consumption",
+  "energy_inputs": "Power inputs",
+  "energy_grid_oid": "Grid power state",
+  "energy_solar_oid": "Solar production state",
+  "energy_grid_unit": "Grid input unit",
+  "energy_solar_unit": "Solar input unit",
+  "energy_invert_grid": "Invert grid sign",
+  "energy_grid_help": "Positive values mean import; negative values mean export. Home consumption is grid plus solar, assuming no battery or other power sources.",
+  "energy_home": "Home consumption",
+  "energy_solar": "Solar",
+  "energy_grid": "Grid",
+  "energy_import": "Grid import",
+  "energy_export": "Grid export",
+  "energy_now": "Now",
+  "energy_unavailable": "Awaiting data",
+  "energy_check_readings": "Check readings",
+  "energy_solar_share": "Solar share"
 }

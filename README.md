@@ -107,6 +107,42 @@ It uses the `openweathermap` adapter by default and automatically binds its `for
 the API temperature, select its state under **Current temperature override**; all other values continue to come from
 OpenWeatherMap. Individual API state IDs can be changed under **Advanced weather bindings**.
 
+### Energy consumption
+
+The **Energy consumption** widget fits a 370 × 150 px tile and displays current solar production, grid import/export,
+and calculated home consumption. Animated arrows show the power direction; the ring and bar show the solar share of
+home consumption. Animation respects reduced-motion preferences.
+
+Default inputs are `sonoff.0.DVES_D10348.SML_curr` for grid power and `deyeidc.0.4154663299.Apo_t1` for solar production.
+Both default to watts; each can be changed to kW independently. Positive grid values mean import and negative values mean
+export. Enable **Invert grid sign** if your meter uses the opposite convention. Readings automatically display W or kW.
+
+Home consumption is calculated as **signed grid power + solar production**, assuming no battery or other source/load
+outside those measurements. For accurate results the solar input must represent power delivered to the home AC system.
+An import-only meter cannot account for export. The solar share is the part of home consumption supplied by solar,
+excluding exported surplus. Zero consumption has no percentage. Missing/invalid inputs stay unavailable; if export
+exceeds measured production, the total is hidden and the widget asks you to check the readings. This displays
+instantaneous power, not accumulated energy in kWh.
+
+### Sun position
+
+The **Sun position** widget is designed for a 370 × 150 px tile. It shows today's approximate sun path, a live marker
+at the measured elevation, sunrise/sunset times, azimuth, elevation, solar radiation (W/m²), and cloudiness (%).
+The completed path is solid and the remaining path is dotted. Below the horizon, the marker disappears and the tile
+shows a nighttime status. Missing readings are shown as a dash; missing or outdated daily events hide the path.
+
+Defaults use `followthesun.0.current.azimuth` / `altitude` and the `sunrise_time`, `solarnoon_time`, `sunset_time`, and
+`solarnoon_altitude` states under `followthesun.0.short term.today` (the space is intentional). All state IDs are
+editable, including for another adapter instance. The curve interpolates the three daily events; it is not an exact
+astronomical ephemeris. Event timestamps use the browser's local day and timezone.
+
+Brightness uses the same `weatherRadiationOid` default as **Sunlight floor plan**:
+`0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2`. Cloudiness defaults to
+`openweathermap.0.forecast.current.clouds`. Copy the floorplan's weather bindings, source, reference, and cloudiness
+scale to compare the same inputs. Both widgets share the direct/diffuse light calculation, which controls the sun's
+glow here; the numeric brightness always shows measured radiation, and missing measurements remain a dash even when
+cloudiness supplies the visual fallback. The preview places both widgets beside the same scene controls.
+
 ### Sunlight floor plan
 
 The Sunlight floor plan widget adds directional sun patches and a separate diffuse daylight wash to the bundled EG, OG,

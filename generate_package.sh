@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# Build the widget and create an ioBroker package archive in the repository root.
+# Build the widget and create an ioBroker package archive. An optional output
+# path lets deployment scripts keep generated archives out of the worktree.
 
 set -Eeuo pipefail
 
@@ -21,7 +22,7 @@ npm run build
 
 PACKAGE_VERSION=$(node -p "require('./package.json').version")
 PACKAGE_FILE="iobroker.${WIDGET_NAME}-${PACKAGE_VERSION}.tgz"
-PACKAGE_PATH="${SCRIPT_DIR}/${PACKAGE_FILE}"
+PACKAGE_PATH=${PACKAGE_OUTPUT:-"${SCRIPT_DIR}/${PACKAGE_FILE}"}
 
 mkdir -- "${PACKAGE_ROOT}"
 cp -r -- admin "${PACKAGE_ROOT}/"

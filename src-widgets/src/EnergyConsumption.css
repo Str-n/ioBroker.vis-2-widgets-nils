@@ -1,0 +1,129 @@
+.sh-energy-consumption {
+    --energy-solar: var(--sh-success, #66cf99);
+    --energy-grid: var(--sh-warning, #efb85b);
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--sh-surface);
+    color: var(--sh-text);
+    border-radius: var(--sh-radius-card);
+    font-variant-numeric: tabular-nums;
+}
+.sh-energy-consumption--bare {
+    background: transparent;
+}
+.sh-energy-consumption > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.sh-energy-consumption text {
+    fill: var(--sh-text);
+    font-family: inherit;
+}
+.sh-energy-consumption .sh-energy-consumption__title {
+    font-size: 13px;
+    font-weight: 600;
+}
+.sh-energy-consumption .sh-energy-consumption__muted {
+    font-size: 10px;
+    fill: var(--sh-text-secondary);
+}
+.sh-energy-consumption__value {
+    font-size: 19px;
+    font-weight: 500;
+}
+.sh-energy-consumption__home-value {
+    font-size: 24px;
+    font-weight: 600;
+}
+.sh-energy-consumption .sh-energy-consumption__unit {
+    font-size: 10px;
+    font-weight: 400;
+    fill: var(--sh-text-secondary);
+}
+.sh-energy-consumption__percentage {
+    font-size: 11px;
+    font-weight: 600;
+}
+.sh-energy-consumption__track {
+    fill: none;
+    stroke: var(--sh-divider);
+    stroke-width: 2;
+}
+.sh-energy-consumption__solar-flow {
+    color: var(--energy-solar);
+}
+.sh-energy-consumption__grid-flow {
+    color: var(--energy-grid);
+}
+.sh-energy-consumption__grid-flow--export {
+    color: var(--energy-solar);
+}
+.sh-energy-consumption__flow {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-dasharray: 3 9;
+    animation: sh-energy-flow 1.8s linear infinite;
+}
+.sh-energy-consumption__arrow {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+.sh-energy-consumption__solar-icon,
+.sh-energy-consumption__grid-icon,
+.sh-energy-consumption__home-icon {
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.sh-energy-consumption__solar-icon {
+    stroke: var(--energy-solar);
+}
+.sh-energy-consumption__grid-icon {
+    stroke: var(--energy-grid);
+}
+.sh-energy-consumption__home-icon {
+    stroke: var(--sh-text);
+}
+.sh-energy-consumption__ring,
+.sh-energy-consumption__ring-grid,
+.sh-energy-consumption__ring-solar {
+    fill: none;
+    stroke-width: 3;
+}
+.sh-energy-consumption__ring {
+    stroke: var(--sh-divider);
+}
+.sh-energy-consumption__ring-grid {
+    stroke: var(--energy-grid);
+}
+.sh-energy-consumption__ring-solar {
+    stroke: var(--energy-solar);
+}
+.sh-energy-consumption__share-track,
+.sh-energy-consumption__share {
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+.sh-energy-consumption__share-track {
+    stroke: var(--sh-divider);
+}
+.sh-energy-consumption__share {
+    stroke: var(--energy-solar);
+}
+@keyframes sh-energy-flow {
+    to {
+        stroke-dashoffset: -24;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sh-energy-consumption__flow {
+        animation: none;
+    }
+}
