@@ -11,14 +11,13 @@ import {
     DialogTitle,
     FormControlLabel,
     LinearProgress,
-    Switch,
     TextField,
 } from '@mui/material';
 import { Add, Close, ExpandMore, Lightbulb, QuestionMark } from '@mui/icons-material';
 import { Icon } from '@iobroker/gui-components';
 
 import Generic from './Generic';
-import { getDeviceWidget, getDeviceWidgetOnePage } from './deviceWidget';
+import { getDeviceWidget } from './deviceWidget';
 import type {
     VisRxWidgetState,
     AnyWidgetId,
@@ -26,7 +25,6 @@ import type {
     DetectorResult,
     Project,
     RxWidgetInfo,
-    SingleWidget,
     SingleWidgetId,
 } from '@iobroker/types-vis-2';
 
@@ -38,8 +36,6 @@ interface WizardDialogState {
     rooms: DetectorResult[] | null;
     devicesChecked: Record<string, boolean>;
     roomsChecked: Record<string, boolean>;
-    onePage: boolean;
-    standardIcons: boolean;
 }
 
 class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState> {
@@ -49,8 +45,6 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
             rooms: null,
             devicesChecked: {},
             roomsChecked: {},
-            onePage: window.localStorage.getItem('AppWizard.onePage') !== 'false',
-            standardIcons: window.localStorage.getItem('AppWizard.standardIcons') === 'true',
         };
     }
 
@@ -59,7 +53,9 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
             let _rooms: DetectorResult[] = (await this.props.helpers?.detectDevices(this.props.socket)) || [];
             // ignore buttons
             _rooms.forEach(room => {
-                room.devices = room.devices.filter(device => device.common.role !== 'button');
+                room.devices = room.devices.filter(
+                    device => device.common.role !== 'button' && getDeviceWidget(device),
+                );
             });
             // ignore empty rooms
             _rooms = _rooms.filter(room => room.devices.length);
@@ -89,7 +85,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
     }
 
     handleSubmit = (): void => {
-        const { rooms, roomsChecked, devicesChecked, onePage, standardIcons } = this.state;
+        const { rooms, roomsChecked, devicesChecked } = this.state;
         const project: Project = JSON.parse(JSON.stringify(this.props.project));
         let newKey = this.props.helpers?.getNewWidgetIdNumber(false, project) || 1000;
         let changed = false;
@@ -103,56 +99,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                 return;
             }
             let viewId = Generic.getText(room.common.name);
-            let roomWidget: SingleWidget | undefined;
-            if (onePage) {
-                roomWidget = Object.values(project[this.props.selectedView].widgets).find(
-                    _widget => _widget.data.wizardId === room._id,
-                );
-
-                roomWidget ||= {
-                    tpl: 'tplNils2Switches',
-                    widgetSet: 'vis-2-widgets-nils-fork',
-                    data: {
-                        name: Generic.getText(room.common.name),
-                        widgetTitle: Generic.getText(room.common.name),
-                        count: 0,
-                        g_common: true,
-                        type: 'lines',
-                        allSwitch: false,
-                        wizardId: room._id,
-                    },
-                    style: {
-                        left: '0px',
-                        top: '0px',
-                        width: '100%',
-                        position: 'relative',
-                    },
-                };
-                viewId = this.props.selectedView;
-
-                room.devices.forEach(device => {
-                    if (!devicesChecked[device._id]) {
-                        return;
-                    }
-                    const widgetId: SingleWidgetId = `w${newKey.toString().padStart(6, '0')}`;
-                    changed = true;
-                    if (getDeviceWidgetOnePage(device, widgetId, roomWidget!, project[viewId], standardIcons)) {
-                        newKey++;
-                    }
-                });
-
-                // try to find existing widget
-                const projectRoomWidget = Object.keys(project[this.props.selectedView].widgets).find(
-                    _widget => roomWidget === project[this.props.selectedView].widgets[_widget as AnyWidgetId],
-                );
-
-                // if not found => add new widget
-                if (!projectRoomWidget) {
-                    const roomWidgetId: SingleWidgetId = `w${newKey.toString().padStart(6, '0')}`;
-                    project[this.props.selectedView].widgets[roomWidgetId] = roomWidget;
-                    newKey++;
-                }
-            } else {
+            {
                 // try to find existing view
                 const projectView = Object.keys(project).find(view => project[view].settings?.wizardId === room._id);
 
@@ -199,9 +146,9 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                     );
 
                     if (!projectWidget) {
-                        changed = true;
-                        const widget = getDeviceWidget(device, standardIcons);
+                        const widget = getDeviceWidget(device);
                         if (widget) {
+                            changed = true;
                             const widgetId: SingleWidgetId = `w${newKey.toString().padStart(6, '0')}`;
                             project[viewId].widgets[widgetId] = widget;
                             newKey++;
@@ -228,7 +175,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
     };
 
     render(): React.ReactNode {
-        const { rooms, roomsChecked, devicesChecked, onePage, standardIcons } = this.state;
+        const { rooms, roomsChecked, devicesChecked } = this.state;
         const allChecked = rooms?.every(room => roomsChecked[room._id]);
         const anyChecked = rooms?.some(room => roomsChecked[room._id]);
         const counters =
@@ -251,51 +198,6 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                 <DialogContent style={{ height: '100%', overflowY: 'hidden' }}>
                     {rooms ? (
                         <div style={{ height: '100%', overflowY: 'hidden' }}>
-                            <div>
-                                {Generic.t('Multiple views')}
-                                <Switch
-                                    checked={onePage}
-                                    onChange={e => {
-                                        window.localStorage.setItem(
-                                            'AppWizard.onePage',
-                                            e.target.checked ? 'true' : 'false',
-                                        );
-                                        this.setState({ onePage: e.target.checked });
-                                    }}
-                                />
-                                {Generic.t('One view')}
-                            </div>
-                            <div>
-                                {Generic.t('Custom icons')}
-                                <img
-                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAyCAMAAAAUcxnlAAADAFBMVEUCAgKGhoY/Pz/X19cfHx9jY2OoqKju7u4QEBDh4eF0dHQxMTG/v78ICAienp5JSUnf399ra2u3t7cXFxfp6el8fHw5OTkDAwNBQUHZ2dkpKSmurq7+/v4SEhLn5+d6eno3NzfBwcEKCgqmpqZycnJycnIeHh4AAACurq4cHBxOTk5FRUUAAAANDQ0cHBwAAABJSUlISEgUFBQAAAAyMjKCgoJGRkYhISGWlpY4ODhGRkYhISHV1dXCwsKpqamYmJhHR0eFhYVMTEwhISFCQkJeXl5UVFQhISElJSUqKioYGBgAAAAeHh4iIiIwMDACAgJMTExwcHB/f39FRUWDg4NTU1MeHh4AAABkZGRycnJoaGhFRUXj4+PKysqpqamYmJgdHR1fX19vb28AAAArKyvOzs5YWFhFRUUWFhZTU1Ofn59HR0cICAgNDQ0EBAQAAAC1tbWYmJhTU1NFRUUUFBQAAAAAAAAAAABYWFhwcHAlJSULCwsuLi6EhIQ/Pz8hISEnJydmZmYaGhoAAAAuLi7IyMg1NTUhISEiIiIoKChAQEAhISGVlZXLy8tXV1dJSUk4ODhUVFRRUVEhISG9vb3b29syMjIhISEaGhqlpaVgYGBFRUVbW1tRUVFjY2NUVFSnp6e/v7+0tLSnp6c7Ozuenp53d3djY2O8vLzAwMCGhoZ7e3sICAgXFxeFhYULCwsQEBAWFhZ3d3cAAAAAAAArKytBQUELCwsLCws1NTUqKiohISFra2uAgIBTU1MhISEAAAAfHx+YmJgiIiIaGhq4uLgPDw8AAAAlJSUlJSVcXFwlJSUkJCQuLi5lZWUXFxc2NjY/Pz8rKysAAAA8PDwzMzM4ODg5OTlcXFxaWlo7Ozs/Pz9ISEhNTU1LS0tFRUU4ODhDQ0NNTU1GRkZ9fX2ZmZl7e3t/f38+Pj5fX19AQEA5OTlJSUlCQkJAQEA6OjpOTk5HR0c1NTUlJSUpKSk7OzsnJyckJCQ7OzsxMTEfHx8kJCRKSkpJSUkLCwtFRUVwJku+AAAACXBIWXMAAFxGAABcRgEUlENBAAAAvklEQVR42u2Vyw6CMBBFrxDDiBmVRylCA4j+/zfKqqBOKS5M1HCn6erkJF3MLcxbwc/jpzjxjFKpxZss9OWCwOIa/qSFxVHUh9lcFaJuxGPfE3fI9yN+8+Hhgz3x4ecXO4jFECLJTi7zMZLsbIi0Zg2e3j1MkEt2LftLUzaynSW8c9od+Gpf7audXcvnslcEzU+Hh9UW7e7iEO1MQ1MI00Psmc91ZLugsCf2ahO3c6O2yGqLZ0s+mz/5tb8EvwNPZ9YpjSwIDgAAAABJRU5ErkJggg=="
-                                    style={{ width: 24, height: 24, marginLeft: 8 }}
-                                    alt="icon"
-                                />
-                                <Switch
-                                    checked={standardIcons}
-                                    onChange={e => {
-                                        window.localStorage.setItem(
-                                            'AppWizard.standardIcons',
-                                            e.target.checked ? 'true' : 'false',
-                                        );
-                                        this.setState({ standardIcons: e.target.checked });
-                                    }}
-                                />
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    height="24px"
-                                    viewBox="0 0 24 24"
-                                    width="24px"
-                                    style={{ marginRight: 8 }}
-                                >
-                                    <path
-                                        fill="currentColor"
-                                        d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
-                                    />
-                                </svg>
-                                {Generic.t('Standard icons')}
-                            </div>
                             <div style={{ marginLeft: 26 }}>
                                 <FormControlLabel
                                     control={
@@ -312,7 +214,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                                     label={allChecked ? Generic.t('Unselect all rooms') : Generic.t('Select all rooms')}
                                 />
                             </div>
-                            <div style={{ height: 'calc(100% - 120px)', overflowY: 'auto' }}>
+                            <div style={{ height: 'calc(100% - 64px)', overflowY: 'auto' }}>
                                 {!rooms.length ? <div>{Generic.t('Nothing detected')}</div> : null}
                                 {rooms.map((room, roomId) => (
                                     <div key={room._id}>
@@ -422,7 +324,7 @@ class WizardDialog extends React.Component<WizardDialogProps, WizardDialogState>
                                                                 onClick={e => e.stopPropagation()}
                                                             />
                                                             <span style={{ marginRight: 8 }}>
-                                                                {!standardIcons && device.common.icon ? (
+                                                                {device.common.icon ? (
                                                                     device.common.icon === '?' ? (
                                                                         <QuestionMark
                                                                             style={{ width: 24, height: 24 }}

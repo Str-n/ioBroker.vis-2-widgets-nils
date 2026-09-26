@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ioBroker.vis-2-widgets-nils is a Material Design widget library for ioBroker vis-2. It provides 19 interactive widgets for smart home control: thermostats, switches, blinds, RGB lights, cameras, locks, vacuum cleaners, etc.
+ioBroker.vis-2-widgets-nils is a Material Design widget library for ioBroker vis-2. It provides widgets for smart home control, weather, energy, and dashboard utilities.
 
 Architecture: Root package orchestrates the build via `tasks.js`; `src-widgets/` contains the actual widget source code built with Vite + Module Federation.
 
@@ -74,11 +74,9 @@ For registration checks, compare with `SwitchButton` in both `io-package.json` a
 
 ### Key Widget Files
 
-- **Switches.tsx** — most versatile widget; handles switch, button, slider, blinds, thermostat, RGB, lock via device type detection
-- **RGBLight.tsx** — largest widget (~55KB); 8 color modes (RGB, RGBW, HSL, Hue/Sat/Lum, CT, white)
-- **deviceWidget.ts** — SVG icon mappings for `@iobroker/type-detector` device types, common icon constants
+- **deviceWidget.ts** — creates widgets for supported device types in the multi-view Wizard
 - **Static.tsx** — utility/base; not exposed via federation
-- **Components/** — shared components: BlindsBase, ObjectChart (ECharts), PinCodeDialog, DoorAnimation, etc.
+- **Components/** — shared components: BlindsBase, ObjectChart (ECharts), and related controls
 
 ## Internationalization
 

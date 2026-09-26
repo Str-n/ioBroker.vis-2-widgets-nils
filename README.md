@@ -43,54 +43,6 @@ References: [Apple web-app configuration](https://developer.apple.com/library/ar
 For a standalone, hot-reloading preview of the button widgets, run `npm run preview:widgets` and open
 <http://localhost:4174/test-dashboard.html>. It uses mock ioBroker values and does not require a deployment.
 
-### Buttons and switches
-
-![Switches](img/material-switches.png)
-
-![Switches](img/material-switches-buttons.png)
-
-![Switches](img/material-switches-buttons-2.png)
-
-### Clock
-
--   Analog
-
-![Clock Analog](img/material-clock-analog-1.png)
-
--   Analog variation
-
-![Clock Analog 2](img/material-clock-analog-2.png)
-
--   Digital
-
-![Digital](img/material-clock-digital-1.png)
-
--   Digital2 (SVG Text)
-
-![Digital2](img/material-clock-digital-2.png)
-
-### Simple state
-
-With this widget, you can control one device. Boolean or number.
-
--   Number
-
-![Simple state](img/material-simple-state-1.png)
-
--   Control
-
-![Simple state](img/material-simple-state-2.png)
-
-### View in widget
-
-![View in widget](img/material-view-in-widget-1.png)
-
-Not as a button: View could be shown in full size, and you can control elements in view.
-
-![View in widget - button](img/material-view-in-widget-2.png)
-
-As button: You can show a small thumbnail of view, and by pressing on it, it will be shown in full size.
-
 ### Thermostat
 
 ![Thermostat](img/material-thermostat-1.png)
@@ -195,33 +147,6 @@ if the preview uses a different port. Browser screenshots are written to the sys
 
 ![Actual value with chart](img/material-actual-value-2.png)
 
-### Security control
-
-![Security control](img/material-security-0.png)
-
-![Security control](img/material-security-1.png)
-
-You can define the delay in seconds.
-
-By activation, the defined ID will be written with the number of the delay seconds,
-and after the delay is over, the defined ID will be set to 0, and the alarm ID will be set to true.
-
-![Security control](img/material-security-2.png)
-
-### Player
-
-![Player](img/material-player.png)
-
-### Map
-
-![Map](img/material-map-1.png)
-
-Position could be defined as a combined state, like `9.2344;41.374652` - `longitude;latitude` or as two separate states.
-
-### Camera
-
-![Camera](img/material-camera-1.png)
-
 ### HTML Template
 
 ![HTML](img/material-html-1.png)
@@ -234,34 +159,6 @@ Additionally, you can show an image or iframe with this widget too.
 ![Blinds](img/material-blinds-1.png)
 
 ![Blinds](img/material-blinds-2.png)
-
-### Color Lamp
-
-With the RGB lamp widget, you can control different types of RGB lamps. Here are some examples:
-
--   RGB colors are set in one state like '#RRGGBB'
--   R/G/B colors are set in different states from 0 to 255
--   RGBW as one variable like '#RRGGBBWW'
--   R/G/B/W colors are set in different states from 0 to 255
--   hue/sat/lum as 3 different states
--   color temperature as one state from 2700 to 6500 or defined by min/max of the object
--   White mode state can be used to switch between RGB and white mode via a special state
-
-![RGB Lamp 1](img/material-rgb-1.png)
-
-![RGB Lamp 2](img/material-rgb-2.png)
-
-### Door lock
-
-![Door lock](img/material-lock.png)
-
-### Vacuum cleaner
-
-This widget is primary for Xiaomi vacuum cleaner. But it can be used for any other vacuum cleaner too.
-
-The only difference is that Xiaomi supports the room cleaning.
-
-![Vacuum cleaner](img/material-vacuum.png)
 
 ### Time picker
 
