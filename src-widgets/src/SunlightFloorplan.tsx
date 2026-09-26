@@ -479,7 +479,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                 },
             ],
             visDefaultStyle: { width: 700, height: 760, position: 'relative' },
-            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sunlight_floorplan.svg',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sunlight_floorplan.png',
         };
     }
 

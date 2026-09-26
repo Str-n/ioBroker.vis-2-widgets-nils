@@ -63,7 +63,7 @@ Federation name: `vis2nilsForkWidgets`, entry: `customWidgets.js`. Exposes widge
 
 1. Create `src-widgets/src/NewWidget.tsx` with a default-exported class extending `Generic<RxData, State>` and both widget-info methods described above.
 2. Implement `renderWidgetBody()` with React/MUI and configure the default editor dimensions in `visDefaultStyle`.
-3. Add the `visWidgetLabel` key and any configuration labels to all 11 `src-widgets/src/i18n/*.json` files (en, de, ru, pt, nl, fr, it, es, pl, uk, zh-cn). Use unprefixed keys in these dictionaries; `translations.ts` exports them with the prefix from `Generic`.
+3. Add the `visWidgetLabel` key and any configuration labels to both `src-widgets/src/i18n/en.json` and `src-widgets/src/i18n/de.json`. Use unprefixed keys in these dictionaries; `translations.ts` exports them with the prefix from `Generic`.
 4. Put a preview image in `src-widgets/public/img/` and set `visPrev` to `widgets/vis-2-widgets-nils-fork/img/<filename>`.
 5. Add `'./NewWidget': './src/NewWidget'` to the federation `exposes` object in `src-widgets/vite.config.ts`.
 6. **Register `"NewWidget"` in `io-package.json` under `common.visWidgets.vis2nilsForkWidgets.components`.** The component name must match the federation expose name without `./`. Exposing the module alone is insufficient for palette discovery.
@@ -74,15 +74,14 @@ For registration checks, compare with `SwitchButton` in both `io-package.json` a
 
 ### Key Widget Files
 
-- **deviceWidget.ts** — creates widgets for supported device types in the multi-view Wizard
 - **Static.tsx** — utility/base; not exposed via federation
 - **Components/** — shared components: BlindsBase, ObjectChart (ECharts), and related controls
 
 ## Internationalization
 
-- 11 languages, JSON files in `src-widgets/src/i18n/`
+- English and German translations are in `src-widgets/src/i18n/`
 - All widget i18n keys are auto-prefixed with `vis_2_widgets_nils_` (defined in `Generic.getI18nPrefix()`)
-- When adding/changing widget config fields, update all 11 JSON files
+- When adding/changing widget config fields, update both language JSON files
 
 ## Code Quality
 

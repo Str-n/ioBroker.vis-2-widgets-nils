@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="300" viewBox="0 0 370 150" fill="none">
+  <rect width="370" height="150" rx="14" fill="#202831"/>
+  <text x="16" y="24" fill="#e8edf3" font-family="Arial,sans-serif" font-size="13" font-weight="600">Switch button</text>
+  <circle cx="344" cy="19" r="4" fill="#66cf99"/>
+  <text x="334" y="23" text-anchor="end" fill="#a4b0be" font-family="Arial,sans-serif" font-size="10">ACTIVE</text>
+  <rect x="15" y="37" width="340" height="98" rx="12" fill="#29333e"/>
+  <circle cx="71" cy="86" r="29" fill="#17654f"/>
+  <path d="M71 67v17m-11-12a16 16 0 1 0 22 0" stroke="#eafff5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="116" y="82" fill="#e8edf3" font-family="Arial,sans-serif" font-size="14" font-weight="600">Living room</text>
+  <text x="116" y="103" fill="#a4b0be" font-family="Arial,sans-serif" font-size="11">Switch on</text>
+  <rect x="273" y="72" width="62" height="29" rx="14.5" fill="#1c9b76"/>
+  <circle cx="320" cy="86.5" r="11" fill="#f5fffb"/>
+  <text x="304" y="120" text-anchor="middle" fill="#66cf99" font-family="Arial,sans-serif" font-size="10">ON</text>
+</svg>

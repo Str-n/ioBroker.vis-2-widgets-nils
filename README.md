@@ -1,4 +1,4 @@
-![Logo](admin/vis-2-widgets-nils.png)
+![Logo](admin/vis-2-widgets-nils-fork.png)
 
 # Material widgets for ioBroker.vis 2.0
 

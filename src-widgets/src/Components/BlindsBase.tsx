@@ -3,7 +3,6 @@ import React, { type CSSProperties } from 'react';
 import Generic from '../Generic';
 import DialogBlinds from './DialogBlinds';
 import type { VisRxWidgetProps, VisRxWidgetState } from '@iobroker/types-vis-2';
-import type { WidgetType } from '../deviceWidget';
 
 const styles: Record<string, CSSProperties> = {
     blindHandle: {
@@ -116,7 +115,7 @@ export interface BlindsBaseRxData {
 export type HelperObject = {
     common: ioBroker.StateCommon;
     _id: string;
-    widgetType?: WidgetType;
+    widgetType?: 'blinds';
 };
 
 export interface BlindsBaseState extends VisRxWidgetState {

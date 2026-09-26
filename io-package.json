@@ -5,147 +5,48 @@
     "news": {
       "1.7.1": {
         "en": "Added the EnergyGame widget",
-        "de": "EnergyGame-Widget hinzugefügt",
-        "ru": "Добавлен виджет EnergyGame",
-        "pt": "Adicionado o widget EnergyGame",
-        "nl": "EnergyGame-widget toegevoegd",
-        "fr": "Widget EnergyGame ajouté",
-        "it": "Aggiunto il widget EnergyGame",
-        "es": "Se añadió el widget EnergyGame",
-        "pl": "Dodano widżet EnergyGame",
-        "uk": "Додано віджет EnergyGame",
-        "zh-cn": "添加了 EnergyGame 小部件"
+        "de": "EnergyGame-Widget hinzugefügt"
       },
       "1.7.0": {
         "en": "Customized by Nils",
-        "de": "Angepasst von Nils",
-        "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
-        "pt": "Erro corrigido com botão e elemento de alarme",
-        "nl": "Gecorrigeerde fout met knop en alarm widget",
-        "fr": "Erreur corrigée avec bouton et widget d'alarme",
-        "it": "Errore corretto con pulsante e widget di allarme",
-        "es": "Error corregido con botón y widget de alarma",
-        "pl": "Poprawiony błąd z widżetem przycisku i alarmu",
-        "uk": "Виправлена помилка з кнопками та тривожним віджетом",
-        "zh-cn": "用按钮和提醒部件校正错误"
+        "de": "Angepasst von Nils"
       },
       "1.6.7": {
         "en": "Corrected error with button and alarm widget",
-        "de": "Fehler behoben mit Knopf und Alarm Widget",
-        "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
-        "pt": "Erro corrigido com botão e elemento de alarme",
-        "nl": "Gecorrigeerde fout met knop en alarm widget",
-        "fr": "Erreur corrigée avec bouton et widget d'alarme",
-        "it": "Errore corretto con pulsante e widget di allarme",
-        "es": "Error corregido con botón y widget de alarma",
-        "pl": "Poprawiony błąd z widżetem przycisku i alarmu",
-        "uk": "Виправлена помилка з кнопками та тривожним віджетом",
-        "zh-cn": "用按钮和提醒部件校正错误"
+        "de": "Fehler behoben mit Knopf und Alarm Widget"
       },
       "1.6.6": {
         "en": "Corrected error with button and alarm widget",
-        "de": "Fehler behoben mit Knopf und Alarm Widget",
-        "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
-        "pt": "Erro corrigido com botão e elemento de alarme",
-        "nl": "Gecorrigeerde fout met knop en alarm widget",
-        "fr": "Erreur corrigée avec bouton et widget d'alarme",
-        "it": "Errore corretto con pulsante e widget di allarme",
-        "es": "Error corregido con botón y widget de alarma",
-        "pl": "Poprawiony błąd z widżetem przycisku i alarmu",
-        "uk": "Виправлена помилка з кнопками та тривожним віджетом",
-        "zh-cn": "用按钮和提醒部件校正错误"
+        "de": "Fehler behoben mit Knopf und Alarm Widget"
       },
       "1.6.5": {
         "en": "Corrected error with button and alarm widget",
-        "de": "Fehler behoben mit Knopf und Alarm Widget",
-        "ru": "Исправлена ошибка с помощью виджета кнопки и сигнализации",
-        "pt": "Erro corrigido com botão e elemento de alarme",
-        "nl": "Gecorrigeerde fout met knop en alarm widget",
-        "fr": "Erreur corrigée avec bouton et widget d'alarme",
-        "it": "Errore corretto con pulsante e widget di allarme",
-        "es": "Error corregido con botón y widget de alarma",
-        "pl": "Poprawiony błąd z widżetem przycisku i alarmu",
-        "uk": "Виправлена помилка з кнопками та тривожним віджетом",
-        "zh-cn": "用按钮和提醒部件校正错误"
+        "de": "Fehler behoben mit Knopf und Alarm Widget"
       },
       "1.6.1": {
         "en": "Corrected error with select value widget",
-        "de": "Korrigierter Fehler mit ausgewähltem Wert Widget",
-        "ru": "Исправленная ошибка с выбранным виджетом",
-        "pt": "Erro corrigido com widget de valor selecionado",
-        "nl": "Fout gecorrigeerd met geselecteerde waarde-widget",
-        "fr": "Erreur corrigée avec le widget select value",
-        "it": "Errore corretto con widget di valore selezionato",
-        "es": "Error corregido con widget de valor selecto",
-        "pl": "Skorygowany błąd z wybranym widget wartości",
-        "uk": "Виправлена помилка з виберіть віджет значення",
-        "zh-cn": "用选定的值部件校正错误"
+        "de": "Korrigierter Fehler mit ausgewähltem Wert Widget"
       },
       "1.6.0": {
         "en": "Corrected \"Actual\" widget",
-        "de": "Korrigiert \"Aktuell\" Widget",
-        "ru": "Исправленный «Актуальный» виджет",
-        "pt": "Elemento \"Real\" corrigido",
-        "nl": "Gecorrigeerd \"actual\" widget",
-        "fr": "Widget \"réel\" corrigé",
-        "it": "Corretto widget \"In realtà\"",
-        "es": "Widget \"Actual\" corregido",
-        "pl": "Poprawiony widżet \"Actual\"",
-        "uk": "Виправлено \"Actual\" віджет",
-        "zh-cn": "更正“ 实际” 部件"
+        "de": "Korrigiert \"Aktuell\" Widget"
       },
       "1.5.3": {
         "en": "Added support for older Android devices",
-        "de": "Unterstützung für ältere Android-Geräte hinzugefügt",
-        "ru": "Добавлена поддержка старых Android-устройств",
-        "pt": "Adicionado suporte para dispositivos Android mais antigos",
-        "nl": "Toegevoegd ondersteuning voor oudere Android-apparaten",
-        "fr": "Ajout du support pour les anciens appareils Android",
-        "it": "Aggiunto il supporto per i dispositivi Android più vecchi",
-        "es": "Añadido soporte para dispositivos Android más antiguos",
-        "pl": "Dodano wsparcie dla starszych urządzeń Android",
-        "uk": "Додано підтримку для старих пристроїв Android",
-        "zh-cn": "对较老的Android设备添加支持"
+        "de": "Unterstützung für ältere Android-Geräte hinzugefügt"
       },
       "1.5.0": {
         "en": "Corrected thermostat slider\nRewritten with TypeScript and vite\nCorrected blinds control\nAdded disabled mode additionally to hidden mode in 'switches and buttons' widget\nAdded `_ts=Date.now()` to camera URL to disable the browser cache\nSimple state has a new option - step\nAdded new navigation widget: jump to view, url or list of views",
-        "de": "Korrigierter Thermostatschieber\nNeu geschrieben mit TypeScript und vite\nKontrolle der Blinds\nZusätzlich zum versteckten Modus in 'Schalter und Tasten' Widget hinzugefügt\n`_ts=Date.now()` zur Kamera-URL hinzugefügt, um den Browser-Cache zu deaktivieren\nEinfacher Zustand hat eine neue Option - Schritt\nHinzugefügt neue Navigation Widget: springen zu sehen, url oder Liste der Ansichten",
-        "ru": "Исправленный ползунок термостата\nПереписано с TypeScript и Vite\nИсправленный контроль слепых\nДобавлен отключенный режим дополнительно к скрытому режиму в виджете «переключатели и кнопки»\nДобавлено '_ts=Date.now()' в URL камеры, чтобы отключить кэш браузера\nПростое состояние имеет новый вариант - шаг\nДобавлен новый виджет навигации: скачок для просмотра, URL или список просмотров",
-        "pt": "Slider de termostato correto\nReescrito com TypeScript e vite\nControle de blinds corrigidos\nAdicionado modo desativado adicionalmente ao modo oculto em 'switches e botões' widget\nAdicionado `_ts=Date.now()` para câmera URL para desativar o cache do navegador\nEstado simples tem uma nova opção - passo\nAdicionado novo widget de navegação: saltar para ver, url ou lista de visualizações",
-        "nl": "Gecorrigeerde thermostaat schuifregelaar\nHerschreven met TypeScript en Vite\nGecorrigeerde blindscontrole\nExtra uitgeschakelde modus toegevoegd aan verborgen modus in widget 'schakelt en knoppen'\nAan camera-URL toegevoegd om de browsercache uit te schakelen\nEenvoudige staat heeft een nieuwe optie - stap\nNieuw navigatie-widget toegevoegd: springen naar weergave, url of lijst met weergaven",
-        "fr": "Slider thermostat corrigé\nRéécrit avec TypeScript et rite\nContrôle des stores corrigés\nAjout du mode désactivé au mode caché dans le widget 'switches and buttons'\nAjouté `_ts=Date.now()` à l'URL de la caméra pour désactiver le cache du navigateur\nL'état simple a une nouvelle option - étape\nAjout d'un nouveau widget de navigation : sauter pour afficher, url ou liste de vues",
-        "it": "Cursore del termostato corretto\nRescritto con TypeScript e vite\nControllo delle tende corretto\nAggiunta modalità disabilitata anche per la modalità nascosta in 'interruttori e pulsanti' widget\nAggiunto `_ts=Date.now()` alla fotocamera URL per disabilitare la cache del browser\nSemplice stato ha una nuova opzione - passo\nAggiunto nuovo widget di navigazione: saltare per visualizzare, url o elenco di visualizzazioni",
-        "es": "Control deslizante termostato corregido\nReescrito con TipoScript y vite\nControl de persianas corregido\nAñadido modo deshabilitado adicionalmente al modo oculto en el widget 'switches and buttons'\nAñadido `_ts=Date.now()` a la URL de la cámara para deshabilitar el caché del navegador\nEstado simple tiene una nueva opción - paso\nAñadido nuevo widget de navegación: saltar a la vista, url o lista de vistas",
-        "pl": "Poprawiony suwak termostatu\nPrzepisane z TypeScript i vite\nPoprawione sterowanie roletami\nDodano tryb wyłączony dodatkowo do trybu ukrytego w widgecie 'przełączniki i przyciski'\nDodano '_ ts = Date.now ()' do URL kamery, aby wyłączyć bufora przeglądarki\nProsty stan ma nową opcję - krok\nDodano nowy widget nawigacyjny: skok do widoku, url lub listę widoków",
-        "uk": "Правильний термостат слайдер\nНаписання з TypeScript і vite\nПравильне управління жалюзі\nДодано режим вимкнення додатково до прихованого режиму в віджеті \"switches і гудзики\"\nДодано `_ts=Date.now()` на URL-адресу камери для вимкнення кешу браузера\nПростий стан має новий варіант - крок\nДодано новий віджет навігації: стрибати для перегляду, URL або списку переглядів",
-        "zh-cn": "修正的自动调温器滑动器\n用类型脚本和 vite 重写\n校正百叶窗控制\n在“ 切换器和按钮” 部件中将禁用模式添加到隐藏模式\n添加 QQts=Date.now()' 到相机 URL 以禁用浏览器缓存\n简单状态有新选项 - step\n添加新导航部件: 跳转到视图、 url 或视图列表"
+        "de": "Korrigierter Thermostatschieber\nNeu geschrieben mit TypeScript und vite\nKontrolle der Blinds\nZusätzlich zum versteckten Modus in 'Schalter und Tasten' Widget hinzugefügt\n`_ts=Date.now()` zur Kamera-URL hinzugefügt, um den Browser-Cache zu deaktivieren\nEinfacher Zustand hat eine neue Option - Schritt\nHinzugefügt neue Navigation Widget: springen zu sehen, url oder Liste der Ansichten"
       }
     },
     "titleLang": {
       "en": "Vis 2 Widgets Nils",
-      "de": "Vis 2 Widgets Nils",
-      "ru": "Vis 2 Widgets Nils",
-      "it": "Vis 2 Widgets Nils",
-      "es": "Vis 2 Widgets Nils",
-      "fr": "Vis 2 Widgets Nils",
-      "nl": "Vis 2 Widgets Nils",
-      "pt": "Vis 2 Widgets Nils",
-      "pl": "Vis 2 Widgets Nils",
-      "uk": "Vis 2 Widgets Nils",
-      "zh-cn": "Vis 2 Widgets Nils"
+      "de": "Vis 2 Widgets Nils"
     },
     "desc": {
       "en": "Different nice-looking widgets in material style for vis-2",
-      "de": "Verschiedene schön aussehende Widgets im Materialstil für vis-2",
-      "ru": "Разные виджеты в стиле material для vis-2",
-      "it": "Diversi widget dall'aspetto gradevole in stile materiale per vis-2",
-      "es": "Diferentes widgets de aspecto agradable en estilo material para vis-2",
-      "fr": "Différents widgets au design agréable en style matériel pour vis-2",
-      "nl": "Verschillende mooi uitziende widgets in materiaalstijl voor vis-2",
-      "pt": "Diferentes widgets com boa aparência em estilo material para vis-2",
-      "pl": "Różne ładnie wyglądające widgety w stylu materiałów dla vis-2",
-      "uk": "Різні привабливі віджети в матеріальному стилі для vis-2",
-      "zh-cn": "vis-2 中不同好看的小部件"
+      "de": "Verschiedene schön aussehende Widgets im Materialstil für vis-2"
     },
     "authors": [
       "bluefox <dogafox@gmail.com>"
@@ -192,7 +93,6 @@
           "ThemeSwitcher",
           "ThemeSelector",
           "HomeScreenFullscreen",
-          "Wizard",
           "EnergyGame",
           "Weather",
           "SunlightFloorplan",

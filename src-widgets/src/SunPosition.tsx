@@ -35,7 +35,7 @@ export default class SunPosition extends Generic<SunPositionData> {
             visSet: 'vis-2-widgets-nils-fork',
             visName: 'Sun position',
             visWidgetLabel: 'sun_position',
-            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sun_position.svg',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sun_position.png',
             visDefaultStyle: { width: 370, height: 150, position: 'relative' },
             visAttrs: [
                 {

@@ -29,7 +29,6 @@ const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
                           './ThemeSelector': './src/ThemeSelector',
                           './SmartHomeTheme': './src/theme/createSmartHomeTheme',
                           './HomeScreenFullscreen': './src/HomeScreenFullscreen',
-                          './Wizard': './src/Wizard',
                           './EnergyGame': './src/EnergyGame',
                           './Weather': './src/Weather',
                           './SunlightFloorplan': './src/SunlightFloorplan',

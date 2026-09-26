@@ -23,7 +23,7 @@ export default class EnergyConsumption extends Generic<EnergyConsumptionData> {
             visSet: 'vis-2-widgets-nils-fork',
             visName: 'Energy consumption',
             visWidgetLabel: 'energy_consumption',
-            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_energy_consumption.svg',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_energy_consumption.png',
             visDefaultStyle: { width: 370, height: 150, position: 'relative' },
             visAttrs: [
                 {
