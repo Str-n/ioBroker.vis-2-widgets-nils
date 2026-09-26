@@ -598,5 +598,17 @@
   "window_sash_count": "Window sashes",
   "window_sash_count_help": "Splits the window opening into 1–3 equal sections with narrow gaps for the frames. Each section casts its own sunlight beam.",
   "floorplan_editor_invalid_room": "Usa almeno tre angoli distinti senza incrociare i lati. Le modifiche non sono state salvate.",
-  "floorplan_editor_invalid_window": "Posiziona la finestra sul bordo della stanza assegnata per far entrare la luce del sole."
+  "floorplan_editor_invalid_window": "Posiziona la finestra sul bordo della stanza assegnata per far entrare la luce del sole.",
+  "sun_position_sunriseOid": "Sunrise today",
+  "sun_position_solarNoonOid": "Solar noon today",
+  "sun_position_sunsetOid": "Sunset today",
+  "sun_position_noonElevationOid": "Solar noon elevation today",
+  "sun_position_weather": "Brightness and cloudiness",
+  "sun_position_today": "Today",
+  "sun_position_night": "Below horizon",
+  "sun_position_unavailable": "Position unavailable",
+  "sun_position_path_unavailable": "Daily path unavailable",
+  "sun_position_path_help": "Approximate daily arc through sunrise, solar noon and sunset; the marker shows the measured elevation at the current time.",
+  "sun_position_azimuth": "Azimuth",
+  "sun_position_elevation": "Elevation"
 }

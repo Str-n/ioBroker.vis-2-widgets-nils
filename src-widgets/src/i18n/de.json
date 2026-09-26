@@ -617,5 +617,17 @@
   "window_sash_count": "Fensterflügel",
   "window_sash_count_help": "Teilt die Fensteröffnung in 1–3 gleich große Abschnitte mit schmalen Rahmenabständen. Jeder Abschnitt erzeugt einen eigenen Sonnenstrahl.",
   "floorplan_editor_invalid_room": "Verwende mindestens drei verschiedene Ecken ohne sich kreuzende Kanten. Die Änderungen wurden nicht gespeichert.",
-  "floorplan_editor_invalid_window": "Platziere das Fenster auf der Begrenzung des zugeordneten Raums, damit Sonnenlicht einfallen kann."
+  "floorplan_editor_invalid_window": "Platziere das Fenster auf der Begrenzung des zugeordneten Raums, damit Sonnenlicht einfallen kann.",
+  "sun_position_sunriseOid": "Sonnenaufgang heute",
+  "sun_position_solarNoonOid": "Sonnenmittag heute",
+  "sun_position_sunsetOid": "Sonnenuntergang heute",
+  "sun_position_noonElevationOid": "Sonnenhöhe am Mittag heute",
+  "sun_position_weather": "Helligkeit und Bewölkung",
+  "sun_position_today": "Heute",
+  "sun_position_night": "Unter dem Horizont",
+  "sun_position_unavailable": "Position nicht verfügbar",
+  "sun_position_path_unavailable": "Tagesbahn nicht verfügbar",
+  "sun_position_path_help": "Angenäherte Tagesbahn durch Sonnenaufgang, Sonnenmittag und Sonnenuntergang; die Markierung zeigt die gemessene Höhe zur aktuellen Uhrzeit.",
+  "sun_position_azimuth": "Azimut",
+  "sun_position_elevation": "Höhe"
 }

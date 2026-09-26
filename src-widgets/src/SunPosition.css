@@ -1,0 +1,70 @@
+.sh-sun-position {
+    --sun-accent: var(--sh-warning, #eab45b);
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--sh-surface);
+    color: var(--sh-text);
+    border-radius: var(--sh-radius-card);
+    font-variant-numeric: tabular-nums;
+}
+
+.sh-sun-position--bare {
+    background: transparent;
+}
+.sh-sun-position--night {
+    --sun-accent: var(--sh-text-secondary);
+}
+.sh-sun-position > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.sh-sun-position text {
+    fill: var(--sh-text);
+    font-family: inherit;
+    font-size: 11px;
+}
+.sh-sun-position .sh-sun-position__title {
+    font-size: 13px;
+    font-weight: 600;
+}
+.sh-sun-position .sh-sun-position__muted {
+    fill: var(--sh-text-secondary);
+    font-size: 10px;
+}
+.sh-sun-position .sh-sun-position__metric {
+    font-size: 20px;
+    font-weight: 500;
+}
+.sh-sun-position .sh-sun-position__unit {
+    fill: var(--sh-text-secondary);
+    font-size: 10px;
+    font-weight: 400;
+}
+.sh-sun-position .sh-sun-position__reading {
+    fill: var(--sh-text);
+}
+.sh-sun-position__divider {
+    fill: none;
+    stroke: var(--sh-divider);
+}
+.sh-sun-position__path {
+    fill: none;
+    stroke: var(--sun-accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 4;
+    opacity: 0.45;
+}
+.sh-sun-position__elapsed {
+    fill: none;
+    stroke: var(--sun-accent);
+    stroke-width: 2;
+}
+.sh-sun-position__guide {
+    stroke: var(--sun-accent);
+    stroke-dasharray: 2 3;
+    opacity: 0.4;
+}

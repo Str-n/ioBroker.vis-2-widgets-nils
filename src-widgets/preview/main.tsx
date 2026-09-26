@@ -8,6 +8,7 @@ import '../public/smarthome.css';
 import './preview.css';
 import sunlightPreviewGeometry from './sunlight-floorplan.json';
 import english from '../src/i18n/en.json';
+import { sunPositionBindings } from '../src/SunPositionUtils';
 import { createOpenWeatherMapBindings } from '../src/WeatherUtils';
 
 type Settings = { rxData: Record<string, any>; values: Record<string, any>; style: React.CSSProperties };
@@ -112,8 +113,8 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
 }
 
 (window as any).visRxWidget = LocalVisRxWidget;
-const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: SunlightFloorplan }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
-    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/Trash'), import('../src/ThemeSelector'),
+const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: ThermostatCompact }, { default: Thermostat }, { default: Blinds }, { default: EnergyGamePreview }, { default: StackCardCarousel }, { default: HorizontalScrollView }, { default: Weather }, { default: SunlightFloorplan }, { default: SunPosition }, { default: Trash }, { default: ThemeSelector }] = await Promise.all([
+    import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/SunPosition'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
 const { default: SunlightFloorplanEditor } = await import('../src/SunlightFloorplanEditor');
@@ -172,6 +173,10 @@ function App(): React.JSX.Element {
     const morningSceneValues = Object.fromEntries(Object.entries(sunlightScenes[0].values).map(([id, value]) => [`${id}.val`, value]));
     const sunlightData = {
         'preview.weather.temperature.val': 18.4,
+        [`${sunPositionBindings.sunriseOid}.val`]: new Date().setHours(6, 30, 0, 0),
+        [`${sunPositionBindings.solarNoonOid}.val`]: new Date().setHours(13, 0, 0, 0),
+        [`${sunPositionBindings.sunsetOid}.val`]: new Date().setHours(19, 30, 0, 0),
+        [`${sunPositionBindings.noonElevationOid}.val`]: 58,
         ...morningSceneValues,
     };
     const [selectedSunlightScene, setSelectedSunlightScene] = React.useState<string | null>('morning');
@@ -376,6 +381,12 @@ function App(): React.JSX.Element {
         <section>
             <div className="section-heading"><div><h2>Sunlight floor plan</h2><p>Explore the real room layout with five typical daylight scenes. Each scene sets sun position, weather, shared blind position, and room lamps.</p></div></div>
             <article className="thermostat-card sunlight-preview-card">
+                <SunPosition {...commonProps as any} id="sun-position-preview" customSettings={{
+                    values, style: { width: 370, maxWidth: '100%', height: 150 },
+                    rxData: { ...sunPositionBindings, sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
+                        weatherRadiationOid: 'preview.weather.radiation', weatherCloudinessOid: 'preview.weather.cloudiness',
+                        weatherConditionOid: 'preview.weather.condition', sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent' },
+                }} />
                 <SunlightFloorplan {...commonProps as any} id="sunlight-floorplan-preview" customSettings={{
                     values,
                     style: { width: 700, maxWidth: '100%', height: 620 },
