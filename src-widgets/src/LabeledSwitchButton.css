@@ -6,6 +6,7 @@
     align-items: center;
     gap: 6px;
     box-sizing: border-box;
+    padding: 3px 6px;
     text-align: center;
 }
 

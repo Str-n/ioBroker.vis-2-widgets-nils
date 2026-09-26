@@ -58,7 +58,7 @@ class LabeledSwitchButton extends SwitchButton {
         const data = this.state.rxData as typeof this.state.rxData & LabeledSwitchButtonTextData;
 
         return (
-            <div className="sh-theme sh-labeled-switch-button">
+            <div className="sh-theme sh-surface sh-labeled-switch-button">
                 <div className="sh-labeled-switch-button__control">{button}</div>
                 {data.textLine1 || data.textLine2 ? (
                     <div className="sh-labeled-switch-button__labels">
