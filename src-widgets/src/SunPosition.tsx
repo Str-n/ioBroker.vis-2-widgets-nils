@@ -19,8 +19,6 @@ import './SunPosition.css';
 interface SunPositionData extends Record<string, any> {
     noCard: boolean | 'true';
     showYearSunpaths: boolean | 'true';
-    sunlightSource: 'radiation' | 'cloudiness';
-    radiationReference: number | string;
     cloudinessScale: 'percent' | 'fraction';
 }
 
@@ -46,7 +44,7 @@ export default class SunPosition extends Generic<SunPositionData> {
             visSet: 'vis-2-widgets-nils-fork',
             visName: 'Sun position',
             visWidgetLabel: 'sun_position',
-            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sun_position.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_sun_position.svg',
             visDefaultStyle: { width: 370, height: 150, position: 'relative' },
             visAttrs: [
                 {
@@ -94,27 +92,10 @@ export default class SunPosition extends Generic<SunPositionData> {
                     label: 'sun_position_weather',
                     fields: [
                         {
-                            name: 'sunlightSource',
-                            label: 'sunlight_weather_source',
-                            type: 'select',
-                            default: 'radiation',
-                            options: [
-                                { value: 'radiation', label: 'outdoor_radiation' },
-                                { value: 'cloudiness', label: 'weather_cloudiness' },
-                            ],
-                        },
-                        {
-                            name: 'weatherRadiationOid',
-                            label: 'outdoor_radiation_oid',
+                            name: 'weatherBrightnessOid',
+                            label: 'weather_brightness_oid',
                             type: 'id',
-                            default: sunPositionBindings.weatherRadiationOid,
-                        },
-                        {
-                            name: 'radiationReference',
-                            label: 'radiation_reference_wm2',
-                            type: 'number',
-                            min: 1,
-                            default: 1000,
+                            default: sunPositionBindings.weatherBrightnessOid,
                         },
                         {
                             name: 'weatherCloudinessOid',
@@ -199,7 +180,7 @@ export default class SunPosition extends Generic<SunPositionData> {
         const elevation = rawElevation !== undefined && Math.abs(rawElevation) <= 90 ? rawElevation : undefined;
         const rawAzimuth = numericStateValue(value('sunAzimuthOid'));
         const azimuth = rawAzimuth === undefined ? undefined : ((rawAzimuth % 360) + 360) % 360;
-        const radiation = numericStateValue(value('weatherRadiationOid'));
+        const brightness = numericStateValue(value('weatherBrightnessOid'));
         const clouds = numericStateValue(value('weatherCloudinessOid'));
         const cloudPercent =
             clouds === undefined ? undefined : clamp(clouds * (data.cloudinessScale === 'fraction' ? 100 : 1), 0, 100);
@@ -208,9 +189,9 @@ export default class SunPosition extends Generic<SunPositionData> {
             value('weatherCloudinessOid'),
             value('weatherConditionOid'),
             data.cloudinessScale === 'fraction',
-            radiation,
-            Number(data.radiationReference) || 1000,
-            data.sunlightSource === 'cloudiness' ? 'cloudiness' : 'radiation',
+            undefined,
+            1000,
+            'cloudiness',
         );
         const night = elevation !== undefined && elevation <= 0;
         const marker =
@@ -466,8 +447,8 @@ export default class SunPosition extends Generic<SunPositionData> {
                         y="69"
                         className="sh-sun-position__metric"
                     >
-                        {radiation === undefined || radiation < 0 ? '–' : this.formatValue(radiation, 0)}
-                        <tspan className="sh-sun-position__unit"> W/m²</tspan>
+                        {brightness === undefined || brightness < 0 ? '–' : this.formatValue(brightness, 0)}
+                        <tspan className="sh-sun-position__unit"> lx</tspan>
                     </text>
                     <text
                         x="266"

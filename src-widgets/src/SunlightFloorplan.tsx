@@ -35,6 +35,7 @@ interface SunlightRxData extends Record<string, any> {
     weatherSunFactorOid: string;
     weatherCloudinessOid: string;
     weatherConditionOid: string;
+    weatherBrightnessOid: string;
     weatherRadiationOid: string;
     sunlightSource: 'cloudiness' | 'radiation';
     cloudinessScale: 'percent' | 'fraction';
@@ -95,6 +96,7 @@ function positiveSetting(value: unknown, fallback: number): number {
 
 const estimatedUsefulLampOutput = 0.55;
 const luxForHalfLampImpact = 65;
+const estimatedLuxPerWm2 = 120;
 
 function renderFloorplan(
     svg: string,
@@ -426,13 +428,21 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
                             type: 'select',
                             options: [
                                 { value: 'cloudiness', label: 'weather_cloudiness' },
-                                { value: 'radiation', label: 'outdoor_radiation' },
+                                { value: 'radiation', label: 'outdoor_brightness' },
                             ],
                             default: 'radiation',
                         },
                         {
+                            name: 'weatherBrightnessOid',
+                            label: 'weather_brightness_oid',
+                            type: 'id',
+                            default: '0_userdata.0.sunlight.overall.estimated',
+                            hidden: 'data.sunlightSource !== "radiation"',
+                            tooltip: 'weather_brightness_oid_help',
+                        },
+                        {
                             name: 'weatherRadiationOid',
-                            label: 'outdoor_radiation_oid',
+                            label: 'outdoor_radiation_fallback_oid',
                             type: 'id',
                             default: '0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2',
                             hidden: 'data.sunlightSource !== "radiation"',
@@ -514,7 +524,10 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         const sunElevation = this.numericValue(data.sunElevationOid);
         const conditionValue = this.stateValue(data.weatherConditionOid);
         const condition = typeof conditionValue === 'string' ? conditionValue : undefined;
-        const radiation = this.numericValue(data.weatherRadiationOid);
+        const brightness = this.numericValue(data.weatherBrightnessOid);
+        const fallbackRadiation = this.numericValue(data.weatherRadiationOid);
+        // The brightness model uses 120 lx per W/m²; keep its existing normalization reference.
+        const radiation = brightness === undefined ? fallbackRadiation : brightness / estimatedLuxPerWm2;
         const factors = calculateSunlightFactors(
             this.stateValue(data.weatherSunFactorOid),
             this.stateValue(data.weatherCloudinessOid),

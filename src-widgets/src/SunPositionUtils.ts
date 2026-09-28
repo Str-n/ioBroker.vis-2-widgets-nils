@@ -15,7 +15,7 @@ export const sunPositionBindings = {
     summerSolarNoonOid: 'followthesun.0.thisYear.start of summer.solarnoon_time',
     summerSunsetOid: 'followthesun.0.thisYear.start of summer.sunset_time',
     summerNoonElevationOid: 'followthesun.0.thisYear.start of summer.solarnoon_altitude',
-    weatherRadiationOid: '0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2',
+    weatherBrightnessOid: '0_userdata.0.sunlight.overall.estimated',
     weatherCloudinessOid: 'openweathermap.0.forecast.current.clouds',
     weatherConditionOid: 'openweathermap.0.forecast.current.state',
     weatherSunFactorOid: '',

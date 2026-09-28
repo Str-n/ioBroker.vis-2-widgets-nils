@@ -15,7 +15,10 @@ fs.mkdirSync(artifacts, { recursive: true });
         await page.goto(url, { waitUntil: 'networkidle0' });
         await page.waitForSelector('.sh-sun-position__marker');
         await page.click('[data-scene="noon"]');
-        await page.waitForFunction(() => document.querySelector('.sh-sun-position').textContent.includes('950'));
+        await page.waitForFunction(() => {
+            const metric = document.querySelector('.sh-sun-position__metric');
+            return metric && metric.textContent.replace(/\D/g, '') === '114000';
+        });
         await (await page.$('.sh-sun-position')).screenshot({ path: `${artifacts}/sun-position-day.png` });
         const bounds = await page.$eval('.sh-sun-position', element => {
             const box = element.getBoundingClientRect();
@@ -49,10 +52,10 @@ fs.mkdirSync(artifacts, { recursive: true });
         await (await page.$('#sun-position-test')).screenshot({ path: `${artifacts}/sun-position-missing.png` });
         await page.evaluate(() => window.renderSunTest({
             'custom.clouds.val': 0.75, 'custom.sun.val': 20,
-            'custom.radiation.val': 0,
-        }, { weatherCloudinessOid: 'custom.clouds', cloudinessScale: 'fraction', sunElevationOid: 'custom.sun', weatherRadiationOid: 'custom.radiation' }));
+            'custom.brightness.val': 0,
+        }, { weatherCloudinessOid: 'custom.clouds', cloudinessScale: 'fraction', sunElevationOid: 'custom.sun', weatherBrightnessOid: 'custom.brightness' }));
         await page.waitForFunction(() => document.querySelector('#sun-position-test').textContent.includes('75'));
-        assert.equal(await page.$eval('#sun-position-test .sh-sun-position__metric', el => el.textContent.trim()), '0 W/m²');
+        assert.equal(await page.$eval('#sun-position-test .sh-sun-position__metric', el => el.textContent.trim()), '0 lx');
         await page.evaluate(async () => {
             const translations = (await import('/src/i18n/de.json')).default;
             window.visRxWidget.t = key => translations[key] || key;

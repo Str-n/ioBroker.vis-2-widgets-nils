@@ -79,7 +79,7 @@ instantaneous power, not accumulated energy in kWh.
 ### Sun position
 
 The **Sun position** widget is designed for a 370 × 150 px tile. It shows today's approximate sun path, a live marker
-at the measured elevation, sunrise/sunset times, azimuth, elevation, solar radiation (W/m²), and cloudiness (%).
+at the measured elevation, sunrise/sunset times, azimuth, elevation, outdoor brightness (lx), and cloudiness (%).
 The completed path is solid and the remaining path is dotted. Below the horizon, the marker disappears and the tile
 shows a nighttime status. Missing readings are shown as a dash; missing or outdated daily events hide the path.
 
@@ -93,12 +93,9 @@ Enable **Compare winter and summer sun paths** to overlay this year's shortest a
 on shared local-time and elevation scales, so today's sunrise, sunset, and solar-noon height appear between them.
 The winter and summer sunrise, noon, sunset, and noon-altitude state IDs are editable in the **Live data** settings.
 
-Brightness uses the same `weatherRadiationOid` default as **Sunlight floor plan**:
-`0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2`. Cloudiness defaults to
-`openweathermap.0.forecast.current.clouds`. Copy the floorplan's weather bindings, source, reference, and cloudiness
-scale to compare the same inputs. Both widgets share the direct/diffuse light calculation, which controls the sun's
-glow here; the numeric brightness always shows measured radiation, and missing measurements remain a dash even when
-cloudiness supplies the visual fallback. The preview places both widgets beside the same scene controls.
+Brightness uses `0_userdata.0.sunlight.overall.estimated` by default and can be changed in the widget settings.
+Cloudiness defaults to `openweathermap.0.forecast.current.clouds`. Cloudiness and weather condition control the sun
+marker glow; missing brightness readings remain a dash. The preview places both widgets beside the same scene controls.
 
 ### Sunlight floor plan
 
@@ -107,11 +104,13 @@ DG, or basement SVG. It uses the current sun azimuth and elevation from `followt
 azimuth and elevation child states in the widget editor. The floor plan orientation defaults to top 163°, right 253°,
 bottom 343°, and left 73°.
 
-Measured solar radiation is the default and primary brightness input. Its default state is
-`0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2`, configurable in the widget settings. Set the clear-sky reference
-to the expected peak value for the sensor, normally 1000 W/m². When the sensor has no current value, cloudiness and
-weather condition below `openweathermap.0.forecast.current` provide the fallback. You can instead select cloudiness as
-the primary input. Optional cloudiness and condition states determine how much of the available light is direct or diffuse.
+Estimated brightness in lux is the default and primary input, using
+`0_userdata.0.sunlight.overall.estimated`. If it has no numeric value, the widget falls back to the existing
+`0_userdata.0.sunlight.neuwied.globalRadiationAvgWm2` radiation state. Lux is converted to a W/m² equivalent using
+120 lx per W/m², and the clear-sky reference remains configurable, normally 1000 W/m². When neither state has a
+numeric value, cloudiness and weather condition below `openweathermap.0.forecast.current` provide the fallback. You can
+select cloudiness as the primary input. Optional cloudiness and condition states determine how much of the available
+light is direct or diffuse.
 
 The model separates measured daylight into directional and diffuse components. Direct light is restricted by the
 current sun direction and each window's outward azimuth. It forms a room-clipped patch that becomes softer as cloud

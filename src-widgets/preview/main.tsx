@@ -123,27 +123,27 @@ const sunlightPreviewConfiguration = { eg: sunlightPreviewGeometry };
 const sunlightScenes = [
     {
         id: 'morning', label: 'Morning', note: 'Soft east light',
-        values: { 'preview.sun.azimuth': 108, 'preview.sun.elevation': 25, 'preview.weather.cloudiness': 25, 'preview.weather.radiation': 720, 'preview.weather.condition': 'Partly cloudy', 'preview.sunlight.blindPosition': 50,
+        values: { 'preview.sun.azimuth': 108, 'preview.sun.elevation': 25, 'preview.weather.cloudiness': 25, 'preview.weather.radiation': 720, 'preview.weather.brightness': 86400, 'preview.weather.condition': 'Partly cloudy', 'preview.sunlight.blindPosition': 50,
             'preview.sunlight.bottomRightLight': false, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': false, 'preview.sunlight.livingRoomLight': true },
     },
     {
         id: 'noon', label: 'Bright noon', note: 'Clear sky, shades down',
-        values: { 'preview.sun.azimuth': 163, 'preview.sun.elevation': 58, 'preview.weather.cloudiness': 5, 'preview.weather.radiation': 950, 'preview.weather.condition': 'Clear sky', 'preview.sunlight.blindPosition': 25,
+        values: { 'preview.sun.azimuth': 163, 'preview.sun.elevation': 58, 'preview.weather.cloudiness': 5, 'preview.weather.radiation': 950, 'preview.weather.brightness': 114000, 'preview.weather.condition': 'Clear sky', 'preview.sunlight.blindPosition': 25,
             'preview.sunlight.bottomRightLight': false, 'preview.sunlight.smallRoomLight': false, 'preview.sunlight.corridorLight': false, 'preview.sunlight.livingRoomLight': false },
     },
     {
         id: 'overcast', label: 'Overcast', note: 'Diffuse daylight',
-        values: { 'preview.sun.azimuth': 190, 'preview.sun.elevation': 34, 'preview.weather.cloudiness': 100, 'preview.weather.radiation': 220, 'preview.weather.condition': 'Overcast', 'preview.sunlight.blindPosition': 100,
+        values: { 'preview.sun.azimuth': 190, 'preview.sun.elevation': 34, 'preview.weather.cloudiness': 100, 'preview.weather.radiation': 220, 'preview.weather.brightness': 26400, 'preview.weather.condition': 'Overcast', 'preview.sunlight.blindPosition': 100,
             'preview.sunlight.bottomRightLight': true, 'preview.sunlight.smallRoomLight': false, 'preview.sunlight.corridorLight': true, 'preview.sunlight.livingRoomLight': false },
     },
     {
         id: 'afternoon', label: 'Late afternoon', note: 'Warm low-angle sun',
-        values: { 'preview.sun.azimuth': 245, 'preview.sun.elevation': 17, 'preview.weather.cloudiness': 15, 'preview.weather.radiation': 540, 'preview.weather.condition': 'Mostly clear', 'preview.sunlight.blindPosition': 60,
+        values: { 'preview.sun.azimuth': 245, 'preview.sun.elevation': 17, 'preview.weather.cloudiness': 15, 'preview.weather.radiation': 540, 'preview.weather.brightness': 64800, 'preview.weather.condition': 'Mostly clear', 'preview.sunlight.blindPosition': 60,
             'preview.sunlight.bottomRightLight': false, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': false, 'preview.sunlight.livingRoomLight': false },
     },
     {
         id: 'evening', label: 'Evening', note: 'Sunset, lamps on',
-        values: { 'preview.sun.azimuth': 292, 'preview.sun.elevation': -4, 'preview.weather.cloudiness': 30, 'preview.weather.radiation': 0, 'preview.weather.condition': 'After sunset', 'preview.sunlight.blindPosition': 0,
+        values: { 'preview.sun.azimuth': 292, 'preview.sun.elevation': -4, 'preview.weather.cloudiness': 30, 'preview.weather.radiation': 0, 'preview.weather.brightness': 0, 'preview.weather.condition': 'After sunset', 'preview.sunlight.blindPosition': 0,
             'preview.sunlight.bottomRightLight': true, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': true, 'preview.sunlight.livingRoomLight': true },
     },
 ] as const;
@@ -406,8 +406,8 @@ function App(): React.JSX.Element {
                 <SunPosition {...commonProps as any} id="sun-position-preview" customSettings={{
                     values, style: { width: 370, maxWidth: '100%', height: 150 },
                     rxData: { ...sunPositionBindings, sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
-                        weatherRadiationOid: 'preview.weather.radiation', weatherCloudinessOid: 'preview.weather.cloudiness',
-                        weatherConditionOid: 'preview.weather.condition', sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent' },
+                        weatherBrightnessOid: 'preview.weather.brightness', weatherCloudinessOid: 'preview.weather.cloudiness',
+                        weatherConditionOid: 'preview.weather.condition', cloudinessScale: 'percent' },
                 }} />
                 <SunlightFloorplan {...commonProps as any} id="sunlight-floorplan-preview" customSettings={{
                     values,
@@ -416,7 +416,7 @@ function App(): React.JSX.Element {
                         floorplan: sunlightConfiguration.floorplan, floorTopAzimuth: 163,
                         sunAzimuthOid: 'preview.sun.azimuth', sunElevationOid: 'preview.sun.elevation',
                         weatherCloudinessOid: 'preview.weather.cloudiness', weatherConditionOid: 'preview.weather.condition',
-                        weatherRadiationOid: 'preview.weather.radiation',
+                        weatherBrightnessOid: 'preview.weather.brightness', weatherRadiationOid: 'preview.weather.radiation',
                         sunlightSource: 'radiation', radiationReference: 1000, cloudinessScale: 'percent',
                         svgUnitsPerMeter: 62, roomHeightMeters: 2.5, maximumProjection: 650,
                         floorConfigurations: sunlightConfiguration.floorConfigurations,}
