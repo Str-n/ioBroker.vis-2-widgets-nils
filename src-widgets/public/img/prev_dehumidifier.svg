@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="144" viewBox="0 0 240 144">
+  <rect x="1" y="1" width="238" height="142" rx="16" fill="#2d4e63" stroke="#698ca2"/>
+  <g fill="none" stroke="#abdce3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M68 24c-5 8-16 17-16 26a16 16 0 0 0 32 0c0-9-11-18-16-26Z"/>
+    <path d="M103 41h21a5 5 0 1 0-5-5M103 48h30a5 5 0 1 1-5 5M108 56h9"/>
+  </g>
+  <g fill="#abdce3"><rect x="158" y="49" width="6" height="9" rx="2"/><rect x="169" y="42" width="6" height="16" rx="2"/><rect x="180" y="35" width="6" height="23" rx="2" opacity=".18"/></g>
+  <g fill="#f7fafc" font-family="Arial, sans-serif" font-size="13" text-anchor="middle"><text x="66" y="80">19.6 °C</text><text x="174" y="80">64 %</text></g>
+  <g fill="#365b73" stroke="#698ca2"><rect x="13" y="87" width="49" height="44" rx="12"/><rect x="68" y="87" width="49" height="44" rx="12"/><rect x="123" y="87" width="49" height="44" rx="12" stroke="#abdce3"/><rect x="178" y="87" width="49" height="44" rx="12"/></g>
+  <path d="M37 99v10m-6-7a9 9 0 1 0 12 0" fill="none" stroke="#eff5f8" stroke-width="2" stroke-linecap="round"/>
+  <g fill="#eff5f8"><path d="M81 112h5v8h-5zM191 112h5v8h-5zM200 105h5v15h-5zM209 98h5v22h-5z"/><path opacity=".18" d="M90 105h5v15h-5zM99 98h5v22h-5z"/></g>
+  <g fill="#abdce3"><path d="M136 112h5v8h-5zM145 105h5v15h-5zM132 127h31v3h-31z"/><path opacity=".18" d="M154 98h5v22h-5z"/></g>
+</svg>

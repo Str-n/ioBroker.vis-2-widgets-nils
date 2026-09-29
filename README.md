@@ -49,6 +49,24 @@ For a standalone, hot-reloading preview of the button widgets, run `npm run prev
 
 Additionally, it can show a history if you activated it.
 
+### Dehumidifier
+
+The **Dehumidifier** widget is a graphical 240 × 144 px control using the shared app theme.
+Its default bindings are `0_userdata.0.Feuchtigkeit.Power_Mode` (boolean power) and
+`0_userdata.0.Feuchtigkeit.Power_Mode_Level` (integer level). Both can be changed in the editor.
+One, two, or three bars select low (1), medium (2), or high (3), writing the level and then
+power `true`. The power button writes only `false`, preserving the last level.
+
+Current temperature (°C) and relative humidity (%) remain visible above the controls, including when off.
+They default to `0_userdata.0.Feuchtigkeit.T_in` and `0_userdata.0.Feuchtigkeit.rel_humidity_basement`;
+both bindings can be changed in the editor. Missing or invalid readings display a dash.
+
+The droplet, moving airflow, status bars, and selected button follow the current state values.
+Missing power is shown with a question mark; missing level while on does not select a speed.
+There is no separate physical running sensor: the running indication represents `Power_Mode`.
+Controls have accessible labels, keyboard support, and tooltips; animation respects reduced motion.
+The editor and **Read only** mode disable controls. A mock control is included in the local preview dashboard.
+
 ### Compact weather
 
 The compact weather widget is designed for an approximately 370 × 150 px tile. It shows the current temperature and

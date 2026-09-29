@@ -12,3 +12,12 @@
 /.claude/settings.local.json
 *.tar.gz
 *.tgz
+artifacts/brightness-2026-09-28/analysis.md
+artifacts/brightness-2026-09-28/analyze.py
+artifacts/brightness-2026-09-28/comparison.csv
+artifacts/brightness-2026-09-28/comparison.png
+artifacts/brightness-2026-09-28/comparison.svg
+artifacts/brightness-2026-09-28/plot.cjs
+artifacts/brightness-2026-09-28/series.json
+artifacts/brightness-2026-09-28/statistics.json
+todo_backlog.md

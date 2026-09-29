@@ -118,6 +118,8 @@ const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: T
     import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/SunPosition'), import('../src/EnergyConsumption'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
+const { default: Dehumidifier, dehumidifierBindings } = await import('../src/Dehumidifier');
+
 const { default: SunlightFloorplanEditor } = await import('../src/SunlightFloorplanEditor');
 const sunlightPreviewConfiguration = { eg: sunlightPreviewGeometry };
 const sunlightScenes = [
@@ -203,7 +205,7 @@ function App(): React.JSX.Element {
             ];
         })),
     };
-    const initialValues = { 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...sunlightData, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
+    const initialValues = { [`${dehumidifierBindings.temperatureOid}.val`]: 19.6, [`${dehumidifierBindings.humidityOid}.val`]: 64, [`${dehumidifierBindings.powerOid}.val`]: false, [`${dehumidifierBindings.levelOid}.val`]: 2, 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...sunlightData, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
@@ -342,6 +344,10 @@ function App(): React.JSX.Element {
                 } }} />
                 <output data-preview="thermostat-values">{JSON.stringify({ setpoint: values['preview.temperature.set.val'], mode: values['preview.SET_POINT_MODE.val'] })}</output>
             </article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Dehumidifier</h2><p>Select a level to turn on. The power button turns off and preserves the level.</p></div></div>
+            <Dehumidifier {...commonProps as any} id="dehumidifier" customSettings={{ values, style: { width: 240, height: 144 }, rxData: dehumidifierBindings }} />
         </section>
         <section>
             <div className="section-heading"><div><h2>Compact thermostat button</h2><p>The real compact widget, backed by local temperature data.</p></div></div>

@@ -1,0 +1,181 @@
+.sh-dehumidifier {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 216px;
+    min-height: 144px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 12px;
+}
+
+.sh-dehumidifier__status {
+    flex: 1;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    color: var(--sh-text-secondary);
+}
+
+.sh-dehumidifier__device {
+    position: relative;
+    display: flex;
+}
+
+.sh-dehumidifier__device > svg {
+    width: 36px;
+    height: 36px;
+}
+
+.sh-dehumidifier__indicator {
+    position: absolute;
+    right: -6px;
+    bottom: -2px;
+    display: flex;
+    padding: 3px;
+    border-radius: 50%;
+    background: var(--sh-surface);
+}
+
+.sh-dehumidifier__indicator svg {
+    width: 16px;
+    height: 16px;
+}
+
+.sh-dehumidifier__flow {
+    display: flex;
+    opacity: 0.2;
+}
+
+.sh-dehumidifier__flow svg {
+    width: 32px;
+    height: 32px;
+}
+
+.sh-dehumidifier[data-running='true'] .sh-dehumidifier__status {
+    color: var(--sh-secondary);
+}
+
+.sh-dehumidifier[data-running='true'] .sh-dehumidifier__flow {
+    animation: sh-dehumidifier-flow 2.4s ease-in-out infinite;
+}
+
+.sh-dehumidifier[data-level='2'] .sh-dehumidifier__flow {
+    animation-duration: 1.6s;
+}
+
+.sh-dehumidifier[data-level='3'] .sh-dehumidifier__flow {
+    animation-duration: 0.9s;
+}
+
+.sh-dehumidifier__readings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    color: var(--sh-text);
+    font-size: 15px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 22px;
+}
+
+.sh-dehumidifier__reading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.sh-dehumidifier__reading > svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--sh-text-secondary);
+}
+
+.sh-dehumidifier__controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.sh-dehumidifier__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--sh-divider);
+    border-radius: var(--sh-radius-control);
+    background: var(--sh-surface-2);
+    color: var(--sh-text-secondary);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.sh-dehumidifier__button[aria-pressed='true'] {
+    color: var(--sh-secondary);
+    border-color: currentColor;
+    box-shadow: inset 0 -3px currentColor;
+}
+
+.sh-dehumidifier__button:hover:not(:disabled) {
+    background: var(--sh-surface-hover, var(--sh-surface));
+}
+
+.sh-dehumidifier__button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.sh-dehumidifier__bars {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 24px;
+}
+
+.sh-dehumidifier__bars > span {
+    width: 5px;
+    height: 8px;
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.18;
+}
+
+.sh-dehumidifier__bars > span:nth-child(2) {
+    height: 15px;
+}
+
+.sh-dehumidifier__bars > span:nth-child(3) {
+    height: 22px;
+}
+
+.sh-dehumidifier__bars > span[data-filled='true'] {
+    opacity: 1;
+}
+
+@keyframes sh-dehumidifier-flow {
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: translateX(-3px);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(3px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sh-dehumidifier[data-running='true'] .sh-dehumidifier__flow {
+        animation: none;
+        opacity: 1;
+    }
+}

@@ -21,6 +21,7 @@ const config = ({ command }: { command: 'build' | 'serve' }): UserConfig => ({
                           './Actual': './src/Actual',
                           './SwitchButton': './src/SwitchButton',
                           './LabeledSwitchButton': './src/LabeledSwitchButton',
+                          './Dehumidifier': './src/Dehumidifier',
                           './Blinds': './src/Blinds',
                           './StackCardCarousel': './src/StackCardCarousel',
                           './HorizontalScrollView': './src/HorizontalScrollView',
