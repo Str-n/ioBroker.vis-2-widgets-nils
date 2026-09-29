@@ -1,0 +1,9 @@
+{
+  "name": "iobroker-energy-game",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pure-logic tests and ioBroker scripts for the energy game backend",
+  "scripts": {
+    "test": "node tests/energyGame.test.js"
+  }
+}
