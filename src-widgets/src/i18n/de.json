@@ -1,4 +1,13 @@
 {
+  "blind_control_auto_open_morning": "Morgens automatisch öffnen",
+  "blind_control_auto_open_morning_description": "Dieses Fenster zur eingestellten Morgenzeit unter Berücksichtigung des Hitzeschutzes öffnen. Der Urlaubsmodus übersteuert diese Einstellung.",
+  "blind_control_settings": "Rollladenautomatik einstellen",
+  "blind_control_enabled": "Automatischer Sonnen- und Hitzeschutz",
+  "blind_control_enabled_oid": "Automatik-Freigabe des Fensters (blindcontrol.0.windows.<id>.enabled)",
+  "blind_control_not_configured": "Wählen Sie im Widget-Editor den enabled-Datenpunkt dieses Fensters im blindcontrol-Adapter aus.",
+  "blind_control_description": "Automatische Steuerung für dieses Fenster aktivieren oder deaktivieren.",
+  "blind_control_error": "Die Automatik-Einstellung konnte nicht bestätigt werden. Prüfen Sie die Adapterverbindung und versuchen Sie es erneut.",
+  "actual_show_history": "Verlauf anzeigen",
   "dehumidifier": "Luftentfeuchter",
   "dehumidifier_temperature": "Aktuelle Temperatur",
   "dehumidifier_humidity": "Relative Luftfeuchtigkeit",

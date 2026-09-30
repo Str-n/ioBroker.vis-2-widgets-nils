@@ -1,4 +1,13 @@
 {
+  "blind_control_auto_open_morning": "Open automatically in the morning",
+  "blind_control_auto_open_morning_description": "Open this window at the configured morning time, subject to heat protection. Vacation mode overrides this setting.",
+  "blind_control_settings": "Blind automation settings",
+  "blind_control_enabled": "Automatic sun and heat protection",
+  "blind_control_enabled_oid": "Window automation enabled state (blindcontrol.0.windows.<id>.enabled)",
+  "blind_control_not_configured": "Select this window’s blindcontrol enabled state in the widget editor to use automatic sun and heat protection.",
+  "blind_control_description": "Enable or disable automatic control for this window.",
+  "blind_control_error": "Could not confirm the automation setting. Check the adapter connection and try again.",
+  "actual_show_history": "Show history",
   "dehumidifier": "Dehumidifier",
   "dehumidifier_temperature": "Current temperature",
   "dehumidifier_humidity": "Relative humidity",

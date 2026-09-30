@@ -1,0 +1,164 @@
+.sh-actual {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 12px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.sh-actual--bare {
+    padding: 0;
+    background: transparent;
+}
+
+.sh-actual--interactive {
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.sh-actual--interactive:hover {
+    border-color: var(--sh-secondary);
+}
+
+.sh-actual__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 0;
+    line-height: 18px;
+}
+
+.sh-actual__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--sh-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.sh-actual__header .sh-actual__history-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--sh-text-secondary);
+}
+
+.sh-actual__readings {
+    display: flex;
+    align-items: center;
+    flex: 1 0 auto;
+    gap: 16px;
+    min-width: 0;
+}
+
+.sh-actual--chart .sh-actual__readings {
+    flex: 0 0 auto;
+}
+
+.sh-actual__reading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 0;
+    min-width: 0;
+    color: var(--sh-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.sh-actual__reading + .sh-actual__reading {
+    border-left: 1px solid var(--sh-divider);
+    padding-left: 16px;
+}
+
+.sh-actual__icon {
+    display: flex;
+    flex-shrink: 0;
+    color: var(--actual-main-color);
+}
+
+.sh-actual__icon:empty {
+    display: none;
+}
+
+.sh-actual__reading--secondary .sh-actual__icon {
+    color: var(--actual-secondary-color);
+}
+
+.sh-actual__icon > svg {
+    width: 22px;
+    height: 22px;
+}
+
+.sh-actual__measurement {
+    min-width: 0;
+}
+
+.sh-actual__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--sh-text-secondary);
+    font-size: 11px;
+    line-height: 16px;
+}
+
+.sh-actual__number {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.15;
+}
+
+.sh-actual__reading--secondary .sh-actual__number {
+    font-size: 22px;
+}
+
+.sh-actual__unit {
+    margin-left: 4px;
+    font-size: 0.5em;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.sh-actual__value {
+    animation: sh-actual-update 0.8s ease-out;
+}
+
+.sh-actual__chart {
+    flex: 1 1 0;
+    min-height: 16px;
+    min-width: 0;
+    pointer-events: none;
+}
+
+.sh-actual-dialog .sh-actual-dialog__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+@keyframes sh-actual-update {
+    from {
+        opacity: 0.45;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sh-actual__value {
+        animation: none;
+    }
+}

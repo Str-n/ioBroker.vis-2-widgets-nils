@@ -45,6 +45,7 @@ class LocalVisRxWidget extends React.Component<PreviewProps, Record<string, any>
         return translations[key] || (english as Record<string, string>)[key] || key.replaceAll('_', ' ');
     }
     static getLanguage(): string { return 'en'; }
+    static getText(value: string | Record<string, string> | undefined): string { return typeof value === 'string' ? value : value?.en || ''; }
     static getDerivedStateFromProps(props: PreviewProps): Record<string, unknown> {
         return { rxData: props.customSettings.rxData, values: props.customSettings.values, rxStyle: props.customSettings.style };
     }
@@ -118,6 +119,7 @@ const [{ default: SwitchButton }, { default: LabeledSwitchButton }, { default: T
     import('../src/SwitchButton'), import('../src/LabeledSwitchButton'), import('../src/ThermostatCompact'), import('../src/Thermostat'), import('../src/Blinds'), import('../src/dev/EnergyGamePreview'), import('../src/StackCardCarousel'), import('../src/HorizontalScrollView'), import('../src/Weather'), import('../src/SunlightFloorplan'), import('../src/SunPosition'), import('../src/EnergyConsumption'), import('../src/Trash'), import('../src/ThemeSelector'),
 ]);
 
+const { default: Actual } = await import('../src/Actual');
 const { default: Dehumidifier, dehumidifierBindings } = await import('../src/Dehumidifier');
 
 const { default: SunlightFloorplanEditor } = await import('../src/SunlightFloorplanEditor');
@@ -158,6 +160,8 @@ const sunlightPreviewFloors = Object.fromEntries(await Promise.all(
 ));
 
 const objects: Record<string, Record<string, any>> = {
+    'preview.actual.temperature': { _id: 'preview.actual.temperature', type: 'state', common: { name: 'Temperature', type: 'number', role: 'value.temperature', unit: '°C', custom: { 'history.0': { enabled: true } } } },
+    'preview.actual.humidity': { _id: 'preview.actual.humidity', type: 'state', common: { name: 'Humidity', type: 'number', role: 'value.humidity', unit: '%', custom: { 'history.0': { enabled: true } } } },
     'preview.light.brightness': { _id: 'preview.light.brightness', type: 'state', common: { type: 'number', min: 0, max: 100, step: 1, unit: '%' } },
     'preview.light.temperature': { _id: 'preview.light.temperature', type: 'state', common: { type: 'number', min: 220, max: 650, step: 5, unit: 'K' } },
     'preview.temperature.set': { _id: 'preview.temperature.set', type: 'state', common: { type: 'number', min: 12, max: 30, step: 0.5, unit: '°C' } },
@@ -205,11 +209,16 @@ function App(): React.JSX.Element {
             ];
         })),
     };
-    const initialValues = { [`${dehumidifierBindings.temperatureOid}.val`]: 19.6, [`${dehumidifierBindings.humidityOid}.val`]: 64, [`${dehumidifierBindings.powerOid}.val`]: false, [`${dehumidifierBindings.levelOid}.val`]: 2, 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...sunlightData, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
+    const initialValues = { 'preview.actual.temperature.val': 21.5, 'preview.actual.humidity.val': 46, [`${dehumidifierBindings.temperatureOid}.val`]: 19.6, [`${dehumidifierBindings.humidityOid}.val`]: 64, [`${dehumidifierBindings.powerOid}.val`]: false, [`${dehumidifierBindings.levelOid}.val`]: 2, 'preview.SET_POINT_MODE.val': 0, 'preview.green.val': true, 'preview.blue.val': false, 'preview.numeric.val': 1, 'preview.readonly.val': true, 'preview.separate-command.val': false, 'preview.separate-status.val': true, 'preview.always-on.val': false, 'preview.always-off.val': true, 'preview.light.val': false, 'preview.light.brightness.val': 72, 'preview.light.temperature.val': 320, 'preview.temperature.set.val': 21.5, 'preview.temperature.actual.val': 20.8, 'preview.outdoor.temperature.val': 19.2, 'preview.humidity.val': 46, 'preview.blinds.position.val': 35, ...sunlightData, ...weatherValues, ...Object.fromEntries(['green', 'brown', 'black', 'blue'].flatMap((color, index) => [[`trashschedule.0.type.${color}.daysLeft.val`, index + 1], [`trashschedule.0.type.${color}.completed.val`, color === 'brown']])) };
     const [values, setValues] = React.useState<Record<string, any>>(initialValues);
     const context = React.useMemo(() => ({
         socket: {
             getObject: async (id: string) => objects[id] || null,
+            getState: async (id: string) => ({ val: (initialValues as Record<string, unknown>)[`${id}.val`], ts: Date.now() }),
+            getHistory: async (id: string, options: { start: number; end: number }) => Array.from({ length: 25 }, (_, index) => ({
+                ts: options.start + (options.end - options.start) * index / 24,
+                val: id.includes('humidity') ? 46 + Math.sin(index / 3) * 4 : 21.5 + Math.sin(index / 4) * 0.8,
+            })),
             getObjectsById: async (ids: string[]) => Object.fromEntries(ids.filter(id => objects[id]).map(id => [id, objects[id]])),
             subscribeState: async () => undefined,
             unsubscribeState: () => undefined,
@@ -344,6 +353,17 @@ function App(): React.JSX.Element {
                 } }} />
                 <output data-preview="thermostat-values">{JSON.stringify({ setpoint: values['preview.temperature.set.val'], mode: values['preview.SET_POINT_MODE.val'] })}</output>
             </article>
+        </section>
+        <section>
+            <div className="section-heading"><div><h2>Actual values</h2><p>Live readings and history in the shared theme. Select the card to open its chart.</p></div></div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+                <Actual {...commonProps as any} id="actual-preview" customSettings={{ values, style: { width: 340, height: 150 }, rxData: {
+                    widgetTitle: 'Living room', 'oid-main': 'preview.actual.temperature', 'oid-secondary': 'preview.actual.humidity', digits_after_comma_main: 1, digits_after_comma_secondary: 0,
+                } }} />
+                <Actual {...commonProps as any} id="actual-bare-preview" customSettings={{ values, style: { width: 300, height: 120 }, rxData: {
+                    noCard: true, noChart: true, 'noChart-secondary': true, 'oid-main': 'preview.actual.temperature', 'oid-secondary': 'preview.actual.humidity', digits_after_comma_main: 1, digits_after_comma_secondary: 0,
+                } }} />
+            </div>
         </section>
         <section>
             <div className="section-heading"><div><h2>Dehumidifier</h2><p>Select a level to turn on. The power button turns off and preserves the level.</p></div></div>

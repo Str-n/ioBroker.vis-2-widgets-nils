@@ -165,6 +165,12 @@ if the preview uses a different port. Browser screenshots are written to the sys
 
 ### Actual value with chart
 
+The Actual widget follows the shared app theme with labeled sensor readings, subtle unit text,
+and matching history colors. Existing state bindings, icons, units, precision, font settings,
+and custom colors are retained. Select a card with history to open its themed chart dialog;
+keyboard users can press Enter or Space. **Without card** embeds the readings and chart on a
+transparent background. Missing values display a dash, and reduced-motion preferences disable value fades.
+
 ![Actual value](img/material-actual-value-1.png)
 
 ![Actual value with chart](img/material-actual-value-2.png)

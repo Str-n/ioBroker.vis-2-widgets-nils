@@ -59,7 +59,8 @@
     "test:sun-position:browser": "node test/sun-position.browser.cjs",
     "test:energy-consumption": "mocha test/energy-consumption.test.js --exit",
     "test:energy-consumption:browser": "node test/energy-consumption.browser.cjs",
-    "test:dehumidifier:browser": "node test/dehumidifier.browser.cjs"
+    "test:dehumidifier:browser": "node test/dehumidifier.browser.cjs",
+    "test:actual:browser": "node test/actual.browser.cjs"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.vis-2-widgets-nils/issues"

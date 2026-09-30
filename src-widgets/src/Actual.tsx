@@ -1,10 +1,15 @@
 import React, { type CSSProperties } from 'react';
 
-import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, IconButton, useTheme, type Theme } from '@mui/material';
 
-import { Close as IconClose, DeviceThermostat as ThermostatIcon, Opacity as HumidityIcon } from '@mui/icons-material';
+import {
+    Close as IconClose,
+    DeviceThermostat as ThermostatIcon,
+    Opacity as HumidityIcon,
+    ShowChart,
+} from '@mui/icons-material';
 
-import ReactEchartsCore from 'echarts-for-react/lib/core';
+import ReactEchartsCore from 'echarts-for-react/esm/core';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import {
@@ -24,6 +29,8 @@ import { Icon } from '@iobroker/gui-components';
 
 import ObjectChart from './Components/ObjectChart';
 import Generic from './Generic';
+import '../public/smarthome.css';
+import './Actual.css';
 
 echarts.use([
     TimelineComponent,
@@ -36,64 +43,10 @@ echarts.use([
     CanvasRenderer,
 ]);
 
-const styles: Record<string, CSSProperties> = {
-    chart: {
-        height: 'calc(100% - 40px)',
-        width: '100%',
-    },
-    mainDiv: {
-        marginLeft: 10,
-        color: 'rgba(243,177,31)',
-        display: 'inline-block',
-        lineHeight: '24px',
-    },
-    temperatureValue: {
-        verticalAlign: 'middle',
-        fontSize: 28,
-    },
-    temperatureUnit: {
-        paddingLeft: 5,
-        opacity: 0.6,
-        fontSize: 14,
-        verticalAlign: 'middle',
-    },
-    mainIcon: {
-        verticalAlign: 'middle',
-        marginRight: 4,
-        fontSize: 20,
-        width: 20,
-    },
-    secondaryDiv: {
-        color: 'rgba(77,134,255)',
-        display: 'inline-block',
-        float: 'right',
-        marginRight: 12,
-        lineHeight: '24px',
-    },
-    humidityValue: {
-        verticalAlign: 'middle',
-    },
-    humidityUnit: {
-        paddingLeft: 5,
-        opacity: 0.6,
-        fontSize: 14,
-        verticalAlign: 'middle',
-    },
-    secondaryIcon: {
-        verticalAlign: 'middle',
-        fontSize: 20,
-        marginRight: 4,
-    },
-    newValueLight: {
-        animation: 'vis-2-widgets-nils-fork-newValueAnimationLight 2s ease-in-out',
-    },
-    newValueDark: {
-        animation: 'vis-2-widgets-nils-fork-newValueAnimationDark 2s ease-in-out',
-    },
-    tooltip: {
-        pointerEvents: 'none',
-    },
-};
+// Canvas charts need resolved theme colors; CSS variables style the card itself.
+function ActualTheme({ children }: { children: (theme: Theme) => React.ReactNode }): React.JSX.Element {
+    return <>{children(useTheme())}</>;
+}
 
 type RxData = {
     noCard: boolean | 'true';
@@ -129,7 +82,6 @@ interface ActualState extends VisRxWidgetState {
         secondary?: { common: ioBroker.StateCommon; _id: string };
     };
     isChart: boolean;
-    containerHeight: number;
     chartData: {
         [oid: string]: {
             data: { value: [ts: number, val: number] }[];
@@ -140,7 +92,7 @@ interface ActualState extends VisRxWidgetState {
 }
 
 export default class Actual extends Generic<RxData, ActualState> {
-    private readonly refContainer: React.RefObject<HTMLDivElement | null> = React.createRef();
+    static smartHomeTheme = true;
     private mainTimer: ReturnType<typeof setInterval> | undefined;
     private updateTimeout: ReturnType<typeof setTimeout> | undefined;
     private lastRxData: string | undefined;
@@ -152,7 +104,6 @@ export default class Actual extends Generic<RxData, ActualState> {
             showDialog: false,
             dialogTab: 0,
             isChart: false,
-            containerHeight: 0,
             chartData: {},
         };
     }
@@ -352,7 +303,7 @@ export default class Actual extends Generic<RxData, ActualState> {
                 height: 120,
                 position: 'relative',
             },
-            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_actual.png',
+            visPrev: 'widgets/vis-2-widgets-nils-fork/img/prev_actual.svg',
         } as const;
     }
 
@@ -488,7 +439,7 @@ export default class Actual extends Generic<RxData, ActualState> {
             await this.readHistory(objects.secondary._id, secondaryHistoryInstance);
             this.mainTimer ||= setInterval(
                 () => this.readHistory(this.state.objects.secondary!._id, secondaryHistoryInstance),
-                parseInt(this.state.rxData.updateInterval, 10) * 60 || 60000,
+                parseInt(this.state.rxData.updateInterval, 10) * 1000 || 60000,
             ); // every minute by default
         } else if (this.state.chartData[this.state.rxData['oid-secondary']]) {
             // delete chart data
@@ -590,6 +541,10 @@ export default class Actual extends Generic<RxData, ActualState> {
     }
 
     componentWillUnmount(): void {
+        if (this.updateTimeout) {
+            clearTimeout(this.updateTimeout);
+            this.updateTimeout = undefined;
+        }
         if (this.mainTimer) {
             clearInterval(this.mainTimer);
             this.mainTimer = undefined;
@@ -602,28 +557,10 @@ export default class Actual extends Generic<RxData, ActualState> {
     }
 
     static getColor(color: string, opacity: number): string {
-        let r: number;
-        let g: number;
-        let b: number;
-        if (color.startsWith('#')) {
-            r = parseInt(color.substring(1, 3), 16);
-            g = parseInt(color.substring(3, 5), 16);
-            b = parseInt(color.substring(5, 7), 16);
-        } else if (color.startsWith('rgb(')) {
-            const parts = color.replace('rgb(', '').replace(')', '').split(',');
-            r = parseInt(parts[0], 10);
-            g = parseInt(parts[1], 10);
-            b = parseInt(parts[2], 10);
-        } else if (color.startsWith('rgba(')) {
-            const parts = color.replace('rgba(', '').replace(')', '').split(',');
-            r = parseInt(parts[0], 10);
-            g = parseInt(parts[1], 10);
-            b = parseInt(parts[2], 10);
-        }
-        return `rgba(${r!},${g!},${b!},${opacity})`;
+        return echarts.color.modifyAlpha(color, opacity) || color;
     }
 
-    getOptions(): EChartsOption {
+    getOptions(theme: Theme): EChartsOption {
         const series: LineSeriesOption[] = [];
         if (
             this.state.chartData[this.state.rxData['oid-main']] &&
@@ -632,12 +569,15 @@ export default class Actual extends Generic<RxData, ActualState> {
         ) {
             let name = this.state.rxData['title-main'] || Generic.getText(this.state.objects?.main?.common?.name || '');
             if (!name) {
-                if (this.state.objects?.secondary?.common?.role?.includes('temperature')) {
+                if (this.state.objects?.main?.common?.role?.includes('temperature')) {
                     name = Generic.t('temperature').replace('vis_2_widgets_nils_', '');
                 }
             }
-            const mainColor = Actual.getColor(this.state.rxData['color-main'] || '#F3B11F', 0.65);
-            const mainBackgroundColor = Actual.getColor(this.state.rxData['color-main'] || '#F3B11F', 0.14);
+            const mainColor = Actual.getColor(this.state.rxData['color-main'] || theme.palette.warning.main, 0.65);
+            const mainBackgroundColor = Actual.getColor(
+                this.state.rxData['color-main'] || theme.palette.warning.main,
+                0.14,
+            );
 
             series.push({
                 areaStyle: {
@@ -657,6 +597,8 @@ export default class Actual extends Generic<RxData, ActualState> {
         }
         if (
             this.state.chartData[this.state.rxData['oid-secondary']] &&
+            this.state.rxData['noChart-secondary'] !== true &&
+            this.state.rxData['noChart-secondary'] !== 'true' &&
             this.state.rxData['noData-secondary'] !== true &&
             this.state.rxData['noData-secondary'] !== 'true'
         ) {
@@ -668,8 +610,14 @@ export default class Actual extends Generic<RxData, ActualState> {
                     name = Generic.t('humidity').replace('vis_2_widgets_nils_', '');
                 }
             }
-            const secondaryColor = Actual.getColor(this.state.rxData['color-secondary'] || '#F3B11F', 0.65);
-            const secondaryBackgroundColor = Actual.getColor(this.state.rxData['color-secondary'] || '#F3B11F', 0.14);
+            const secondaryColor = Actual.getColor(
+                this.state.rxData['color-secondary'] || theme.palette.info.main,
+                0.65,
+            );
+            const secondaryBackgroundColor = Actual.getColor(
+                this.state.rxData['color-secondary'] || theme.palette.info.main,
+                0.14,
+            );
 
             series.push({
                 areaStyle: {
@@ -714,33 +662,44 @@ export default class Actual extends Generic<RxData, ActualState> {
         };
     }
 
-    componentDidUpdate(): void {
-        if (this.refContainer.current && this.state.containerHeight !== this.refContainer.current.clientHeight) {
-            this.setState({ containerHeight: this.refContainer.current.clientHeight });
-        }
-    }
-
-    renderDialog(): React.ReactNode {
+    renderDialog(theme: Theme): React.ReactNode {
         if (!this.state.showDialog) {
             return null;
         }
-        const mainColor = Actual.getColor(this.state.rxData['color-main'] || '#F3B11F', 0.65);
-        const mainBackgroundColor = Actual.getColor(this.state.rxData['color-main'] || '#F3B11F', 0.14);
-        const secondaryColor = Actual.getColor(this.state.rxData['color-secondary'] || '#F3B11F', 0.65);
-        const secondaryBackgroundColor = Actual.getColor(this.state.rxData['color-secondary'] || '#F3B11F', 0.14);
+        const mainColor = Actual.getColor(this.state.rxData['color-main'] || theme.palette.warning.main, 0.65);
+        const mainBackgroundColor = Actual.getColor(
+            this.state.rxData['color-main'] || theme.palette.warning.main,
+            0.14,
+        );
+        const secondaryColor = Actual.getColor(this.state.rxData['color-secondary'] || theme.palette.info.main, 0.65);
+        const secondaryBackgroundColor = Actual.getColor(
+            this.state.rxData['color-secondary'] || theme.palette.info.main,
+            0.14,
+        );
 
         return (
             <Dialog
-                sx={{ '& .MuiDialog-paper': { height: '100%' } }}
+                className="sh-actual-dialog"
+                sx={{
+                    '& .MuiDialog-paper': {
+                        height: '100%',
+                        borderRadius: 'var(--sh-radius-card)',
+                        border: '1px solid var(--sh-divider)',
+                    },
+                }}
+                aria-labelledby={`${this.props.id}-history-title`}
                 maxWidth="lg"
                 fullWidth
-                open={!0}
+                open
                 onClose={() => this.setState({ showDialog: false })}
             >
-                <DialogTitle>
-                    {this.state.rxData.widgetTitle}
+                <DialogTitle
+                    id={`${this.props.id}-history-title`}
+                    className="sh-actual-dialog__title"
+                >
+                    {this.state.rxData.widgetTitle || Generic.t('actual_value_with_chart')}
                     <IconButton
-                        style={{ float: 'right' }}
+                        aria-label={Generic.t('close')}
                         onClick={() => this.setState({ showDialog: false })}
                     >
                         <IconClose />
@@ -774,11 +733,11 @@ export default class Actual extends Generic<RxData, ActualState> {
                         }
                         objLineType="line"
                         obj2LineType="line"
-                        objColor={mainColor}
+                        objColor={this.state.objects?.main ? mainColor : secondaryColor}
                         obj2Color={secondaryColor}
-                        objBackgroundColor={mainBackgroundColor}
+                        objBackgroundColor={this.state.objects?.main ? mainBackgroundColor : secondaryBackgroundColor}
                         obj2BackgroundColor={secondaryBackgroundColor}
-                        themeType={this.props.context.themeType}
+                        themeType={theme.palette.mode}
                         historyInstance={Generic.getHistoryInstance(
                             this.state.objects.main || this.state.objects.secondary,
                             this.props.context.systemConfig?.common?.defaultHistory || 'history.0',
@@ -808,216 +767,153 @@ export default class Actual extends Generic<RxData, ActualState> {
             }, 50);
         }
 
-        const onCardClick =
-            !this.state.showDialog && this.state.isChart
-                ? (e?: React.MouseEvent<HTMLDivElement>) => {
-                      e?.preventDefault();
-                      e?.stopPropagation();
-                      this.setState({ showDialog: true });
-                  }
-                : undefined;
+        return <ActualTheme>{theme => this.renderThemedBody(props, theme)}</ActualTheme>;
+    }
 
-        const classUpdateVal = this.props.context.themeType === 'dark' ? styles.newValueDark : styles.newValueLight;
-
-        const mainValue =
-            this.state.objects?.main && this.state.values[`${this.state.rxData['oid-main']}.val`] !== undefined
-                ? this.formatValue(
-                      this.state.values[`${this.state.rxData['oid-main']}.val`],
-                      this.state.rxData.digits_after_comma_main,
-                  )
-                : undefined;
-
-        const secondaryValue =
-            this.state.objects?.secondary &&
-            this.state.values[`${this.state.rxData['oid-secondary']}.val`] !== undefined
-                ? this.formatValue(
-                      this.state.values[`${this.state.rxData['oid-secondary']}.val`],
-                      this.state.rxData.digits_after_comma_secondary,
-                  )
-                : undefined;
-
-        let mainIcon: React.ReactNode = this.state.rxData['icon-main'] || this.state.objects?.main?.common?.icon;
-        if (mainIcon) {
-            mainIcon = (
-                <Icon
-                    src={mainIcon as string}
-                    style={{ ...styles.mainIcon, width: 24, color: this.state.rxData['color-main'] }}
-                />
-            );
-        } else if (
-            this.state.objects?.main?.common?.role?.includes('temperature') ||
-            this.state.objects?.main?.common?.unit?.includes('°')
-        ) {
-            mainIcon = <ThermostatIcon style={styles.mainIcon} />;
-        } else {
-            mainIcon = null;
+    private renderReading(kind: 'main' | 'secondary'): React.ReactNode {
+        const data = this.state.rxData;
+        const oid = data[`oid-${kind}`];
+        if (!oid || oid === 'nothing_selected') {
+            return null;
         }
+        const common = this.state.objects?.[kind]?.common;
+        const raw = this.state.values[`${oid}.val`];
+        const value =
+            raw === undefined || raw === null ? '–' : this.formatValue(raw, data[`digits_after_comma_${kind}`]);
+        const title = data[`title-${kind}`] || Generic.getText(common?.name || '') || Generic.t(`${kind}_object`);
+        const unit = data[`unit-${kind}`] || common?.unit || '';
+        const icon = data[`icon-${kind}`] || common?.icon;
+        const fontSize = parseInt(data[`font-size-${kind}`], 10) || undefined;
+        const color = data[`color-${kind}`];
+        const sensorIcon =
+            common?.role?.includes('temperature') || unit.includes('°') ? (
+                <ThermostatIcon />
+            ) : common?.role?.includes('humidity') ? (
+                <HumidityIcon />
+            ) : null;
 
-        let secondaryIcon: React.ReactNode =
-            this.state.rxData['icon-secondary'] || this.state.objects?.secondary?.common?.icon;
-        if (secondaryIcon) {
-            secondaryIcon = (
-                <Icon
-                    src={secondaryIcon as string}
-                    style={{ ...styles.secondaryIcon, width: 20, color: this.state.rxData['color-secondary'] }}
-                />
-            );
-        } else if (this.state.objects?.secondary?.common?.role?.includes('humidity')) {
-            secondaryIcon = <HumidityIcon style={styles.secondaryIcon} />;
-        } else {
-            secondaryIcon = null;
-        }
-        const mainFontSize = parseInt(this.state.rxData['font-size-main'], 10) || 0;
-        const secondaryFontSize = parseInt(this.state.rxData['font-size-secondary'], 10) || 0;
-
-        const content = (
+        return (
             <div
-                style={{
-                    width: '100%',
-                    height:
-                        this.state.rxData.noCard !== true &&
-                        this.state.rxData.noCard !== 'true' &&
-                        !props.widget.usedInWidget &&
-                        this.state.rxData.widgetTitle
-                            ? 'calc(100% - 32px)'
-                            : '100%',
-                }}
-                ref={this.refContainer}
+                className={`sh-actual__reading sh-actual__reading--${kind}`}
+                style={{ color }}
+                title={`${title}: ${value} ${unit}`}
             >
-                <style>
-                    {`
-@keyframes vis-2-widgets-nils-fork-newValueAnimationLight {
-    0% {
-        color: #00bd00;
-    }
-    80% {
-        color: #008000;
-    }
-    100% {
-        color: rgba(243,177,31);
-    }
-}
-@keyframes vis-2-widgets-nils-fork-newValueAnimationDark {
-    0% {
-        color: #008000;
-    }
-    80% {
-        color: #00bd00;
-    }
-    100% {
-        color: rgba(243,177,31);
-    }
-}                
-                `}
-                </style>
-                {mainValue !== undefined ? (
-                    <Tooltip
-                        title={
-                            this.state.rxData['title-main'] ||
-                            Generic.getText(this.state.objects?.main?.common?.name || '') ||
-                            null
-                        }
-                        slotProps={{ popper: { sx: styles.tooltip } }}
+                <span
+                    className="sh-actual__icon"
+                    style={{ color }}
+                    aria-hidden="true"
+                >
+                    {icon ? (
+                        <Icon
+                            src={icon}
+                            style={{ width: 22, height: 22 }}
+                        />
+                    ) : (
+                        sensorIcon
+                    )}
+                </span>
+                <div className="sh-actual__measurement">
+                    <div className="sh-actual__label">{title}</div>
+                    <div
+                        className="sh-actual__number"
+                        style={{ fontSize, fontStyle: data[`font-style-${kind}`] }}
                     >
-                        <div style={styles.mainDiv}>
-                            {mainIcon}
-                            <span
-                                key={`${mainValue}valText`}
-                                style={{
-                                    ...styles.temperatureValue,
-                                    ...classUpdateVal,
-                                    fontSize: mainFontSize || undefined,
-                                    fontStyle: this.state.rxData['font-style-main'],
-                                    color: this.state.rxData['color-main'],
-                                }}
-                            >
-                                {mainValue}
-                            </span>
-                            <span
-                                style={{
-                                    ...styles.temperatureUnit,
-                                    fontSize: mainFontSize ? mainFontSize * 0.5 : undefined,
-                                    fontStyle: this.state.rxData['font-style-main'],
-                                    color: this.state.rxData['color-main'],
-                                }}
-                            >
-                                {this.state.rxData['unit-main'] || this.state.objects?.main?.common?.unit}
-                            </span>
-                        </div>
-                    </Tooltip>
-                ) : null}
-                {secondaryValue !== undefined ? (
-                    <Tooltip
-                        title={
-                            this.state.rxData['title-secondary'] ||
-                            Generic.getText(this.state.objects?.secondary?.common?.name || '') ||
-                            null
-                        }
-                        slotProps={{ popper: { sx: styles.tooltip } }}
-                    >
-                        <div style={styles.secondaryDiv}>
-                            {secondaryIcon}
-                            <span
-                                key={`${secondaryValue}valText`}
-                                style={{
-                                    ...styles.humidityValue,
-                                    ...classUpdateVal,
-                                    fontSize: secondaryFontSize || undefined,
-                                    fontStyle: this.state.rxData['font-style-secondary'],
-                                    color: this.state.rxData['color-secondary'],
-                                }}
-                            >
-                                {secondaryValue}
-                            </span>
-                            <span
-                                style={{
-                                    ...styles.humidityUnit,
-                                    fontSize: secondaryFontSize ? secondaryFontSize / 2 : undefined,
-                                    fontStyle: this.state.rxData['font-style-secondary'],
-                                    color: this.state.rxData['color-secondary'],
-                                }}
-                            >
-                                {this.state.rxData['unit-secondary'] || this.state.objects?.secondary?.common?.unit}
-                            </span>
-                        </div>
-                    </Tooltip>
-                ) : null}
-                {this.state.containerHeight &&
-                (this.state.chartData[this.state.rxData['oid-main']] ||
-                    this.state.chartData[this.state.rxData['oid-secondary']]) ? (
-                    <ReactEchartsCore
-                        echarts={echarts}
-                        option={this.getOptions()}
-                        notMerge
-                        lazyUpdate
-                        theme={this.props.context.themeType === 'dark' ? 'dark' : ''}
-                        style={{
-                            ...styles.chart,
-                            height: this.state.containerHeight - 26,
-                            width: '100%',
-                        }}
-                        // opts={{ renderer: 'svg' }}
-                    />
-                ) : null}
-                {this.renderDialog()}
+                        <span
+                            className="sh-actual__value"
+                            key={String(value)}
+                        >
+                            {value}
+                        </span>
+                        {unit ? <span className="sh-actual__unit">{unit}</span> : null}
+                    </div>
+                </div>
             </div>
         );
+    }
 
-        if (this.state.rxData.noCard === true || this.state.rxData.noCard === 'true' || props.widget.usedInWidget) {
-            return content;
-        }
+    private renderThemedBody(props: RxRenderWidgetProps, theme: Theme): React.JSX.Element {
+        const data = this.state.rxData;
+        const bare = data.noCard === true || data.noCard === 'true' || props.widget.usedInWidget;
+        const canOpen = this.state.isChart && !this.props.editMode && !this.state.editMode;
+        const options = this.getOptions(theme);
+        const hasChart = Array.isArray(options.series) && options.series.length > 0;
+        const openHistory = (): void => this.setState({ showDialog: true });
 
-        return this.wrapContent(
-            content,
-            null,
-            {
-                paddingLeft: 0,
-                paddingRight: 0,
-                paddingBottom: 0,
-                height: 'calc(100% - 16px)',
-            },
-            { paddingLeft: 16 },
-            onCardClick,
+        return (
+            <>
+                <div
+                    className={`sh-theme sh-actual${bare ? ' sh-actual--bare' : ' sh-surface'}${hasChart ? ' sh-actual--chart' : ''}${canOpen ? ' sh-actual--interactive sh-focusable' : ''}`}
+                    role={canOpen ? 'button' : undefined}
+                    tabIndex={canOpen ? 0 : undefined}
+                    aria-label={
+                        canOpen
+                            ? `${data.widgetTitle || Generic.t('actual_value_with_chart')}: ${Generic.t('actual_show_history')}`
+                            : undefined
+                    }
+                    aria-haspopup={canOpen ? 'dialog' : undefined}
+                    aria-describedby={canOpen ? `${this.props.id}-actual-readings` : undefined}
+                    onClick={
+                        canOpen
+                            ? event => {
+                                  event.stopPropagation();
+                                  openHistory();
+                              }
+                            : undefined
+                    }
+                    onKeyDown={
+                        canOpen
+                            ? event => {
+                                  if (event.key === 'Enter' || event.key === ' ') {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      openHistory();
+                                  }
+                              }
+                            : undefined
+                    }
+                    style={
+                        {
+                            '--actual-main-color': data['color-main'] || theme.palette.warning.main,
+                            '--actual-secondary-color': data['color-secondary'] || theme.palette.info.main,
+                        } as CSSProperties
+                    }
+                >
+                    {!bare && data.widgetTitle ? (
+                        <div className="sh-actual__header">
+                            <span className="sh-actual__title">{data.widgetTitle}</span>
+                            {canOpen ? (
+                                <ShowChart
+                                    className="sh-actual__history-icon"
+                                    aria-hidden="true"
+                                />
+                            ) : null}
+                        </div>
+                    ) : null}
+                    <div
+                        className="sh-actual__readings"
+                        id={`${this.props.id}-actual-readings`}
+                    >
+                        {this.renderReading('main')}
+                        {this.renderReading('secondary')}
+                    </div>
+                    {hasChart ? (
+                        <div
+                            className="sh-actual__chart"
+                            aria-hidden="true"
+                        >
+                            <ReactEchartsCore
+                                echarts={echarts}
+                                option={options}
+                                notMerge
+                                lazyUpdate
+                                theme={theme.palette.mode === 'dark' ? 'dark' : undefined}
+                                style={{ height: '100%', width: '100%' }}
+                            />
+                        </div>
+                    ) : null}
+                </div>
+                {this.renderDialog(theme)}
+            </>
         );
     }
 }

@@ -92,6 +92,8 @@ const styles: Record<string, CSSProperties> = {
 export const STYLES = styles;
 
 export interface BlindsBaseRxData {
+    blindControlEnabled_oid?: string;
+    [key: `slideBlindControlEnabled_oid${number}`]: string;
     [key: `slideStop_oid${number}`]: string;
     [key: `slidePos_oid${number}`]: string;
     [key: `slideInvert${number}`]: boolean | 'true';
@@ -318,6 +320,12 @@ class BlindsBase<
 
             return (
                 <DialogBlinds
+                    automation={{
+                        enabledOid: data.customOid
+                            ? this.state.rxData[`slideBlindControlEnabled_oid${Number(this.state.showBlindsDialog)}`]
+                            : this.state.rxData.blindControlEnabled_oid,
+                        socket: this.props.context.socket,
+                    }}
                     onClose={() => {
                         this.lastClick = Date.now();
                         this.setState({ showBlindsDialog: null });

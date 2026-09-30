@@ -15,7 +15,7 @@
  */
 import React, { Component, type CSSProperties, type MouseEventHandler, type TouchEventHandler } from 'react';
 
-import { Dialog, DialogContent, DialogTitle, IconButton, Fab } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, IconButton, Fab, Collapse } from '@mui/material';
 
 import { darken } from '@mui/system';
 
@@ -25,10 +25,13 @@ import {
     KeyboardDoubleArrowDown as IconDown,
     Lightbulb as IconLamp,
     Close as CloseIcon,
+    Settings as SettingsIcon,
 } from '@mui/icons-material';
 
 import { I18n } from '@iobroker/gui-components';
+import Generic from '../Generic';
 import { BlindSceneBackdrop, BlindSceneForeground } from './BlindsScene';
+import BlindControlSettings, { type BlindControlSettingsProps } from './BlindControlSettings';
 
 const styles: Record<string, CSSProperties> = {
     dialog: {
@@ -158,12 +161,14 @@ interface DialogBlindsProps {
     unit?: string;
     background?: string;
     controlTimeout?: number;
+    automation?: BlindControlSettingsProps;
 }
 
 interface DialogBlindsState {
     value: number;
     toggleValue: boolean;
     lastControl: number;
+    settingsOpen: boolean;
 }
 
 export default class DialogBlinds extends Component<DialogBlindsProps, DialogBlindsState> {
@@ -196,6 +201,7 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
             value: this.props.startValue || 0,
             toggleValue: this.props.startToggleValue || false,
             lastControl: 0,
+            settingsOpen: false,
         };
         this.type = this.props.type || DialogBlinds.types.dimmer;
     }
@@ -320,6 +326,12 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
     };
 
     componentWillUnmount(): void {
+        if (this.controlTimer) {
+            clearTimeout(this.controlTimer);
+        }
+        if (this.button.timer) {
+            clearTimeout(this.button.timer);
+        }
         // document.getElementById('root').className = ``;
         if (DialogBlinds.mouseDown) {
             DialogBlinds.mouseDown = false;
@@ -560,6 +572,16 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
                 slotProps={{ paper: { style: styles.dialog } }}
             >
                 <DialogTitle style={styles.dialogTitle}>
+                    {this.props.type === DialogBlinds.types.blinds ? (
+                        <IconButton
+                            onClick={() => this.setState(state => ({ settingsOpen: !state.settingsOpen }))}
+                            aria-label={Generic.t('blind_control_settings')}
+                            aria-expanded={this.state.settingsOpen}
+                            style={{ position: 'absolute', left: 8, color: 'inherit' }}
+                        >
+                            <SettingsIcon />
+                        </IconButton>
+                    ) : null}
                     <div style={styles.sliderText}>{this.getValueText()}</div>
                     <IconButton
                         onClick={() => this.props.onClose()}
@@ -575,7 +597,20 @@ export default class DialogBlinds extends Component<DialogBlindsProps, DialogBli
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
-                <DialogContent style={styles.dialogContent}>{this.generateContent()}</DialogContent>
+                <DialogContent style={styles.dialogContent}>
+                    <Collapse
+                        in={this.state.settingsOpen}
+                        unmountOnExit
+                    >
+                        <div style={{ padding: '12px 20px' }}>
+                            <BlindControlSettings
+                                key={this.props.automation?.enabledOid}
+                                {...this.props.automation}
+                            />
+                        </div>
+                    </Collapse>
+                    {this.generateContent()}
+                </DialogContent>
             </Dialog>
         );
     }
