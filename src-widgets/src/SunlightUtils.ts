@@ -198,7 +198,9 @@ export function sunlightColor(sunElevation: number): string {
     return rgbToHex(255, 250 - 65 * warmth, 228 - 154 * warmth);
 }
 
-export function normalizeBlindOpenFactorForWindow(window: SunlightWindow): number {
+export function normalizeBlindOpenFactorForWindow(
+    window: Pick<SunlightWindow, 'blindValue' | 'blindStateConfigured' | 'blindMin' | 'blindMax' | 'blindInvert'>,
+): number {
     const blindUnavailable =
         window.blindValue === undefined ||
         window.blindValue === null ||

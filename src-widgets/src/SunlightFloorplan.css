@@ -90,6 +90,64 @@
     transition: opacity 600ms ease;
 }
 
+.sh-floorplan-svg .sh-floorplan-cut-wall {
+    stroke-linecap: butt;
+}
+
+.sh-floorplan-svg .sh-floorplan-window-well {
+    fill: color-mix(in srgb, var(--sh-surface) 68%, #061521);
+}
+.sh-floorplan-svg .sh-floorplan-window-reveal {
+    fill: none;
+    stroke: color-mix(in srgb, var(--sh-wall) 56%, var(--sh-surface));
+    stroke-width: 0.85;
+    stroke-linecap: butt;
+    stroke-linejoin: round;
+    opacity: 0.78;
+}
+.sh-floorplan-svg .sh-floorplan-window-glass {
+    fill: color-mix(in srgb, var(--sh-primary) 58%, #a8d7dd);
+    fill-opacity: 0.96;
+    stroke: color-mix(in srgb, var(--sh-primary) 78%, var(--sh-text));
+    stroke-width: 0.55;
+}
+
+.sh-floorplan-svg .sh-floorplan-window-frame {
+    fill: none;
+    stroke: color-mix(in srgb, var(--sh-text) 78%, var(--sh-primary));
+    stroke-width: 0.55;
+    stroke-linecap: butt;
+}
+
+.sh-floorplan-svg .sh-floorplan-window-mullion {
+    fill: none;
+    stroke: color-mix(in srgb, var(--sh-text) 68%, var(--sh-primary));
+    stroke-width: 0.65;
+    opacity: 0.88;
+}
+
+.sh-floorplan-svg .sh-floorplan-window-frame--unknown {
+    stroke-dasharray: 3 2;
+}
+.sh-floorplan-svg .sh-floorplan-window-glint {
+    fill: none;
+    stroke: var(--sh-text);
+    stroke-width: 0.65;
+    stroke-linecap: round;
+    opacity: 0.76;
+}
+
+.sh-floorplan-svg .sh-floorplan-blind {
+    fill: color-mix(in srgb, var(--sh-wall) 74%, var(--sh-surface));
+}
+
+.sh-floorplan-svg .sh-floorplan-blind-slat {
+    fill: none;
+    stroke: var(--sh-surface);
+    stroke-opacity: 0.5;
+    stroke-width: 0.65;
+}
+
 @media (max-width: 520px) {
     .sh-sunlight-floorplan:not(.sh-sunlight-floorplan--bare) {
         gap: 8px;

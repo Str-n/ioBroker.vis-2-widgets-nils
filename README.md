@@ -118,7 +118,7 @@ marker glow; missing brightness readings remain a dash. The preview places both 
 ### Sunlight floor plan
 
 The Sunlight floor plan widget adds directional sun patches and a separate diffuse daylight wash to the bundled EG, OG,
-DG, or basement SVG. It uses the current sun azimuth and elevation from `followthesun.0.current`; select the matching
+DG, or basement floor plan, or a plan drawn from scratch. It uses the current sun azimuth and elevation from `followthesun.0.current`; select the matching
 azimuth and elevation child states in the widget editor. The floor plan orientation defaults to top 163°, right 253°,
 bottom 343°, and left 73°.
 
@@ -136,10 +136,22 @@ cover increases and warmer as the sun gets lower. Rays stop at the first room wa
 creates a soft wall reflection even when the floor projection exceeds the drawing limit. Diffuse light depends on exposed
 window area and room size. At night the solar overlay fades away.
 
-Open **Edit floor plan geometry**, add a room, and click its corners in order. Choose **Finish room** to save it. Select
+Open **Edit floor plan geometry** to draw **Outer wall** outlines and **Inner wall** partitions. Click corners in order,
+then **Finish wall**. A **Closed outline** fills the floor; open wall paths retain intentional openings. Drag walls or
+their corners, edit corner coordinates, add/remove corners, or change the wall type. Select **Custom** for a blank canvas
+and set its width and height. Orthogonal drawing is available for walls, rooms and windows.
+
+The bundled floors use editable JSON drawings with exactly the original SVG coordinates. Existing `eg`, `og`, `dg`, and
+`basement` selections and saved room/window/light bindings continue working without a manual migration. Drawing edits
+are saved with that floor's `floorConfigurations`; original SVG files and explicit **legacy SVG** choices remain available.
+Legacy choices share their floor's lighting configuration and do not offer wall editing.
+
+Add a room and click its corners in order, then choose **Finish room**, or select a closed wall and choose **Create room
+from outline**. Rooms define the sunlight clipping regions separately from walls; update room corners when changing the
+corresponding walls. Select
 the room before adding windows or lights. Drag along a wall to place a window; endpoints snap to nearby room boundaries,
 and the outward azimuth is inferred from that boundary. Set its sash count to 1, 2, or 3 to divide the opening into
-separate patches. Geometry uses the SVG's `viewBox` coordinates and is saved separately for each floor. Crossing room
+separate patches. Geometry uses the floor plan's `viewBox` coordinates and is saved separately for each floor. Crossing room
 edges are rejected. Escape cancels the current drawing or drag before closing the editor.
 
 Place light bubbles inside rooms and assign their on/off state IDs and brightness in lumens. Their local warm glow

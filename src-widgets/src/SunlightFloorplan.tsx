@@ -19,10 +19,8 @@ import {
 } from './SunlightUtils';
 import SunlightFloorplanEditor from './SunlightFloorplanEditor';
 import { parseFloorplanGeometries, type FloorplanGeometries } from './SunlightFloorplanConfig';
-import egSvg from '../public/floorplans/eg.svg?raw';
-import ogSvg from '../public/floorplans/og.svg?raw';
-import dgSvg from '../public/floorplans/dg.svg?raw';
-import basementSvg from '../public/floorplans/basement.svg?raw';
+import { floorplans } from './SunlightFloorplanPresets';
+import { renderFloorplanDrawing } from './SunlightFloorplanDrawing';
 import '../public/smarthome.css';
 import './SunlightFloorplan.css';
 
@@ -47,13 +45,6 @@ interface SunlightRxData extends Record<string, any> {
 }
 
 type SunlightState = VisRxWidgetState;
-
-const floorplans: Record<string, { label: string; svg: string }> = {
-    eg: { label: 'EG', svg: egSvg },
-    og: { label: 'OG', svg: ogSvg },
-    dg: { label: 'DG', svg: dgSvg },
-    basement: { label: 'Basement', svg: basementSvg },
-};
 
 interface RenderedBeam {
     points: Array<[number, number]>;
@@ -537,7 +528,7 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
             Number(data.radiationReference) || 1000,
             data.sunlightSource === 'cloudiness' ? 'cloudiness' : 'radiation',
         );
-        const floorGeometry = this.floorGeometries()[floorKey] || {
+        const floorGeometry = this.floorGeometries()[floor.configurationKey || floorKey] || {
             rooms: [],
             windows: [],
             lightBubbles: [],
@@ -725,7 +716,13 @@ export default class SunlightFloorplan extends Generic<SunlightRxData, SunlightS
         }
         return (
             <SunlightFloorplanContent
-                svg={floor.svg}
+                svg={
+                    floor.drawing
+                        ? renderFloorplanDrawing(floorGeometry.drawing || floor.drawing, floorGeometry.windows, oid =>
+                              this.stateValue(oid),
+                          )
+                        : floor.svg || ''
+                }
                 beams={beams}
                 ambient={ambient}
                 reflections={reflections}

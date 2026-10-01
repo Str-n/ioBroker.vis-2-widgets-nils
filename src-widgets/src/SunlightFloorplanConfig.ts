@@ -1,4 +1,5 @@
 import { isValidRoomPolygon, numericStateValue } from './SunlightUtils';
+import { parseFloorplanDrawing, type FloorplanDrawing } from './SunlightFloorplanDrawing';
 
 export type FloorplanPoint = [number, number];
 
@@ -31,6 +32,7 @@ export interface FloorplanLightBubbleGeometry {
 }
 
 export interface FloorplanGeometry {
+    drawing?: FloorplanDrawing;
     rooms: FloorplanRoomGeometry[];
     windows: FloorplanWindowGeometry[];
     lightBubbles: FloorplanLightBubbleGeometry[];
@@ -126,7 +128,8 @@ function parseFloorGeometry(value: unknown): FloorplanGeometry {
               .filter(item => item.roomIndex > 0)
         : [];
 
-    return { rooms, windows, lightBubbles };
+    const drawing = parseFloorplanDrawing(source.drawing);
+    return { rooms, windows, lightBubbles, ...(drawing ? { drawing } : {}) };
 }
 
 export function parseFloorplanGeometries(value: unknown): FloorplanGeometries {

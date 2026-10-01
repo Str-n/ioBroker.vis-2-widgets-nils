@@ -73,6 +73,37 @@ async function checkLightingAppearance(page) {
     console.log('Lighting appearance and room clipping passed', lit);
 }
 
+async function checkPresetMigration(browser) {
+    const page = await browser.newPage();
+    await page.goto(previewUrl, { waitUntil: 'networkidle0' });
+    const results = await page.evaluate(async () => {
+        const { floorplans } = await import('/src/SunlightFloorplanPresets.ts');
+        const { renderFloorplanDrawing } = await import('/src/SunlightFloorplanDrawing.ts');
+        const parser = new DOMParser();
+        return ['eg', 'og', 'dg', 'basement'].map(floor => {
+            const original = parser.parseFromString(floorplans[`${floor}-svg`].svg, 'image/svg+xml');
+            const converted = parser.parseFromString(renderFloorplanDrawing(floorplans[floor].drawing), 'image/svg+xml');
+            const matches = ['sh-floorplan-outline', 'sh-floorplan-partitions'].every(className => {
+                const merged = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                merged.setAttribute('d', [...converted.querySelectorAll(`.${className}`)].map(p => p.getAttribute('d')).join(' '));
+                const old = original.querySelector(`.${className}`);
+                const length = old.getTotalLength();
+                if (Math.abs(length - merged.getTotalLength()) > 0.01) return false;
+                for (let i = 0; i <= 100; i++) {
+                    const a = old.getPointAtLength(length * i / 100);
+                    const b = merged.getPointAtLength(length * i / 100);
+                    if (Math.hypot(a.x - b.x, a.y - b.y) > 0.01) return false;
+                }
+                return true;
+            });
+            return { floor, matches };
+        });
+    });
+    assert(results.every(result => result.matches), JSON.stringify(results));
+    console.log('Original and migrated wall coordinates match', results);
+    await page.close();
+}
+
 async function checkRenderer(browser) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1440, height: 1000 });
@@ -80,36 +111,36 @@ async function checkRenderer(browser) {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(previewUrl, { waitUntil: 'networkidle0' });
     await page.waitForSelector('.sh-sunlight-floorplan');
-    assert.equal(await page.$$eval('.sunlight-scene-button', buttons => buttons.length), 5);
-    await page.click('.sunlight-scene-button[data-scene="evening"]');
+    assert.equal(await page.$$eval('[aria-label="Sunlight scene presets"] .sunlight-scene-button', buttons => buttons.length), 5);
+    await page.click('[aria-label="Sunlight scene presets"] .sunlight-scene-button[data-scene="evening"]');
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 4);
     assert.deepEqual(
         await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
         [292, -4, 30, 0, 0],
         'The evening preset should update sun, weather and blind settings together',
     );
-    await page.click('.sunlight-scene-button[data-scene="noon"]');
+    await page.click('[aria-label="Sunlight scene presets"] .sunlight-scene-button[data-scene="noon"]');
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > 0 &&
         document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 0);
     assert.deepEqual(
         await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
-        [163, 58, 5, 950, 25],
+        [163, 58, 5, 114000, 25],
     );
-    await page.click('.sunlight-scene-button[data-scene="overcast"]');
+    await page.click('[aria-label="Sunlight scene presets"] .sunlight-scene-button[data-scene="overcast"]');
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length === 0 &&
         document.querySelectorAll('.sh-sunlight-floorplan__ambient').length > 0);
     assert.deepEqual(
         await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
-        [190, 34, 100, 220, 100],
+        [190, 34, 100, 26000, 100],
     );
-    await page.click('.sunlight-scene-button[data-scene="afternoon"]');
+    await page.click('[aria-label="Sunlight scene presets"] .sunlight-scene-button[data-scene="afternoon"]');
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__beam').length > 0 &&
         document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 1);
     assert.deepEqual(
         await page.$$eval('.sunlight-preview-controls input[type=range]', inputs => inputs.map(input => Number(input.value))),
-        [245, 17, 15, 540, 60],
+        [245, 17, 15, 65000, 60],
     );
-    await page.click('.sunlight-scene-button[data-scene="morning"]');
+    await page.click('[aria-label="Sunlight scene presets"] .sunlight-scene-button[data-scene="morning"]');
     await page.waitForFunction(() => document.querySelectorAll('.sh-sunlight-floorplan__light-glow').length === 2);
     const set = async values => {
         await page.evaluate(values => {
@@ -298,7 +329,7 @@ async function checkEditor(browser) {
         const Provider = (await import('/src/theme/SmartHomeThemeProvider.tsx')).default;
         const translations = (await import('/src/i18n/en.json')).default;
         window.visRxWidget.t = key => translations[key] || key;
-        const svg = (await import('/public/floorplans/eg.svg?raw')).default;
+        const { floorplans } = await import('/src/SunlightFloorplanPresets.ts');
         const node = document.createElement('div');
         node.id = 'sunlight-editor-test';
         document.body.append(node);
@@ -330,7 +361,7 @@ async function checkEditor(browser) {
                     window.editorData = next;
                     setValue(next);
                 },
-                floors: { eg: { label: 'EG', svg }, og: { label: 'OG', svg } },
+                floors: floorplans,
             });
         }
         createRoot(node).render(React.createElement(Provider, null, React.createElement(Harness)));
@@ -414,12 +445,10 @@ async function checkEditor(browser) {
     const text = async (label, value) => {
         const control = await field(label);
         const input = await control.$('textarea');
-        await input.click();
-        await page.keyboard.down('Control');
-        await page.keyboard.press('A');
-        await page.keyboard.up('Control');
-        await page.keyboard.type(value);
-        await page.keyboard.press('Tab');
+        await input.evaluate((element, value) => {
+            Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(element, value);
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+        }, value);
         await pause();
     };
     await button('Add', 0);
@@ -510,6 +539,62 @@ async function checkEditor(browser) {
     await page.keyboard.press('Escape');
     await new Promise(r => setTimeout(r, 350));
     assert(await page.$('[role=dialog]'));
+    // Converted presets keep editable architecture and survive switching to legacy views.
+    assert.equal((await data()).eg.drawing.walls.length, 6);
+    const savedEg = JSON.stringify((await data()).eg);
+    await select('Floor', 'EG (legacy SVG)');
+    assert.equal(await page.$$eval('[data-wall-index]', nodes => nodes.length), 0);
+    assert(await page.$('[role=dialog] [role=alert]'));
+    assert.equal(JSON.stringify((await data()).eg), savedEg);
+    await select('Floor', 'Custom');
+    await button('Outer wall');
+    for (const p of [[100, 100], [600, 100], [600, 600], [100, 600]]) await click(...p);
+    await button('Finish wall');
+    assert.equal((await data()).custom.drawing.walls.length, 1);
+    assert.equal((await data()).custom.drawing.walls[0].closed, true);
+    await button('Create room from outline');
+    assert.equal((await data()).custom.rooms.length, 1);
+    await button('Add', 1);
+    await drag(200, 102, 350, 102);
+    assert.equal((await data()).custom.windows.length, 1);
+    await button('Inner wall');
+    await click(400, 101);
+    await click(400, 450);
+    await button('Finish wall');
+    let custom = (await data()).custom;
+    assert.equal(custom.drawing.walls.length, 2);
+    assert.equal(custom.drawing.walls[1].closed, false);
+    assert(Math.abs(custom.drawing.walls[1].points[0][1] - custom.drawing.walls[0].points[0][1]) < 0.01, 'Inner wall should snap to outer wall');
+    await drag(400, 450, 440, 450);
+    assert(Math.abs((await data()).custom.drawing.walls[1].points[1][0] - 440) < 1);
+    await drag(440, 450, 470, 450, true);
+    assert(Math.abs((await data()).custom.drawing.walls[1].points[1][0] - 440) < 1, 'Cancelled wall drag must roll back');
+    await number('X', 430);
+    assert.equal((await data()).custom.drawing.walls[1].points[1][0], 430);
+    await button('Edit as JSON');
+    const customJson = JSON.parse(await (await (await field('Geometry JSON')).$('textarea')).evaluate(input => input.value));
+    const validCustom = JSON.stringify(customJson);
+    customJson.drawing.walls[0].points[0][0] = null;
+    await text('Geometry JSON', JSON.stringify(customJson));
+    await button('Apply JSON');
+    assert(await page.$('[role=dialog] [role=alert]'));
+    assert.equal(JSON.stringify((await data()).custom), validCustom);
+    await button('Back to drawing');
+    await select('Wall', 'Inner wall 2');
+    await button('Remove wall');
+    assert.equal((await data()).custom.drawing.walls.length, 1);
+    await button('Inner wall');
+    await click(400, 200);
+    await page.keyboard.press('Escape');
+    await pause();
+    assert.equal((await data()).custom.drawing.walls.length, 1);
+    await number('Canvas width', 800);
+    await select('Floor', 'OG');
+    await select('Floor', 'Custom');
+    assert.equal((await data()).custom.drawing.viewBox[2], 800);
+    assert.equal((await data()).custom.windows.length, 1);
+    await (await page.$('[role=dialog]')).screenshot({ path: screenshotPath('editable-walls.png') });
+    await select('Floor', 'EG');
     await page.setViewport({ width: 390, height: 844 });
     await pause();
     const bounds = await page.$eval('[role=dialog] svg.sh-floorplan-svg', e => e.getBoundingClientRect().toJSON());
@@ -535,6 +620,7 @@ async function checkEditor(browser) {
 (async () => {
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'], pipe: true });
     try {
+        await checkPresetMigration(browser);
         await checkRenderer(browser);
         await checkEditor(browser);
         console.log(`Browser checks passed. Screenshots: ${artifacts}`);

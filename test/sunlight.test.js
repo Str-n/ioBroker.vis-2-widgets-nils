@@ -305,3 +305,83 @@ describe('SunlightFloorplan geometry and editor helpers', () => {
         assert.deepEqual(parseFloorplanGeometries('{'), {});
     });
 });
+
+const drawingUtils = loadSource('SunlightFloorplanDrawing');
+const presetDrawing = floor => JSON.parse(fs.readFileSync(path.resolve(__dirname, `../src-widgets/public/floorplans/${floor}.json`), 'utf8'));
+
+describe('Editable floor plans', () => {
+    it('migrates all presets with their original coordinate spaces and intentional wall openings', () => {
+        for (const floor of ['eg', 'og', 'dg', 'basement']) {
+            const drawing = drawingUtils.parseFloorplanDrawing(presetDrawing(floor));
+            assert(drawing, `${floor} must be valid editable geometry`);
+            const svg = fs.readFileSync(path.resolve(__dirname, `../src-widgets/public/floorplans/${floor}.svg`), 'utf8');
+            assert.deepEqual(drawing.viewBox, svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));
+            assert.equal(drawing.walls[0].closed, true);
+            assert.equal(drawing.walls[0].kind, 'outer');
+            assert(drawing.walls.slice(1).every(wall => !wall.closed && wall.kind === 'inner'));
+        }
+        assert.deepEqual(presetDrawing('dg').walls[1].points, [[283.5, 189.5], [283.5, 525.5]]);
+        assert.deepEqual(presetDrawing('basement').walls[5].points, [[181.91046, 8.5904495], [181.60425, 294.69999]]);
+    });
+    it('round-trips drawing geometry without changing existing room, window or light settings', () => {
+        const old = { eg: JSON.parse(fs.readFileSync(path.resolve(__dirname, '../src-widgets/preview/sunlight-floorplan.json'), 'utf8')) };
+        const before = parseFloorplanGeometries(old);
+        const migrated = parseFloorplanGeometries({ eg: { ...old.eg, drawing: presetDrawing('eg') } });
+        const { drawing, ...lighting } = migrated.eg;
+        assert.deepEqual(lighting, before.eg);
+        assert.deepEqual(parseFloorplanGeometries(JSON.stringify(migrated)), migrated);
+        assert.deepEqual(drawing, presetDrawing('eg'));
+        assert.equal(before.eg.drawing, undefined, 'Legacy room-only configurations must stay valid');
+    });
+    it('rejects invalid drawings and unsafe geometry without throwing or accepting partial walls', () => {
+        const valid = presetDrawing('eg');
+        for (const invalid of [null, {}, { ...valid, version: 2 }, { ...valid, viewBox: [0, 0, -1, 200] },
+            { ...valid, walls: [null] }, { ...valid, walls: [{ kind: 'outer', closed: true, points: [[0,0], [10,10], [0,10], [10,0]] }] },
+            { ...valid, walls: [{ kind: 'inner', closed: false, points: [[0, 0], ['<script>', 10]] }] }]) {
+            assert.equal(drawingUtils.parseFloorplanDrawing(invalid), undefined);
+        }
+        assert.deepEqual(drawingUtils.parseFloorplanDrawing({ ...valid, walls: [] }).walls, []);
+    });
+    it('cuts a window opening into the matching wall while leaving all other wall lengths intact', () => {
+        const drawing = { version: 1, viewBox: [0, 0, 200, 200], walls: [{ kind: 'outer', closed: false, points: [[10, 10], [190, 10]] }] };
+        const window = { centerX: 100, centerY: 11, widthX: 60, widthY: 0 };
+        const { segments, openings } = drawingUtils.floorplanWallSegments(drawing, [window]);
+        assert.deepEqual(segments.map(s => [s.start, s.end]), [[[10, 10], [70, 10]], [[130, 10], [190, 10]]]);
+        assert.equal(openings.length, 1);
+        assert.equal(drawingUtils.floorplanWallSegments(drawing, [{ ...window, centerY: 30 }]).openings.length, 0);
+        assert.equal(drawingUtils.floorplanWallSegments(drawing, [{ ...window, widthX: 0 }]).openings.length, 0);
+    });
+    it('renders flat windows with live, inverted and unknown blinds', () => {
+        const drawing = drawingUtils.parseFloorplanDrawing(presetDrawing('eg'));
+        const window = { centerX: 100, centerY: 7.5, widthX: 80, widthY: 0, windowSashCount: 2, blindOid: 'blind', blindMin: 0, blindMax: 100, blindInvert: false };
+        const flat = drawingUtils.renderFloorplanDrawing(drawing, [window], () => 50);
+        assert(flat.includes('sh-floorplan-window'));
+        assert(!flat.includes('sh-floorplan-wall-face'));
+        assert(!flat.includes('--3d'));
+        const render = (value, overrides = {}) => drawingUtils.renderFloorplanDrawing(drawing, [{ ...window, ...overrides }], () => value);
+        assert(render(50).includes('data-blind-open="0.5"'));
+        assert(render(0).includes('data-blind-open="0"'));
+        assert(render(0).includes('class="sh-floorplan-blind"'));
+        assert(!render(100).includes('class="sh-floorplan-blind"'));
+        assert(render(20, { blindInvert: true }).includes('data-blind-open="0.8"'));
+        assert(render(110, { blindMin: 10, blindMax: 210 }).includes('data-blind-open="0.5"'));
+        assert(render(null).includes('data-blind-open="unknown"'));
+        assert(render(50, { blindMin: 100, blindMax: 0 }).includes('data-blind-open="unknown"'));
+        assert(!render(null).includes('class="sh-floorplan-blind"'));
+        assert(render(undefined, { blindOid: '' }).includes('data-blind-open="unbound"'));
+        assert(!/NaN|Infinity|undefined/.test(render(undefined)));
+    });
+    it('renders finite flat geometry for all presets, diagonal walls, acute joins, and empty custom plans', () => {
+        const custom = { version: 1, viewBox: [0,0,756,699], walls: [
+            { kind: 'outer', closed: true, points: [[30,80],[400,30],[690,150],[640,620],[80,640]] },
+            { kind: 'inner', closed: false, points: [[120,200],[400,230],[125,215],[300,460]] },
+        ] };
+        for (const drawing of [...['eg', 'og', 'dg', 'basement'].map(presetDrawing), custom, { ...custom, walls: [] }]) {
+            const svg = drawingUtils.renderFloorplanDrawing(drawing);
+            assert(!/NaN|Infinity|undefined/.test(svg));
+            const coordinates = [...svg.matchAll(/\bd="([^"]+)"/g)].flatMap(match => match[1].match(/-?\d+(?:\.\d+)?/g).map(Number));
+            assert(coordinates.every(value => Math.abs(value) < 2000), 'Acute corners must not form unbounded miter spikes');
+        }
+    });
+
+});

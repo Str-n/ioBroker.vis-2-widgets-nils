@@ -151,13 +151,7 @@ const sunlightScenes = [
             'preview.sunlight.bottomRightLight': true, 'preview.sunlight.smallRoomLight': true, 'preview.sunlight.corridorLight': true, 'preview.sunlight.livingRoomLight': true },
     },
 ] as const;
-const sunlightPreviewFloors = Object.fromEntries(await Promise.all(
-    Object.entries(import.meta.glob('../public/floorplans/*.svg', { query: '?raw', import: 'default' }))
-        .map(async ([path, load]) => {
-            const key = path.split('/').pop()!.replace('.svg', '');
-            return [key, { label: key.toUpperCase(), svg: await load() as string }];
-        }),
-));
+const { floorplans: sunlightPreviewFloors } = await import('../src/SunlightFloorplanPresets');
 
 const objects: Record<string, Record<string, any>> = {
     'preview.actual.temperature': { _id: 'preview.actual.temperature', type: 'state', common: { name: 'Temperature', type: 'number', role: 'value.temperature', unit: '°C', custom: { 'history.0': { enabled: true } } } },

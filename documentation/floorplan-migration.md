@@ -1,5 +1,41 @@
 # Theme-aware floor plans
 
+## Editable Sunlight floor plans
+
+The **Sunlight floor plan** widget now uses the editable `eg.json`, `og.json`, `dg.json`, and `basement.json`
+drawings in `src-widgets/public/floorplans/`. Floor keys, view boxes, every wall coordinate, and intentional partition
+openings are preserved from the SVGs. Existing widget selections and room/window/light configurations use these drawings
+automatically; no project rewrite or device rebinding is required.
+
+Each floor's existing `floorConfigurations` entry can include a `drawing` object:
+
+```json
+{
+  "drawing": {
+    "version": 1,
+    "viewBox": [0, 0, 756, 699],
+    "walls": [
+      { "kind": "outer", "closed": true, "points": [[20, 20], [700, 20], [700, 650], [20, 650]] },
+      { "kind": "inner", "closed": false, "points": [[350, 20], [350, 400]] }
+    ]
+  },
+  "rooms": [],
+  "windows": [],
+  "lightBubbles": []
+}
+```
+
+When `drawing` is absent, a bundled floor uses its preset. Editing writes a private copy into that widget's configuration;
+an empty wall list is a deliberate empty drawing. **Custom** starts with an empty canvas. JSON editing validates drawings
+before applying them; importing older room/window/light JSON preserves the current drawing. Wall paths are independent
+of the room polygons used for sunlight clipping. Adjust those polygons after changing the corresponding architecture,
+or create a room directly from a closed wall outline.
+
+The explicit `eg-svg`, `og-svg`, `dg-svg`, and `basement-svg` choices share the corresponding floor's lighting bindings.
+The original SVG assets remain unchanged for existing inline HTML consumers; their migration guide follows below.
+
+## Inline HTML floor plans
+
 Use the maintained SVG files in `src-widgets/public/floorplans/` as inline markup
 in a vis-2 **Html template** widget. This keeps geometry in version control and
 appearance in the shared theme. The editor holds a deployed copy of the geometry;
@@ -107,10 +143,9 @@ at one boundary. SVG geometry stays unchanged. Synchronizing the MUI palette and
 its CSS variables belongs to the theme integration, not to each floor plan.
 Avoid a global brightness filter: it would dim text and device status colors too.
 
-A dedicated React floor-plan widget becomes useful if rooms later need
-interaction, live occupancy fills or an editor picker for plan assets. Static
-backdrops already work through the existing HTML widget without another runtime
-component or datapoint containing SVG markup.
+Use the dedicated **Sunlight floor plan** widget described above for editable geometry,
+sunlight and live blind visualization. Static backdrops continue to work through
+the existing HTML widget without a datapoint containing SVG markup.
 
 ## Local preview
 

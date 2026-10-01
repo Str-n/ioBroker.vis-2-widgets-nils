@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "viewBox": [0, 0, 581, 704],
+  "walls": [
+    { "kind": "outer", "closed": true, "points": [[7.5, 9.5], [573.5, 9.5], [573.5, 696.5], [7.5, 696.5]] },
+    { "kind": "inner", "closed": false, "points": [[281.5, 9.5], [281.5, 696.5]] },
+    { "kind": "inner", "closed": false, "points": [[7.5, 295.5], [281.5, 295.5]] },
+    { "kind": "inner", "closed": false, "points": [[7.5, 531.5], [281.5, 531.5]] },
+    { "kind": "inner", "closed": false, "points": [[281.5, 366.5], [573.5, 366.5]] }
+  ]
+}

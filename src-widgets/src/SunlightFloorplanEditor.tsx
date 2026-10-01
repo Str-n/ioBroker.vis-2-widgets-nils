@@ -38,18 +38,27 @@ import {
     type FloorplanPoint,
     type FloorplanWindowGeometry,
 } from './SunlightFloorplanConfig';
+import {
+    isValidWall,
+    parseFloorplanDrawing,
+    renderFloorplanDrawing,
+    wallPath,
+    type FloorplanDefinition,
+    type FloorplanWall,
+} from './SunlightFloorplanDrawing';
+import './SunlightFloorplan.css';
 
 interface SunlightFloorplanEditorProps {
     data: WidgetData;
     onDataChange: (newData: WidgetData) => void;
-    floors: Record<string, { label: string; svg: string }>;
+    floors: Record<string, FloorplanDefinition>;
 }
 
-type EditorTool = 'select' | 'drawRoom' | 'drawWindow' | 'placeLight';
+type EditorTool = 'select' | 'drawRoom' | 'drawWindow' | 'placeLight' | 'drawOuterWall' | 'drawInnerWall';
 type WindowDragKind = 'start' | 'end' | 'move';
 
 interface GeometryDrag {
-    kind: 'vertex' | 'window' | 'light';
+    kind: 'vertex' | 'window' | 'light' | 'wallVertex' | 'wall';
     pointerStart: FloorplanPoint;
     roomIndex?: number;
     vertexIndex?: number;
@@ -57,6 +66,7 @@ interface GeometryDrag {
     lightIndex?: number;
     windowDragKind?: WindowDragKind;
     originalWindow?: FloorplanWindowGeometry;
+    wallIndex?: number;
 }
 
 interface WindowDraft {
@@ -189,6 +199,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     const [selectedWindow, setSelectedWindow] = React.useState(-1);
     const [selectedLight, setSelectedLight] = React.useState(-1);
     const [selectedVertex, setSelectedVertex] = React.useState(-1);
+    const [selectedWall, setSelectedWall] = React.useState(-1);
+    const [selectedWallVertex, setSelectedWallVertex] = React.useState(-1);
+    const [closeWall, setCloseWall] = React.useState(true);
     const [tool, setTool] = React.useState<EditorTool>('select');
     const [orthogonalDrawing, setOrthogonalDrawing] = React.useState(false);
     const [roomDraft, setRoomDraft] = React.useState<FloorplanPoint[]>([]);
@@ -213,9 +226,15 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }, [props.data.floorConfigurations, initialFloor, open]);
 
     const currentFloor = props.floors[activeFloor] || props.floors.eg || Object.values(props.floors)[0];
-    const currentGeometry = geometries[activeFloor] || emptyFloorplanGeometry;
-    const viewBox = currentFloor ? svgViewBox(currentFloor.svg) : '0 0 756 699';
-    const currentSvgContents = currentFloor ? svgContents(currentFloor.svg) : '';
+    const configurationKey = currentFloor?.configurationKey || activeFloor;
+    const storedGeometry = geometries[configurationKey] || emptyFloorplanGeometry;
+    const drawing = currentFloor?.drawing ? storedGeometry.drawing || currentFloor.drawing : undefined;
+    const currentGeometry = drawing ? { ...storedGeometry, drawing } : storedGeometry;
+    const viewBox = drawing ? drawing.viewBox.join(' ') : svgViewBox(currentFloor?.svg || '');
+    const currentSvgContents = drawing
+        ? svgContents(renderFloorplanDrawing(drawing))
+        : svgContents(currentFloor?.svg || '');
+    const drawingWall = tool === 'drawOuterWall' || tool === 'drawInnerWall';
 
     function save(next: FloorplanGeometries, floor = activeFloor): void {
         geometriesRef.current = next;
@@ -228,7 +247,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }
 
     function replaceGeometry(nextGeometry: FloorplanGeometry, shouldSave = true): void {
-        const next = { ...geometriesRef.current, [activeFloor]: nextGeometry };
+        const next = { ...geometriesRef.current, [configurationKey]: nextGeometry };
         geometriesRef.current = next;
         setGeometries(next);
         if (shouldSave) {
@@ -265,6 +284,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         const windows = parsed.windows;
         const lightBubbles = parsed.lightBubbles;
         if (
+            ('drawing' in parsed && !parseFloorplanDrawing(parsed.drawing)) ||
             !Array.isArray(rooms) ||
             !Array.isArray(windows) ||
             !Array.isArray(lightBubbles) ||
@@ -345,7 +365,11 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             return;
         }
 
-        save({ ...geometriesRef.current, [activeFloor]: nextGeometry });
+        // Older JSON exports contain only rooms/windows/lights. Keep the drawing on import.
+        if (drawing && !nextGeometry.drawing) {
+            nextGeometry.drawing = drawing;
+        }
+        save({ ...geometriesRef.current, [configurationKey]: nextGeometry });
         setJsonDraft(JSON.stringify(nextGeometry, null, 2));
         setJsonError('');
         setJsonMode(false);
@@ -353,6 +377,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setSelectedWindow(-1);
         setSelectedLight(-1);
         setSelectedVertex(-1);
+        setSelectedWall(-1);
         setTool('select');
     }
 
@@ -382,8 +407,9 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     function openEditor(): void {
         const loaded = parseFloorplanGeometries(props.data.floorConfigurations);
         const floor = initialFloor;
-        if (!loaded[floor]) {
-            loaded[floor] = emptyGeometry();
+        const key = props.floors[floor]?.configurationKey || floor;
+        if (!loaded[key]) {
+            loaded[key] = emptyGeometry();
         }
         geometriesRef.current = loaded;
         setGeometries(loaded);
@@ -392,6 +418,8 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setSelectedWindow(-1);
         setSelectedLight(-1);
         setSelectedVertex(-1);
+        setSelectedWall(-1);
+        setSelectedWallVertex(-1);
         setTool('select');
         setRoomDraft([]);
         setRoomHover(null);
@@ -409,15 +437,18 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         setDrag(null);
         dragSnapshot.current = null;
         setGeometryError('');
-        const next = { ...geometriesRef.current, [activeFloor]: currentGeometry };
-        if (!next[floor]) {
-            next[floor] = emptyGeometry();
+        const next = { ...geometriesRef.current, [configurationKey]: currentGeometry };
+        const key = props.floors[floor]?.configurationKey || floor;
+        if (!next[key]) {
+            next[key] = emptyGeometry();
         }
         setActiveFloor(floor);
         setSelectedRoom(0);
         setSelectedWindow(-1);
         setSelectedLight(-1);
         setSelectedVertex(-1);
+        setSelectedWall(-1);
+        setSelectedWallVertex(-1);
         setTool('select');
         setRoomDraft([]);
         setRoomHover(null);
@@ -425,7 +456,109 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         save(next, floor);
     }
 
+    function snapToWalls(point: FloorplanPoint, excludedWall = -1): FloorplanPoint {
+        let closest = point;
+        let distance = 7;
+        drawing?.walls.forEach((wall, wallIndex) => {
+            if (wallIndex === excludedWall) {
+                return;
+            }
+            wall.points.forEach((start, index) => {
+                const end = wall.points[(index + 1) % wall.points.length];
+                if (!wall.closed && index === wall.points.length - 1) {
+                    return;
+                }
+                const dx = end[0] - start[0];
+                const dy = end[1] - start[1];
+                const lengthSquared = dx * dx + dy * dy;
+                if (!lengthSquared) {
+                    return;
+                }
+                const fraction = Math.max(
+                    0,
+                    Math.min(1, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / lengthSquared),
+                );
+                const candidate: FloorplanPoint = [start[0] + fraction * dx, start[1] + fraction * dy];
+                const candidateDistance = Math.hypot(point[0] - candidate[0], point[1] - candidate[1]);
+                if (candidateDistance < distance) {
+                    closest = candidate;
+                    distance = candidateDistance;
+                }
+            });
+        });
+        return closest;
+    }
+
+    function startWall(kind: FloorplanWall['kind']): void {
+        cancelRoom();
+        setSelectedWall(-1);
+        setSelectedWallVertex(-1);
+        setSelectedWindow(-1);
+        setSelectedLight(-1);
+        setSelectedVertex(-1);
+        setCloseWall(kind === 'outer');
+        setTool(kind === 'outer' ? 'drawOuterWall' : 'drawInnerWall');
+    }
+
+    function finishWall(): void {
+        if (!drawing) {
+            return;
+        }
+        const wall: FloorplanWall = {
+            kind: tool === 'drawOuterWall' ? 'outer' : 'inner',
+            closed: closeWall,
+            points: orthogonalDrawing && closeWall ? closeOrthogonalRoom(roomDraft) : roomDraft,
+        };
+        if (!isValidWall(wall)) {
+            setGeometryError(Generic.t('floorplan_editor_invalid_wall'));
+            return;
+        }
+        replaceGeometry({ ...currentGeometry, drawing: { ...drawing, walls: [...drawing.walls, wall] } });
+        setSelectedWall(drawing.walls.length);
+        cancelRoom();
+    }
+
+    function updateWall(wall: FloorplanWall): void {
+        if (!drawing || selectedWall < 0) {
+            return;
+        }
+        if (!isValidWall(wall)) {
+            setGeometryError(Generic.t('floorplan_editor_invalid_wall'));
+            return;
+        }
+        setGeometryError('');
+        replaceGeometry({
+            ...currentGeometry,
+            drawing: {
+                ...drawing,
+                walls: drawing.walls.map((value, index) => (index === selectedWall ? wall : value)),
+            },
+        });
+    }
+
+    function beginWallDrag(event: React.PointerEvent<SVGElement>, wallIndex: number, vertexIndex?: number): void {
+        if (tool !== 'select') {
+            return;
+        }
+        event.stopPropagation();
+        event.preventDefault();
+        svgRef.current?.setPointerCapture(event.pointerId);
+        dragSnapshot.current = currentGeometry;
+        setSelectedWall(wallIndex);
+        setSelectedWallVertex(vertexIndex ?? -1);
+        setSelectedVertex(-1);
+        setSelectedWindow(-1);
+        setSelectedLight(-1);
+        setDrag({
+            kind: vertexIndex === undefined ? 'wall' : 'wallVertex',
+            wallIndex,
+            vertexIndex,
+            pointerStart: eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>),
+        });
+    }
+
     function addRoom(): void {
+        setSelectedWall(-1);
         setGeometryError('');
         setSelectedWindow(-1);
         setSelectedLight(-1);
@@ -525,6 +658,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }
 
     function addWindow(): void {
+        setSelectedWall(-1);
         if (!currentGeometry.rooms.length) {
             return;
         }
@@ -536,6 +670,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
     }
 
     function addLightBubble(): void {
+        setSelectedWall(-1);
         if (!currentGeometry.rooms.length || currentGeometry.lightBubbles.length >= 32) {
             return;
         }
@@ -586,7 +721,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             setTool('select');
             return;
         }
-        if (tool !== 'drawRoom') {
+        if (tool !== 'drawRoom' && !drawingWall) {
             return;
         }
         if (roomDraft.length >= 64) {
@@ -597,7 +732,11 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             return;
         }
         setGeometryError('');
-        setRoomDraft([...roomDraft, orthogonalDrawing && previous ? constrainOrthogonally(point, previous) : point]);
+        const snapped = snapToWalls(point);
+        setRoomDraft([
+            ...roomDraft,
+            orthogonalDrawing && previous ? constrainOrthogonally(snapped, previous) : snapped,
+        ]);
         setRoomHover(null);
     }
 
@@ -624,6 +763,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
         dragSnapshot.current = currentGeometry;
+        setSelectedWall(-1);
         setSelectedRoom(roomIndex);
         setSelectedWindow(-1);
         setSelectedLight(-1);
@@ -648,6 +788,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
         dragSnapshot.current = currentGeometry;
+        setSelectedWall(-1);
         setSelectedRoom(currentGeometry.windows[windowIndex].roomIndex - 1);
         const pointerStart = eventPoint(event as unknown as React.PointerEvent<SVGSVGElement>);
         setSelectedWindow(windowIndex);
@@ -670,6 +811,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         event.preventDefault();
         svgRef.current?.setPointerCapture(event.pointerId);
         dragSnapshot.current = currentGeometry;
+        setSelectedWall(-1);
         setSelectedLight(lightIndex);
         setSelectedWindow(-1);
         setSelectedVertex(-1);
@@ -694,15 +836,41 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             });
             return;
         }
-        if (tool === 'drawRoom') {
-            setRoomHover(point);
+        if (tool === 'drawRoom' || drawingWall) {
+            setRoomHover(snapToWalls(point));
             return;
         }
         if (!drag) {
             return;
         }
 
-        const base = geometriesRef.current[activeFloor] || emptyGeometry();
+        const base = geometriesRef.current[configurationKey] || currentGeometry;
+        if (
+            (drag.kind === 'wallVertex' || drag.kind === 'wall') &&
+            drag.wallIndex !== undefined &&
+            dragSnapshot.current?.drawing
+        ) {
+            const original = dragSnapshot.current.drawing;
+            const walls = original.walls.map((wall, index) => {
+                if (index !== drag.wallIndex) {
+                    return wall;
+                }
+                return {
+                    ...wall,
+                    points: wall.points.map((vertex, index): FloorplanPoint => {
+                        if (drag.kind === 'wall') {
+                            return [
+                                vertex[0] + point[0] - drag.pointerStart[0],
+                                vertex[1] + point[1] - drag.pointerStart[1],
+                            ];
+                        }
+                        return index === drag.vertexIndex ? snapToWalls(point, drag.wallIndex) : vertex;
+                    }),
+                };
+            });
+            replaceGeometry({ ...base, drawing: { ...original, walls } }, false);
+            return;
+        }
         if (drag.kind === 'vertex' && drag.roomIndex !== undefined && drag.vertexIndex !== undefined) {
             const rooms = base.rooms.map((room, roomIndex) =>
                 roomIndex === drag.roomIndex
@@ -806,12 +974,15 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
             setWindowDraft(null);
             setTool('select');
         } else if (drag) {
-            const geometry = geometriesRef.current[activeFloor];
-            if (geometry.rooms.some(room => !isValidRoomPolygon(room.points))) {
+            const geometry = geometriesRef.current[configurationKey];
+            const invalidWall = geometry.drawing?.walls.some(wall => !isValidWall(wall));
+            if (invalidWall || geometry.rooms.some(room => !isValidRoomPolygon(room.points))) {
                 if (dragSnapshot.current) {
                     replaceGeometry(dragSnapshot.current, false);
                 }
-                setGeometryError(Generic.t('floorplan_editor_invalid_room'));
+                setGeometryError(
+                    Generic.t(invalidWall ? 'floorplan_editor_invalid_wall' : 'floorplan_editor_invalid_room'),
+                );
             } else {
                 save(geometriesRef.current);
                 setGeometryError('');
@@ -887,6 +1058,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
         ) === undefined;
     const selectedLightGeometry = currentGeometry.lightBubbles[selectedLight];
     const selectedRoomGeometry = currentGeometry.rooms[selectedRoom];
+    const selectedWallGeometry = drawing?.walls[selectedWall];
     const selectedWindowEndpoints = selectedWindowGeometry ? windowEndpoints(selectedWindowGeometry) : undefined;
     const roomPreviewPoints = roomHover
         ? [
@@ -985,13 +1157,15 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                 variant="body2"
                                 sx={{ mb: 1 }}
                             >
-                                {tool === 'drawRoom'
-                                    ? Generic.t('floorplan_editor_draw_room_help')
-                                    : tool === 'drawWindow'
-                                      ? Generic.t('floorplan_editor_draw_window_help')
-                                      : tool === 'placeLight'
-                                        ? Generic.t('floorplan_editor_place_light_help')
-                                        : Generic.t('floorplan_editor_drag_help')}
+                                {drawingWall
+                                    ? Generic.t('floorplan_editor_draw_wall_help')
+                                    : tool === 'drawRoom'
+                                      ? Generic.t('floorplan_editor_draw_room_help')
+                                      : tool === 'drawWindow'
+                                        ? Generic.t('floorplan_editor_draw_window_help')
+                                        : tool === 'placeLight'
+                                          ? Generic.t('floorplan_editor_place_light_help')
+                                          : Generic.t('floorplan_editor_drag_help')}
                             </Typography>
                             <svg
                                 ref={svgRef}
@@ -1012,10 +1186,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                     background: 'var(--sh-surface, #f5f5f5)',
                                     touchAction: 'none',
                                     pointerEvents: 'auto',
-                                    cursor:
-                                        tool === 'drawRoom' || tool === 'drawWindow' || tool === 'placeLight'
-                                            ? 'crosshair'
-                                            : 'default',
+                                    cursor: tool !== 'select' ? 'crosshair' : 'default',
                                 }}
                             >
                                 <g
@@ -1035,36 +1206,74 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                 if (tool === 'select') {
                                                     event.stopPropagation();
                                                     setSelectedRoom(roomIndex);
+                                                    setSelectedWall(-1);
                                                     setSelectedWindow(-1);
                                                     setSelectedLight(-1);
                                                     setSelectedVertex(-1);
                                                 }
                                             }}
                                         />
-                                        {roomIndex === selectedRoom &&
+                                    </g>
+                                ))}
+                                {drawing?.walls.map((wall, index) => (
+                                    <g key={`wall-${index}`}>
+                                        <path
+                                            data-wall-index={index}
+                                            d={wallPath(wall)}
+                                            fill="none"
+                                            stroke={index === selectedWall ? '#42a5f5' : 'transparent'}
+                                            strokeWidth={index === selectedWall ? 4 : 10}
+                                            vectorEffect="non-scaling-stroke"
+                                            pointerEvents={tool === 'select' ? 'stroke' : 'none'}
+                                            style={{ cursor: 'move' }}
+                                            onPointerDown={event => beginWallDrag(event, index)}
+                                            onClick={event => {
+                                                if (tool === 'select') {
+                                                    event.stopPropagation();
+                                                }
+                                            }}
+                                        />
+                                        {index === selectedWall &&
                                             tool === 'select' &&
-                                            room.points.map((point, vertexIndex) => (
+                                            wall.points.map((point, vertex) => (
                                                 <circle
-                                                    key={`room-${roomIndex}-vertex-${vertexIndex}`}
+                                                    key={vertex}
+                                                    data-wall-vertex={vertex}
                                                     cx={point[0]}
                                                     cy={point[1]}
-                                                    r={5}
-                                                    fill={selectedVertex === vertexIndex ? '#d32f2f' : '#fff'}
+                                                    r={6}
+                                                    fill={vertex === selectedWallVertex ? '#d32f2f' : '#fff'}
                                                     stroke="#1565c0"
                                                     strokeWidth={2}
                                                     vectorEffect="non-scaling-stroke"
                                                     style={{ cursor: 'move' }}
-                                                    onPointerDown={event =>
-                                                        beginVertexDrag(event, roomIndex, vertexIndex)
-                                                    }
-                                                    onClick={event => {
-                                                        event.stopPropagation();
-                                                        setSelectedVertex(vertexIndex);
-                                                    }}
+                                                    onPointerDown={event => beginWallDrag(event, index, vertex)}
+                                                    onClick={event => event.stopPropagation()}
                                                 />
                                             ))}
                                     </g>
                                 ))}
+                                {selectedRoomGeometry &&
+                                    selectedWall < 0 &&
+                                    tool === 'select' &&
+                                    selectedRoomGeometry.points.map((point, vertexIndex) => (
+                                        <circle
+                                            key={`room-${selectedRoom}-vertex-${vertexIndex}`}
+                                            cx={point[0]}
+                                            cy={point[1]}
+                                            r={5}
+                                            fill={selectedVertex === vertexIndex ? '#d32f2f' : '#fff'}
+                                            stroke="#1565c0"
+                                            strokeWidth={2}
+                                            vectorEffect="non-scaling-stroke"
+                                            style={{ cursor: 'move' }}
+                                            onPointerDown={event => beginVertexDrag(event, selectedRoom, vertexIndex)}
+                                            onClick={event => {
+                                                event.stopPropagation();
+                                                setSelectedVertex(vertexIndex);
+                                            }}
+                                        />
+                                    ))}
                                 {roomDraft.length ? (
                                     <g pointerEvents="none">
                                         {roomPreviewPoints.length > 1 ? (
@@ -1108,6 +1317,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                     if (tool === 'select') {
                                                         event.stopPropagation();
                                                         setSelectedWindow(windowIndex);
+                                                        setSelectedWall(-1);
                                                         setSelectedLight(-1);
                                                         setSelectedRoom(Math.max(0, window.roomIndex - 1));
                                                     }
@@ -1157,6 +1367,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                                 if (tool === 'select') {
                                                     event.stopPropagation();
                                                     setSelectedLight(lightIndex);
+                                                    setSelectedWall(-1);
                                                     setSelectedWindow(-1);
                                                     setSelectedRoom(Math.max(0, light.roomIndex - 1));
                                                     setSelectedVertex(-1);
@@ -1232,6 +1443,269 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                 {Generic.t('floorplan_editor_edit_json')}
                             </Button>
 
+                            {drawing ? (
+                                <Stack spacing={1}>
+                                    <Typography variant="subtitle2">{Generic.t('floorplan_editor_walls')}</Typography>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                    >
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => startWall('outer')}
+                                            disabled={tool !== 'select' || drawing.walls.length >= 256}
+                                        >
+                                            {Generic.t('floorplan_editor_outer_wall')}
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => startWall('inner')}
+                                            disabled={tool !== 'select' || drawing.walls.length >= 256}
+                                        >
+                                            {Generic.t('floorplan_editor_inner_wall')}
+                                        </Button>
+                                    </Stack>
+                                    {drawingWall ? (
+                                        <>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={closeWall}
+                                                        onChange={event => setCloseWall(event.target.checked)}
+                                                    />
+                                                }
+                                                label={Generic.t('floorplan_editor_closed_wall')}
+                                            />
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                            >
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={finishWall}
+                                                    disabled={roomDraft.length < (closeWall ? 3 : 2)}
+                                                >
+                                                    {Generic.t('floorplan_editor_finish_wall')}
+                                                </Button>
+                                                <Button onClick={cancelRoom}>{Generic.t('cancel')}</Button>
+                                            </Stack>
+                                        </>
+                                    ) : null}
+                                    <FormControl
+                                        size="small"
+                                        fullWidth
+                                        disabled={!drawing.walls.length || tool !== 'select'}
+                                    >
+                                        <InputLabel id={`${editorId}-wall`}>
+                                            {Generic.t('floorplan_editor_wall')}
+                                        </InputLabel>
+                                        <Select
+                                            labelId={`${editorId}-wall`}
+                                            label={Generic.t('floorplan_editor_wall')}
+                                            value={selectedWall >= 0 ? selectedWall : ''}
+                                            onChange={event => {
+                                                setSelectedWall(Number(event.target.value));
+                                                setSelectedWallVertex(-1);
+                                                setSelectedWindow(-1);
+                                                setSelectedLight(-1);
+                                                setSelectedVertex(-1);
+                                            }}
+                                        >
+                                            {drawing.walls.map((wall, index) => (
+                                                <MenuItem
+                                                    key={index}
+                                                    value={index}
+                                                >
+                                                    {`${Generic.t(wall.kind === 'outer' ? 'floorplan_editor_outer_wall' : 'floorplan_editor_inner_wall')} ${index + 1}`}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                    {selectedWallGeometry && tool === 'select' ? (
+                                        <>
+                                            <FormControl
+                                                size="small"
+                                                fullWidth
+                                            >
+                                                <InputLabel id={`${editorId}-wall-kind`}>
+                                                    {Generic.t('floorplan_editor_wall_kind')}
+                                                </InputLabel>
+                                                <Select
+                                                    labelId={`${editorId}-wall-kind`}
+                                                    label={Generic.t('floorplan_editor_wall_kind')}
+                                                    value={selectedWallGeometry.kind}
+                                                    onChange={event =>
+                                                        updateWall({
+                                                            ...selectedWallGeometry,
+                                                            kind: event.target.value,
+                                                        })
+                                                    }
+                                                >
+                                                    <MenuItem value="outer">
+                                                        {Generic.t('floorplan_editor_outer_wall')}
+                                                    </MenuItem>
+                                                    <MenuItem value="inner">
+                                                        {Generic.t('floorplan_editor_inner_wall')}
+                                                    </MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={selectedWallGeometry.closed}
+                                                        onChange={event =>
+                                                            updateWall({
+                                                                ...selectedWallGeometry,
+                                                                closed: event.target.checked,
+                                                            })
+                                                        }
+                                                    />
+                                                }
+                                                label={Generic.t('floorplan_editor_closed_wall')}
+                                            />
+                                            <Button
+                                                onClick={() => {
+                                                    replaceGeometry({
+                                                        ...currentGeometry,
+                                                        drawing: {
+                                                            ...drawing,
+                                                            walls: drawing.walls.filter(
+                                                                (_, index) => index !== selectedWall,
+                                                            ),
+                                                        },
+                                                    });
+                                                    setSelectedWall(-1);
+                                                    setSelectedWallVertex(-1);
+                                                }}
+                                            >
+                                                {Generic.t('floorplan_editor_remove_wall')}
+                                            </Button>
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                            >
+                                                <Button
+                                                    disabled={
+                                                        selectedWallVertex < 0 ||
+                                                        selectedWallGeometry.points.length >= 64
+                                                    }
+                                                    onClick={() => {
+                                                        const points = [...selectedWallGeometry.points];
+                                                        const index = selectedWallGeometry.closed
+                                                            ? selectedWallVertex
+                                                            : Math.min(selectedWallVertex, points.length - 2);
+                                                        const start = points[index];
+                                                        const end = points[(index + 1) % points.length];
+                                                        points.splice(index + 1, 0, [
+                                                            (start[0] + end[0]) / 2,
+                                                            (start[1] + end[1]) / 2,
+                                                        ]);
+                                                        updateWall({ ...selectedWallGeometry, points });
+                                                        setSelectedWallVertex(index + 1);
+                                                    }}
+                                                >
+                                                    {Generic.t('floorplan_editor_add_vertex')}
+                                                </Button>
+                                                <Button
+                                                    disabled={
+                                                        selectedWallVertex < 0 ||
+                                                        selectedWallGeometry.points.length <=
+                                                            (selectedWallGeometry.closed ? 3 : 2)
+                                                    }
+                                                    onClick={() => {
+                                                        updateWall({
+                                                            ...selectedWallGeometry,
+                                                            points: selectedWallGeometry.points.filter(
+                                                                (_, index) => index !== selectedWallVertex,
+                                                            ),
+                                                        });
+                                                        setSelectedWallVertex(-1);
+                                                    }}
+                                                >
+                                                    {Generic.t('floorplan_editor_remove_vertex')}
+                                                </Button>
+                                            </Stack>
+                                            <Button
+                                                disabled={
+                                                    !selectedWallGeometry.closed || currentGeometry.rooms.length >= 16
+                                                }
+                                                onClick={() => {
+                                                    replaceGeometry({
+                                                        ...currentGeometry,
+                                                        rooms: [
+                                                            ...currentGeometry.rooms,
+                                                            {
+                                                                points: selectedWallGeometry.points.map(
+                                                                    point => [...point] as FloorplanPoint,
+                                                                ),
+                                                            },
+                                                        ],
+                                                    });
+                                                    setSelectedRoom(currentGeometry.rooms.length);
+                                                    setSelectedWall(-1);
+                                                }}
+                                            >
+                                                {Generic.t('floorplan_editor_room_from_wall')}
+                                            </Button>
+                                            {selectedWallVertex >= 0 ? (
+                                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                                                    {[0, 1].map(axis => (
+                                                        <GeometryNumberField
+                                                            key={`${selectedWall}-${selectedWallVertex}-${axis}`}
+                                                            label={axis === 0 ? 'X' : 'Y'}
+                                                            value={
+                                                                selectedWallGeometry.points[selectedWallVertex][axis]
+                                                            }
+                                                            onCommit={value =>
+                                                                updateWall({
+                                                                    ...selectedWallGeometry,
+                                                                    points: selectedWallGeometry.points.map(
+                                                                        (point, index) =>
+                                                                            index === selectedWallVertex
+                                                                                ? axis === 0
+                                                                                    ? [value, point[1]]
+                                                                                    : [point[0], value]
+                                                                                : point,
+                                                                    ),
+                                                                })
+                                                            }
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            ) : null}
+                                        </>
+                                    ) : null}
+                                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                                        {[2, 3].map(axis => (
+                                            <GeometryNumberField
+                                                key={`${activeFloor}-size-${axis}`}
+                                                label={Generic.t(
+                                                    axis === 2 ? 'floorplan_editor_width' : 'floorplan_editor_height',
+                                                )}
+                                                min={1}
+                                                value={drawing.viewBox[axis]}
+                                                onCommit={value => {
+                                                    const viewBox = [...drawing.viewBox] as typeof drawing.viewBox;
+                                                    viewBox[axis] = value;
+                                                    replaceGeometry({
+                                                        ...currentGeometry,
+                                                        drawing: { ...drawing, viewBox },
+                                                    });
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                    >
+                                        {Generic.t('floorplan_editor_walls_help')}
+                                    </Typography>
+                                </Stack>
+                            ) : (
+                                <Alert severity="info">{Generic.t('floorplan_editor_legacy')}</Alert>
+                            )}
+
                             <Box>
                                 <FormControlLabel
                                     control={
@@ -1269,6 +1743,7 @@ export default function SunlightFloorplanEditor(props: SunlightFloorplanEditorPr
                                         label={Generic.t('floorplan_editor_room')}
                                         value={currentGeometry.rooms.length ? selectedRoom : ''}
                                         onChange={event => {
+                                            setSelectedWall(-1);
                                             setSelectedRoom(Number(event.target.value));
                                             setSelectedVertex(-1);
                                             setSelectedWindow(-1);

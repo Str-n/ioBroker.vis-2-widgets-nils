@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "viewBox": [0, 0, 756, 699],
+  "walls": [
+    { "kind": "outer", "closed": true, "points": [[7.5, 7.5], [748.5, 7.5], [748.5, 691.5], [181.5, 691.5], [181.5, 295.5], [7.5, 295.5]] },
+    { "kind": "inner", "closed": false, "points": [[455.5, 7.8242443], [455.5, 691.5]] },
+    { "kind": "inner", "closed": false, "points": [[181.5, 295.5], [455.5, 295.5]] },
+    { "kind": "inner", "closed": false, "points": [[455.5, 366.5], [748.5, 366.5]] },
+    { "kind": "inner", "closed": false, "points": [[181.5, 526.5], [455.33785, 526.5]] },
+    { "kind": "inner", "closed": false, "points": [[181.91046, 8.5904495], [181.60425, 294.69999]] },
+    { "kind": "inner", "closed": false, "points": [[455.32153, 526.95594], [747.93779, 526.95594]] }
+  ]
+}
