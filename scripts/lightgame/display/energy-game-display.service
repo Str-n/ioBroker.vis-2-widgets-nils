@@ -1,0 +1,21 @@
+[Unit]
+Description=Energy Game USB score display
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=energy-display
+Group=dialout
+WorkingDirectory=/opt/energy-game-display
+ExecStart=/usr/bin/python3 -u /opt/energy-game-display/bridge.py --config /etc/energy-game-display.json
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+[Install]
+WantedBy=multi-user.target

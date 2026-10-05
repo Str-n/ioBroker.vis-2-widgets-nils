@@ -1,4 +1,11 @@
 
+Deaktiviere widgets im editor mode
+
+Merge editor from branch
+
+Erstelle einen House-twin basierend auf der Json
+
+
 Kellerfeuchtigkeit
 
 Batteriezustand erweitern

@@ -8,6 +8,7 @@ This workspace contains the ioBroker Energy-Saving Gamification Backend describe
 |---|---|
 | [`backend/energyGame.js`](backend/energyGame.js) | Production JavaScript-adapter script. Configure `LIGHTS` before enabling it. |
 | [`backend/energyGameCore.js`](backend/energyGameCore.js) | Standalone CommonJS copy of the pure scoring core. |
+| [`display/README.md`](display/README.md) | RP2040 round score display firmware, USB bridge, installer and device tests. |
 | [`tests/energyGame.test.js`](tests/energyGame.test.js) | Dependency-free Node test harness with 24 deterministic scenarios. |
 | [`automations/global/energyGameHelpers.js`](automations/global/energyGameHelpers.js) | Global suppression helper for automatic OFF commands. |
 | [`automations/javascript/hallwayMotion.js`](automations/javascript/hallwayMotion.js) | Motion timeout integration example. |

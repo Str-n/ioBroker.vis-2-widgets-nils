@@ -1,0 +1,6 @@
+{
+  "api_url": "http://192.168.178.40:8087",
+  "state_base": "0_userdata.0.energyGame",
+  "port": "/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_e4629cc3231b4a29-if00",
+  "poll_seconds": 0.5
+}
