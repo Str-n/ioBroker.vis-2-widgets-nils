@@ -20,7 +20,10 @@ class SerialPort:
         self.fd = os.open(path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
         try:
             fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            tty.setraw(self.fd)
+            # TCSAFLUSH (tty.setraw's default) can block indefinitely draining
+            # output after a USB/firmware failure. Recovery must stay nonblocking.
+            termios.tcflush(self.fd, termios.TCIOFLUSH)
+            tty.setraw(self.fd, when=termios.TCSANOW)
             attrs = termios.tcgetattr(self.fd)
             attrs[4] = attrs[5] = termios.B115200
             attrs[2] |= termios.CLOCAL | termios.CREAD

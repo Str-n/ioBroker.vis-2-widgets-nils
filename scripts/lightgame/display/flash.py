@@ -9,7 +9,7 @@ import time
 from serial_port import SerialPort, discover
 
 HERE = Path(__file__).resolve().parent
-FILES = ('score_model.py', 'lcd.py', 'ui.py', 'main.py')
+FILES = ('score_model.py', 'lcd.py', 'controls.py', 'touch.py', 'ui.py', 'main.py')
 
 
 class RawREPL:

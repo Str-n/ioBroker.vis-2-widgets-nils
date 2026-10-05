@@ -5,6 +5,30 @@ Linux USB bridge and installer. Large daily score, teal progress ring towards th
 best daily score, smaller gold high score, animated particle bursts and rising `+N`
 on increases, gold record celebration, and a visible stale/offline indicator.
 
+## Touch controls
+
+Tap the score to open the sofa page (living room); swipe left/right between the
+score, sofa and oven (kitchen) pages. Each room lists only its confirmed-on lamps.
+Tap a lamp row to request **OFF**. Living-room lamps are numbered 1/2/3 in the
+supplied order. Kitchen rows show table, island, oven and cupboard pictograms with
+short German labels. All four kitchen lamps fit without scrolling. The large room
+icon returns to the score, as does 15 seconds of inactivity. Side arrows offer an
+alternative to swiping. A sideways movement of about 4 mm changes the page
+immediately, once per gesture; lifting afterward never also taps a lamp. An empty room shows a check mark and `Alles aus!`.
+
+The first tap on the score only opens controls. Swipes never send commands. Rows
+remember which lamp was touched at finger-down, so a changing list cannot switch
+off a different lamp at release. A pending row shows `...` until actual OFF is
+confirmed. Failed or unconfirmed commands show `Nochmal tippen`; reconnects never
+replay old requests. Loss of connectivity disables switching.
+
+`lamps.py` is the host's fixed seven-lamp allowlist. The board sends a lamp index,
+never an ioBroker ID or an arbitrary value. The bridge validates writable Boolean
+metadata and a fresh acknowledged state, then writes only `false` with `ack=false`.
+It verifies actual state through the next polls. Touch requests are manual actions:
+the backend's existing minimum-on-time and suppression rules still determine points.
+No synthetic score writes or suppression windows are added.
+
 ## Hardware and data flow
 
 This board has **neither Wi-Fi nor Bluetooth**. Its RP2040 cannot connect wirelessly
@@ -18,11 +42,11 @@ energyGame.js -> existing ioBroker simple-api (:8087)
              -> Python bridge on hp400 -> USB serial -> RP2040 display
 ```
 
-The bridge reads `score.daily`, `score.highScore`, and `day.key` under
+The bridge reads the seven lamp states plus `score.daily`, `score.highScore`, and `day.key` under
 `0_userdata.0.energyGame` in one `getBulk` request every 0.5 seconds. This is
 polling, with typical update latency below one second. Increases within one poll
-are combined into one `+N` animation. The bridge only reads ioBroker; it never
-writes game states or switches lights. It needs no new adapters, MQTT topics,
+are combined into one `+N` animation. The bridge reads game states and lamp status; it writes only explicit touch-triggered
+OFF requests to the seven configured lamps. It never writes game scores. It needs no new adapters, MQTT topics,
 server-side script, npm packages, Python packages, or compiler.
 
 On startup/reconnection, the current score is loaded silently. Duplicate packets,
@@ -86,7 +110,7 @@ Copy this directory to the always-on host, then run there:
 sudo ./install.sh --service --config bridge.example.json
 ```
 
-This installs `/opt/energy-game-display/{bridge.py,serial_port.py}`, configuration
+This installs `/opt/energy-game-display/{bridge.py,serial_port.py,lamps.py}`, configuration
 at `/etc/energy-game-display.json`, and `energy-game-display.service`. It creates
 the unprivileged `energy-display` system user with serial access through `dialout`.
 The service starts on boot and reconnects when USB or the API returns. Without
@@ -130,7 +154,12 @@ hp400 is deliberately not auto-selected.
 
 To update firmware later, stop the bridge, rerun `--flash`, then restart the
 service. `python3 flash.py --inspect` reports firmware and free memory and reboots
-the existing app. If MicroPython is missing or the REPL cannot be recovered, hold
+the existing app. If an application locks up USB before you can interrupt it, run
+`sudo python3 recover.py`, then unplug/reconnect when prompted. It catches startup,
+installs the current firmware and restores serial access to the invoking user.
+The app also leaves a 1.5-second recovery window before peripheral startup.
+
+If MicroPython is missing or the REPL cannot be recovered, hold
 BOOT while tapping RESET, then copy the vendor's RP2040 Touch board UF2 to the
 `RPI-RP2` volume. This bootloader recovery requires access to the board's buttons.
 
@@ -153,4 +182,9 @@ sudo userdel energy-display
 
 The LCD uses SPI1 SCK=10, MOSI=11, CS=9, DC=8, RESET=13, BACKLIGHT=25.
 **The non-touch RP2040-LCD-1.28 uses different reset/backlight pins.**
-Touch and IMU inputs are not used by this application.
+Touch uses CST816 at I2C address 0x15, SDA=6, SCL=7, RESET=22. Touch points are
+read only after a touch interrupt signals a change; I2C reads happen outside
+the interrupt handler. `IrqCtl=0x61` enables both touch and release notifications;
+the vendor drawing example's `0x41` merges separate taps because it omits release
+interrupts. Lamp rows highlight immediately on touch-down. The old Waveshare MicroPython firmware does not support
+the I2C `timeout` keyword. The IMU is not used.

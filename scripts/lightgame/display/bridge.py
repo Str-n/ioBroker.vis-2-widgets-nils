@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""Read-only ioBroker simple-api -> RP2040 USB bridge. Python stdlib, Linux."""
+"""ioBroker scores and allowlisted lamp OFF commands over RP2040 USB."""
 import argparse
 from datetime import datetime
 import json
 import logging
 from pathlib import Path
 import signal
+import secrets
 import time
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 from serial_port import SerialPort, discover
+from lamps import LAMPS
 
 LOG = logging.getLogger('energy-display')
 SUFFIXES = ('score.daily', 'score.highScore', 'day.key')
@@ -64,7 +66,8 @@ class Source:
         parsed = urlparse(url)
         if parsed.scheme not in ('http', 'https') or not parsed.netloc or parsed.query or parsed.fragment:
             raise ValueError('api_url must be an HTTP(S) base URL without query/fragment')
-        ids = ','.join(base + '.' + suffix for suffix in SUFFIXES)
+        ids = ','.join([base + '.' + suffix for suffix in SUFFIXES] + list(LAMPS))
+        self.api_url = url
         self.url = url + '/getBulk/' + quote(ids, safe=',.')
         self.base = base
         self.headers = {'Accept': 'application/json'}
@@ -77,7 +80,57 @@ class Source:
             data = response.read(65537)
         if len(data) > 65536:
             raise ValueError('API response too large')
-        return snapshot(json.loads(data), self.base)
+        rows = json.loads(data)
+        packet = snapshot(rows, self.base)
+        states = {item['id']: item for item in rows if isinstance(item, dict) and 'id' in item}
+        packet['lights'] = []
+        for lamp in LAMPS:
+            state = states.get(lamp, {})
+            value = state.get('val')
+            packet['lights'].append(int(value) if type(value) is bool and state.get('ack') is True and state.get('q', 0) == 0 else -1)
+        return packet
+
+    def turn_off(self, lamp):
+        if type(lamp) is not int or not 0 <= lamp < len(LAMPS):
+            raise ValueError('Lamp outside allowlist')
+        path = quote(LAMPS[lamp], safe='')  # Shelly IDs contain #, not URL fragments.
+        with urlopen(Request(self.api_url + '/get/' + path, headers=self.headers), timeout=3) as response:
+            state = json.loads(response.read(16384))
+        common = state.get('common', {})
+        if common.get('type') != 'boolean' or common.get('write') is not True:
+            raise ValueError('Lamp is not a writable Boolean state')
+        if state.get('ack') is not True or state.get('q', 0) != 0 or type(state.get('val')) is not bool:
+            raise ValueError('Lamp state not confirmed')
+        if state['val'] is False:
+            return  # Already off: no write and no synthetic points.
+        url = self.api_url + '/set/' + path + '?value=false&type=boolean&ack=false'
+        with urlopen(Request(url, headers=self.headers), timeout=3) as response:
+            result = json.loads(response.read(16384))
+        if not isinstance(result, dict) or result.get('error'):
+            raise ValueError('ioBroker rejected OFF')
+        LOG.info('Requested OFF: %s', LAMPS[lamp])
+
+
+class Commands:
+    def __init__(self, source):
+        self.source = source
+        self.session = secrets.token_hex(6)
+        self.last_id = 0
+        self.result = None
+
+    def handle(self, command):
+        if not isinstance(command, dict) or command.get('session') != self.session:
+            return
+        number = command.get('id')
+        if type(number) is not int or number <= self.last_id:
+            return  # Never retry a physical write after an ambiguous response.
+        self.last_id = number
+        self.result = {'id': number, 'ok': False}
+        try:
+            self.source.turn_off(command.get('lamp'))
+            self.result['ok'] = True
+        except Exception as exc:
+            LOG.warning('OFF failed: %s', type(exc).__name__)
 
 
 def exchange(port, packet, counter):
@@ -105,6 +158,7 @@ def exchange(port, packet, counter):
 
 def run(config, once=False):
     source = Source(config)
+    commands = Commands(source)
     interval = float(config.get('poll_seconds', 0.5))
     if not 0.2 <= interval <= 5:
         raise ValueError('poll_seconds must be between 0.2 and 5')
@@ -114,6 +168,7 @@ def run(config, once=False):
     counter = 0
     last_sent = 0
     last_error = None
+    last_page = None
     try:
         while True:
             begin = time.monotonic()
@@ -132,14 +187,22 @@ def run(config, once=False):
             try:
                 if port is None:
                     port = SerialPort(config.get('port') or discover())
+                    commands = Commands(source)
                     previous = None
                     healthy = False
                     last_sent = 0
                     LOG.info('USB display connected')
-                if packet != previous or begin - last_sent >= 3 or once:
-                    outgoing = dict(packet, animate=healthy)
+                if packet != previous or begin - last_sent >= interval or once:
+                    outgoing = dict(packet, animate=healthy, session=commands.session)
+                    if commands.result:
+                        outgoing['result'] = commands.result
                     counter += 1
                     ack = exchange(port, outgoing, counter)
+                    if ack.get('page') != last_page:
+                        last_page = ack.get('page')
+                        LOG.info('Display page=%s touch_events=%s', last_page, ack.get('touch_events'))
+                    if packet['type'] == 'score' and not once:
+                        commands.handle(ack.get('command'))
                     if packet['type'] == 'score':
                         if not healthy or packet != previous:
                             LOG.info('Confirmed on display: today=%s high=%s day=%s',

@@ -51,7 +51,7 @@ case "$MODE" in
                 --shell /usr/sbin/nologin energy-display
         fi
         install -d -m 755 /opt/energy-game-display
-        install -m 644 "$DISPLAY_DIR/bridge.py" "$DISPLAY_DIR/serial_port.py" /opt/energy-game-display/
+        install -m 644 "$DISPLAY_DIR/bridge.py" "$DISPLAY_DIR/serial_port.py" "$DISPLAY_DIR/lamps.py" /opt/energy-game-display/
         if [[ -n "$CONFIG_SOURCE" ]]; then
             install -m 640 -o root -g dialout "$CONFIG_SOURCE" /etc/energy-game-display.json
         elif [[ ! -f /etc/energy-game-display.json ]]; then
